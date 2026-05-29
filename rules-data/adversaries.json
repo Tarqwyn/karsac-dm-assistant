@@ -1,0 +1,394 @@
+{
+  "shadow-walkers": {
+    "id": "adversaries/shadow-walkers",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "canon",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["faction-agent", "pursuer"],
+    "encounterRoles": ["ambusher", "pursuer", "watcher", "pressure", "omen"],
+    "campaignUse": ["early-warning", "pursuit", "supernatural-pressure", "fear", "escalation-signal"],
+    "mechanicalBase": [
+      "karsac-authored/yngondi-shadow-walker-cr3",
+      "npc-bases/srd-2014/spy",
+      "npc-bases/srd-2014/scout"
+    ],
+    "mechanicalStatus": "canon-homebrew",
+    "canKnow": [
+      "immediate orders and current objective",
+      "target identity",
+      "current route or location to surveil",
+      "that they carry a bone disc with a symbol from their oldest tradition"
+    ],
+    "mustNotKnow": [
+      "what the bone disc symbol means at its cosmological root",
+      "that Vishara touched the proto-Yngondi cultures",
+      "Vishara's identity, purpose, or relationship to Maharuq",
+      "the full campaign cosmology (Yantravaq, Dhurvaq, the Instruments)",
+      "that their Ashvein weapons are the same material as the Truthspeaker's pin"
+    ],
+    "playerSafeReveal": [
+      "They are professionals from somewhere far to the east, dressed for a climate that is not here.",
+      "They move with absolute economy. Nothing wasted, nothing performed.",
+      "They do not speak. They assess.",
+      "Their restraint is not mercy. It is discipline.",
+      "Their weapons are a dark reddish-black metal that does not reflect light normally.",
+      "One carries a bone disc with a symbol nobody here has seen before."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/shadow-walkers.md",
+    "aliases": ["shadow walker", "shadow walkers", "Yngondi shadow-walker", "yngondi operative"]
+  },
+  "sea-hag-thralls": {
+    "id": "adversaries/sea-hag-thralls",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "canon",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["thrall", "supernatural-threat", "environmental-linked-threat"],
+    "encounterRoles": ["combatant", "pressure", "ambusher", "moral-pressure"],
+    "campaignUse": ["supernatural-escalation", "sea-encounter", "emotional-weight", "whale-road-threat"],
+    "mechanicalBase": [
+      "karsac-authored/sea-hag-whale-road-cr5",
+      "npc-bases/srd-2014/commoner",
+      "npc-bases/srd-2014/guard"
+    ],
+    "mechanicalStatus": "canon-homebrew",
+    "canKnow": [
+      "immediate compulsion from the hag",
+      "simple tasks",
+      "local waters (residual)"
+    ],
+    "mustNotKnow": [
+      "wider campaign cosmology",
+      "Mathr's political operation",
+      "Vishara's purpose",
+      "why the hag was drawn to the cargo"
+    ],
+    "playerSafeReveal": [
+      "The thralls move with purpose but not intelligence. They are compelled, not willing.",
+      "One thrall wears old Lösweg clothing — recognisable as belonging to a vessel not seen in years.",
+      "They collapse the moment the hag is destroyed.",
+      "The fog had no right to be here. It arrived with the hag and left with her."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/sea-hag-thralls.md",
+    "aliases": ["sea hag thrall", "sea hag thralls", "drowned thrall", "drowned thralls", "whale-road thrall"]
+  },
+  "vane-housecarls": {
+    "id": "adversaries/vane-housecarls",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "canon",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["faction-agent", "guard", "npc-agent"],
+    "encounterRoles": ["combatant", "blocker", "watcher", "moral-pressure", "pressure"],
+    "campaignUse": ["dock-pressure", "social-obstruction", "faction-presence", "moral-complication", "chapter-2"],
+    "mechanicalBase": [
+      "karsac-authored/vane-housecarl-discreet-cr2",
+      "karsac-authored/aldric-vane-cr4",
+      "npc-bases/srd-2014/guard",
+      "npc-bases/srd-2014/veteran"
+    ],
+    "mechanicalStatus": "canon-homebrew",
+    "canKnow": [
+      "Aldric Vane's direct orders",
+      "which cargo is being moved and where it is going",
+      "who they are watching for",
+      "that the sigil on their token is Jarl Mathr's"
+    ],
+    "mustNotKnow": [
+      "that Mathr is shaped by Vishara",
+      "Mathr's full hidden nature",
+      "the cosmological purpose of the artefacts",
+      "Vishara's identity or the Yantravaq"
+    ],
+    "playerSafeReveal": [
+      "They are loyal Lösweg housecarls doing their lord's work. They are not villains.",
+      "Each wears a small bronze token at the collar — flat, palm-sized, marked with a sigil that does not match the Vane house mark on the warehouse door.",
+      "Aldric Vane uses your name once he learns it.",
+      "They are not the same as the people who killed the boy. That distinction matters."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/vane-housecarls.md",
+    "aliases": ["vane housecarl", "vane housecarls", "housecarl", "Aldric Vane", "Vane's men", "Törweg guard"]
+  },
+  "truthspeaker-escorts": {
+    "id": "adversaries/truthspeaker-escorts",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "canon",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["faction-agent", "guard", "social-obstacle"],
+    "encounterRoles": ["blocker", "social-pressure", "pressure", "escalation-signal", "moral-pressure"],
+    "campaignUse": ["social-obstruction", "faction-removal", "chapter-2-closing", "council-authority", "skald-corruption"],
+    "mechanicalBase": [
+      "karsac-authored/losweg-warrior-implied",
+      "npc-bases/srd-2014/veteran",
+      "npc-bases/srd-2014/guard"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "Jarl Mathr's instruction to escort Vane away",
+      "formal council authority and ceremonial procedures",
+      "that their Truthspeaker carries full inner council warrant",
+      "the public reason for the escort"
+    ],
+    "mustNotKnow": [
+      "that the Truthspeaker's tradition has been corrupted",
+      "Vishara's purpose or the Yantravaq",
+      "what the Truthspeaker intends to do with Vane",
+      "the cosmological significance of the Ashvein pin"
+    ],
+    "playerSafeReveal": [
+      "He speaks with the formal cadence of the Lösweg oral tradition. The verses he uses are the right verses.",
+      "There is something wrong underneath them. Not the words. The weight.",
+      "He wears a small black pin at his throat, a metal nobody at the dock recognises.",
+      "He came to collect Aldric Vane. He did it politely. He did not ask what the party wanted."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/truthspeaker-escorts.md",
+    "aliases": ["Truthspeaker", "Truthspeaker escort", "Lösweg warrior", "council escort", "Mathr's Truthspeaker"]
+  },
+  "house-mathr-watchers": {
+    "id": "adversaries/house-mathr-watchers",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "provisional",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["faction-agent", "scout", "informant"],
+    "encounterRoles": ["watcher", "scout", "informant", "clue-carrier", "social-pressure"],
+    "campaignUse": ["surveillance", "information-control", "faction-presence", "ambient-threat", "dock-pressure"],
+    "mechanicalBase": [
+      "npc-bases/srd-2014/spy",
+      "npc-bases/srd-2014/scout",
+      "npc-bases/srd-2014/commoner"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "assigned observation point or target",
+      "who to report to in Törweg",
+      "that they work for Jarl Mathr's operation",
+      "basic descriptions of the party"
+    ],
+    "mustNotKnow": [
+      "Mathr's full hidden nature",
+      "Vishara's purpose or the Yantravaq",
+      "the cosmological significance of what they are watching",
+      "why Mathr's interest extends to these foreigners"
+    ],
+    "playerSafeReveal": [
+      "The dockworkers handling Vane's cargo are not Törweg locals.",
+      "Someone on Halvash knew the characters were coming before they came.",
+      "The questions are slightly too specific.",
+      "There is a face that has appeared in two places that should not connect."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/house-mathr-watchers.md",
+    "aliases": ["Mathr watcher", "Mathr watchers", "House Mathr watcher", "planted dockworker", "Mathr agent"]
+  },
+  "mathr-road-agents": {
+    "id": "adversaries/mathr-road-agents",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "provisional",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["faction-agent", "pursuer", "scout", "social-obstacle"],
+    "encounterRoles": ["blocker", "pursuer", "interrogator", "watcher", "social-pressure", "combatant"],
+    "campaignUse": ["road-pressure", "pursuit", "social-obstruction", "chapter-3", "valweg-approach"],
+    "mechanicalBase": [
+      "npc-bases/srd-2014/guard",
+      "npc-bases/srd-2014/scout",
+      "npc-bases/srd-2014/spy",
+      "npc-bases/srd-2014/veteran"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "who gave their immediate order",
+      "where they are assigned to watch or delay",
+      "who they are meant to intercept",
+      "approximate operational deadline"
+    ],
+    "mustNotKnow": [
+      "Mathr's full hidden nature",
+      "Vishara's purpose or the Yantravaq",
+      "the cosmological significance of the artefacts",
+      "why the deadline matters"
+    ],
+    "playerSafeReveal": [
+      "They have authority, or something that looks like it.",
+      "Their questions are specific in ways a routine checkpoint should not be.",
+      "They are not trying to kill you. They are trying to stop you.",
+      "The road to Valweg is not safe. This is why."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/mathr-road-agents.md",
+    "aliases": ["Mathr road agent", "road agent", "road checkpoint", "Mathr operative", "road patrol"]
+  },
+  "vishara-touched-locals": {
+    "id": "adversaries/vishara-touched-locals",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "provisional",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["social-obstacle", "environmental-linked-threat", "npc-agent"],
+    "encounterRoles": ["social-pressure", "moral-pressure", "clue-carrier", "pressure", "omen"],
+    "campaignUse": ["vishara-symptoms", "ambient-pressure", "information-degradation", "chapter-2", "chapter-3"],
+    "mechanicalBase": [
+      "npc-bases/srd-2014/commoner",
+      "npc-bases/srd-2014/noble"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "repeated behaviours and compulsions",
+      "ordinary life and relationships (residual)",
+      "local knowledge (thinning)",
+      "fragments of compulsion rationalised as choice"
+    ],
+    "mustNotKnow": [
+      "that Vishara is the source",
+      "that Dhurvaq or any opposing force exists",
+      "why their behaviour matters cosmologically",
+      "that they are being used"
+    ],
+    "playerSafeReveal": [
+      "They seem gentler than they were. That is the most frightening thing.",
+      "They are not lying. They are answering a slightly different question than the one you asked.",
+      "They came back asking different questions. Interested in different things.",
+      "Whatever happened, it did not seem cruel about it."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/vishara-touched-locals.md",
+    "aliases": ["Vishara touched", "Vishara-touched local", "diffused NPC", "Ashfen-type", "changed local"]
+  },
+  "maw-changed-creatures": {
+    "id": "adversaries/maw-changed-creatures",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "provisional",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["monster", "environmental-linked-threat", "supernatural-threat"],
+    "encounterRoles": ["combatant", "omen", "pressure", "ambusher"],
+    "campaignUse": ["maw-encounter", "stormwatch-threat", "supernatural-escalation", "chapter-2", "chapter-3"],
+    "mechanicalBase": [
+      "monsters/srd-2014/beast-appropriate-cr",
+      "monsters/srd-2014/undead-appropriate-cr"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "immediate compulsion or territorial behaviour",
+      "the space of the Maw and immediate environs"
+    ],
+    "mustNotKnow": [
+      "what the Maw is cosmologically",
+      "what was taken from it",
+      "that the bone disc pattern has meaning"
+    ],
+    "playerSafeReveal": [
+      "It is wrong in a way that is hard to name. The proportions are not right.",
+      "There is a pattern in the scarring that you have seen before, somewhere.",
+      "It does not behave like a creature that is hunting. It behaves like something changed by a place.",
+      "Whatever opened here, it left marks on what was inside."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/maw-changed-creatures.md",
+    "aliases": ["Maw creature", "Maw-changed", "changed creature", "Stormwatch creature", "Aeorian changed"]
+  },
+  "pursuit-scouts": {
+    "id": "adversaries/pursuit-scouts",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "provisional",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["faction-agent", "pursuer", "scout"],
+    "encounterRoles": ["pursuer", "scout", "watcher", "pressure"],
+    "campaignUse": ["pursuit", "road-pressure", "information-control", "chapter-3", "valweg-approach"],
+    "mechanicalBase": [
+      "npc-bases/srd-2014/scout",
+      "npc-bases/srd-2014/spy"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "current assignment: track and report position",
+      "target description",
+      "reporting structure",
+      "approximate operational deadline"
+    ],
+    "mustNotKnow": [
+      "Mathr's full hidden nature",
+      "Vishara's purpose",
+      "why the deadline matters",
+      "the full scope of the artefact operation"
+    ],
+    "playerSafeReveal": [
+      "The checkpoint ahead was not there yesterday. Someone knew you were coming.",
+      "There was a rider on the ridge. He stopped when you stopped.",
+      "The road behind you is not empty.",
+      "This is why the road was not safe."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/pursuit-scouts.md",
+    "aliases": ["pursuit scout", "pursuit scouts", "road tracker", "Mathr tracker", "relay rider"]
+  },
+  "false-customs-officers": {
+    "id": "adversaries/false-customs-officers",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "provisional",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["social-obstacle", "faction-agent", "deceiver"],
+    "encounterRoles": ["deceiver", "interrogator", "blocker", "social-pressure"],
+    "campaignUse": ["social-obstruction", "information-extraction", "dock-pressure", "chapter-3", "valweg-arrival"],
+    "mechanicalBase": [
+      "npc-bases/srd-2014/spy",
+      "npc-bases/srd-2014/noble",
+      "npc-bases/srd-2014/guard"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "cover identity and authority documentation",
+      "what information to extract",
+      "reporting contact and operational brief"
+    ],
+    "mustNotKnow": [
+      "Mathr's full hidden nature",
+      "Vishara's purpose",
+      "cosmological significance of the cargo"
+    ],
+    "playerSafeReveal": [
+      "Their authority is correct in form. Something is slightly wrong with it.",
+      "The seal on the document is the Mathr sigil — you have seen it before.",
+      "They are not interested in the ordinary cargo. They are interested in what is below it.",
+      "The questions are too specific for a routine inspection."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/false-customs-officers.md",
+    "aliases": ["false customs officer", "false official", "customs inspector", "Mathr official", "port inspector"]
+  },
+  "valweg-informants": {
+    "id": "adversaries/valweg-informants",
+    "type": "adversary",
+    "visibility": "dm-only",
+    "canonical": "provisional",
+    "ruleset": "dnd-5e-2014",
+    "oppositionType": ["informant", "social-obstacle", "faction-agent"],
+    "encounterRoles": ["informant", "social-pressure", "clue-carrier", "deceiver", "watcher"],
+    "campaignUse": ["information-control", "social-obstruction", "chapter-3", "valweg-operations", "council-access"],
+    "mechanicalBase": [
+      "npc-bases/srd-2014/spy",
+      "npc-bases/srd-2014/commoner",
+      "npc-bases/srd-2014/noble"
+    ],
+    "mechanicalStatus": "provisional-adaptation",
+    "canKnow": [
+      "embedded position and cover role",
+      "who to report to and how",
+      "party description if provided",
+      "local Valweg knowledge appropriate to cover"
+    ],
+    "mustNotKnow": [
+      "Mathr's full hidden nature",
+      "Vishara's purpose",
+      "that they are part of a larger network",
+      "the full purpose of the information they collect"
+    ],
+    "playerSafeReveal": [
+      "In a city this size, someone is always watching the arrivals board.",
+      "The innkeeper was very interested in how long they planned to stay.",
+      "The information they received was accurate in form and wrong in a way that was hard to identify.",
+      "Someone knew they had asked to see Beorn before Beorn received the request."
+    ],
+    "sourceFile": "openwebui-runtime-collections/karsac-adversaries/valweg-informants.md",
+    "aliases": ["Valweg informant", "Valweg informants", "Mathr informant", "council informant", "planted contact"]
+  }
+}

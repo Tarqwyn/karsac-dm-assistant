@@ -1,0 +1,283 @@
+{
+  "ruleset": "dnd-5e-2014",
+  "answerFormat": [
+    "Ruling",
+    "Base 5e rule",
+    "Karsac table rule",
+    "At the table",
+    "Edge cases",
+    "DM call"
+  ],
+  "rules": {
+    "rules/core/ability-checks": {
+      "title": "Ability Checks",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/ability-checks.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["ability check", "ability checks", "skill check"],
+      "tags": ["ability-checks", "skills", "dc"],
+      "related": ["rules/core/advantage-disadvantage", "rules/core/proficiency-bonus", "rules/core/hiding-stealth-perception"]
+    },
+    "rules/core/saving-throws": {
+      "title": "Saving Throws",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/saving-throws.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["saving throw", "saving throws", "save", "saves"],
+      "tags": ["saving-throws", "save", "saves"],
+      "related": ["rules/core/ability-checks", "rules/core/proficiency-bonus", "rules/core/advantage-disadvantage"]
+    },
+    "rules/core/attack-rolls": {
+      "title": "Attack Rolls",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/attack-rolls.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["attack roll", "attack rolls", "to hit"],
+      "tags": ["attack-rolls", "ac", "critical-hit"],
+      "related": ["rules/core/advantage-disadvantage", "rules/core/cover", "rules/core/opportunity-attacks"]
+    },
+    "rules/core/advantage-disadvantage": {
+      "title": "Advantage and Disadvantage",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/advantage-disadvantage.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["advantage", "disadvantage"],
+      "tags": ["advantage", "disadvantage"],
+      "related": ["rules/core/ability-checks", "rules/core/saving-throws", "rules/core/attack-rolls"]
+    },
+    "rules/core/proficiency-bonus": {
+      "title": "Proficiency Bonus",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/proficiency-bonus.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["proficiency bonus", "proficiency"],
+      "tags": ["proficiency-bonus", "proficiency"],
+      "related": ["rules/core/ability-checks", "rules/core/saving-throws", "rules/core/attack-rolls"]
+    },
+    "rules/core/actions-in-combat": {
+      "title": "Actions in Combat",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/actions-in-combat.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["actions in combat", "combat actions", "action"],
+      "tags": ["combat", "action"],
+      "related": ["rules/core/bonus-actions", "rules/core/reactions", "rules/core/dash-disengage-dodge-help-hide-ready"]
+    },
+    "rules/core/bonus-actions": {
+      "title": "Bonus Actions",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/bonus-actions.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["bonus action", "bonus actions"],
+      "tags": ["bonus-action"],
+      "related": ["rules/core/actions-in-combat", "rules/core/reactions", "rules/core/spellcasting-basics"]
+    },
+    "rules/core/reactions": {
+      "title": "Reactions",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/reactions.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["reaction", "reactions"],
+      "tags": ["reaction", "trigger"],
+      "related": ["rules/core/actions-in-combat", "rules/core/bonus-actions", "rules/core/opportunity-attacks"]
+    },
+    "rules/core/movement-and-position": {
+      "title": "Movement and Position",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/movement-and-position.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["movement", "movement and position", "speed"],
+      "tags": ["movement", "speed", "position"],
+      "related": ["rules/core/actions-in-combat", "rules/core/opportunity-attacks", "rules/core/grapple-and-shove"]
+    },
+    "rules/core/dash-disengage-dodge-help-hide-ready": {
+      "title": "Dash, Disengage, Dodge, Help, Hide, Ready",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/dash-disengage-dodge-help-hide-ready.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["dash", "disengage", "dodge", "help", "hide", "ready"],
+      "tags": ["dash", "disengage", "dodge", "help", "hide", "ready"],
+      "related": ["rules/core/actions-in-combat", "rules/core/opportunity-attacks", "rules/core/hiding-stealth-perception"]
+    },
+    "rules/core/opportunity-attacks": {
+      "title": "Opportunity Attacks",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/opportunity-attacks.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["opportunity attack", "opportunity attacks", "attack of opportunity"],
+      "tags": ["opportunity-attacks", "reaction"],
+      "related": ["rules/core/reactions", "rules/core/movement-and-position", "rules/core/dash-disengage-dodge-help-hide-ready"]
+    },
+    "rules/core/grapple-and-shove": {
+      "title": "Grapple and Shove",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/grapple-and-shove.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["grapple", "grappling", "shove", "shoving"],
+      "tags": ["grapple", "shove", "athletics", "acrobatics"],
+      "related": ["rules/core/ability-checks", "rules/core/movement-and-position", "rules/core/conditions"]
+    },
+    "rules/core/cover": {
+      "title": "Cover",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/cover.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["cover", "half cover", "three-quarters cover", "total cover"],
+      "tags": ["cover", "ac", "targeting"],
+      "related": ["rules/core/attack-rolls", "rules/core/area-of-effect"]
+    },
+    "rules/core/conditions": {
+      "title": "Conditions",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/conditions.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["condition", "conditions"],
+      "tags": ["conditions"],
+      "related": ["rules/core/grapple-and-shove", "rules/core/death-saving-throws", "rules/core/hiding-stealth-perception"]
+    },
+    "rules/core/damage-types": {
+      "title": "Damage Types",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/damage-types.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["damage type", "damage types"],
+      "tags": ["damage-types", "resistance", "vulnerability"],
+      "related": ["rules/core/attack-rolls", "rules/core/conditions"]
+    },
+    "rules/core/death-saving-throws": {
+      "title": "Death Saving Throws",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/death-saving-throws.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["death save", "death saves", "death saving throw", "death saving throws"],
+      "tags": ["death-saving-throws", "death-save", "stable"],
+      "related": ["rules/core/saving-throws", "rules/core/conditions", "rules/core/resting"]
+    },
+    "rules/core/resting": {
+      "title": "Resting",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/resting.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["resting", "short rest", "long rest"],
+      "tags": ["short-rest", "long-rest", "hit-dice"],
+      "related": ["rules/core/death-saving-throws", "rules/core/spellcasting-basics"]
+    },
+    "rules/core/spellcasting-basics": {
+      "title": "Spellcasting Basics",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/spellcasting-basics.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["spellcasting", "spellcasting basics", "spell slots", "components"],
+      "tags": ["spellcasting", "spell-slots", "components", "duration"],
+      "related": ["rules/core/concentration", "rules/core/area-of-effect", "rules/core/saving-throws"]
+    },
+    "rules/core/concentration": {
+      "title": "Concentration",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/concentration.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["concentration", "concentration check", "concentration save"],
+      "tags": ["concentration", "constitution"],
+      "related": ["rules/core/spellcasting-basics", "rules/core/saving-throws", "rules/core/death-saving-throws"]
+    },
+    "rules/core/area-of-effect": {
+      "title": "Area of Effect",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/area-of-effect.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["area of effect", "aoe", "cone", "cube", "cylinder", "line", "sphere"],
+      "tags": ["area-of-effect", "targeting"],
+      "related": ["rules/core/spellcasting-basics", "rules/core/cover", "rules/core/saving-throws"]
+    },
+    "rules/core/hiding-stealth-perception": {
+      "title": "Hiding, Stealth, Perception",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/hiding-stealth-perception.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["hiding", "stealth", "perception", "passive perception"],
+      "tags": ["hiding", "stealth", "perception", "passive-perception"],
+      "related": ["rules/core/ability-checks", "rules/core/dash-disengage-dodge-help-hide-ready", "rules/core/vision-and-light"]
+    },
+    "rules/core/vision-and-light": {
+      "title": "Vision and Light",
+      "path": "openwebui-runtime-collections/karsac-rules-dnd-2014-core/vision-and-light.md",
+      "collection": "karsac-rules-dnd-2014-core",
+      "canonical": "srd-5.1",
+      "aliases": ["vision", "light", "darkness", "darkvision", "blindsight", "tremorsense", "truesight"],
+      "tags": ["vision", "light", "darkness", "special-senses"],
+      "related": ["rules/core/hiding-stealth-perception", "rules/core/conditions"]
+    },
+    "rules/house/table-ruling-principles": {
+      "title": "Karsac Table Ruling Principles",
+      "path": "openwebui-runtime-collections/karsac-rules-karsac-house/table-ruling-principles.md",
+      "collection": "karsac-rules-karsac-house",
+      "canonical": "karsac",
+      "aliases": ["table ruling principles", "karsac ruling principles"],
+      "tags": ["karsac", "dm-call"],
+      "related": ["rules/core/ability-checks", "rules/house/player-safe-rulings", "rules/house/karsac-mechanical-language"]
+    },
+    "rules/house/growing-items": {
+      "title": "Growing Items",
+      "path": "openwebui-runtime-collections/karsac-rules-karsac-house/growing-items.md",
+      "collection": "karsac-rules-karsac-house",
+      "canonical": "karsac",
+      "aliases": ["growing items", "awakening items"],
+      "tags": ["karsac", "growing-items"],
+      "related": ["rules/items/ragnfrids-arm-ring", "rules/items/word-before-steel"]
+    },
+    "rules/house/player-safe-rulings": {
+      "title": "Player-Safe Rulings",
+      "path": "openwebui-runtime-collections/karsac-rules-karsac-house/player-safe-rulings.md",
+      "collection": "karsac-rules-karsac-house",
+      "canonical": "karsac",
+      "aliases": ["player-safe rulings", "spoiler-safe rulings"],
+      "tags": ["player-safe", "spoilers"],
+      "related": ["rules/house/table-ruling-principles", "rules/house/karsac-mechanical-language"]
+    },
+    "rules/house/karsac-mechanical-language": {
+      "title": "Karsac Mechanical Language",
+      "path": "openwebui-runtime-collections/karsac-rules-karsac-house/karsac-mechanical-language.md",
+      "collection": "karsac-rules-karsac-house",
+      "canonical": "karsac",
+      "aliases": ["karsac mechanical language", "mechanical language"],
+      "tags": ["karsac", "wording"],
+      "related": ["rules/house/table-ruling-principles", "rules/house/player-safe-rulings"]
+    },
+    "rules/items/ragnfrids-arm-ring": {
+      "title": "Ragnfrid's Arm-Ring",
+      "path": "openwebui-runtime-collections/karsac-rules-items/ragnfrids-arm-ring.md",
+      "collection": "karsac-rules-items",
+      "canonical": "karsac",
+      "aliases": ["ragnfrid's arm-ring", "oath-ring of veyr"],
+      "tags": ["item", "ragnfrid", "arm-ring"],
+      "related": ["rules/house/growing-items", "rules/items/word-before-steel", "rules/items/grandmothers-keeping"]
+    },
+    "rules/items/word-before-steel": {
+      "title": "Word Before Steel",
+      "path": "openwebui-runtime-collections/karsac-rules-items/word-before-steel.md",
+      "collection": "karsac-rules-items",
+      "canonical": "karsac",
+      "aliases": ["word before steel"],
+      "tags": ["item", "word-before-steel"],
+      "related": ["rules/items/ragnfrids-arm-ring", "rules/house/growing-items"]
+    },
+    "rules/items/grandmothers-keeping": {
+      "title": "Grandmother's Keeping",
+      "path": "openwebui-runtime-collections/karsac-rules-items/grandmothers-keeping.md",
+      "collection": "karsac-rules-items",
+      "canonical": "karsac",
+      "aliases": ["grandmother's keeping", "grandmothers keeping"],
+      "tags": ["item", "memory", "witness"],
+      "related": ["rules/items/ragnfrids-arm-ring", "rules/items/word-before-steel"]
+    },
+    "rules/items/brynjas-hidden-artefact": {
+      "title": "Brynja's Hidden Artefact",
+      "path": "openwebui-runtime-collections/karsac-rules-items/brynjas-hidden-artefact.md",
+      "collection": "karsac-rules-items",
+      "canonical": "karsac",
+      "aliases": ["brynja's hidden artefact", "brynjas hidden artefact"],
+      "tags": ["item", "brynja", "artefact"],
+      "related": ["rules/house/growing-items"]
+    }
+  }
+}

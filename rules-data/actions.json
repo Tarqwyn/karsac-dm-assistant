@@ -1,0 +1,98 @@
+{
+  "attack": {
+    "id": "action/attack",
+    "name": "Attack",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Make one melee or ranged attack, or more if a feature such as Extra Attack says so.",
+    "sourceRule": "rules/core/actions-in-combat"
+  },
+  "cast-a-spell": {
+    "id": "action/cast-a-spell",
+    "name": "Cast a Spell",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "varies",
+    "summary": "Cast a spell using the casting time listed in the spell's description.",
+    "sourceRule": "rules/core/spellcasting-basics"
+  },
+  "dash": {
+    "id": "action/dash",
+    "name": "Dash",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Gain extra movement for the current turn equal to your speed after modifiers.",
+    "sourceRule": "rules/core/dash-disengage-dodge-help-hide-ready"
+  },
+  "disengage": {
+    "id": "action/disengage",
+    "name": "Disengage",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Your movement does not provoke opportunity attacks for the rest of the turn.",
+    "sourceRule": "rules/core/dash-disengage-dodge-help-hide-ready"
+  },
+  "dodge": {
+    "id": "action/dodge",
+    "name": "Dodge",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Until your next turn, attacks against you have disadvantage if you can see the attacker, and you have advantage on Dexterity saving throws.",
+    "sourceRule": "rules/core/dash-disengage-dodge-help-hide-ready"
+  },
+  "help": {
+    "id": "action/help",
+    "name": "Help",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Give an ally advantage on the next relevant check, or on the first attack against a creature within 5 feet of you before your next turn.",
+    "sourceRule": "rules/core/dash-disengage-dodge-help-hide-ready"
+  },
+  "hide": {
+    "id": "action/hide",
+    "name": "Hide",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Make a Dexterity (Stealth) check to hide if the circumstances allow it.",
+    "sourceRule": "rules/core/dash-disengage-dodge-help-hide-ready"
+  },
+  "ready": {
+    "id": "action/ready",
+    "name": "Ready",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Choose a perceivable trigger and an action or movement to take later with your reaction.",
+    "sourceRule": "rules/core/dash-disengage-dodge-help-hide-ready"
+  },
+  "search": {
+    "id": "action/search",
+    "name": "Search",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Devote your attention to finding something, usually with Perception or Investigation.",
+    "sourceRule": "rules/core/actions-in-combat"
+  },
+  "use-an-object": {
+    "id": "action/use-an-object",
+    "name": "Use an Object",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "action",
+    "summary": "Use an object that requires an action, or interact with more than one object on your turn.",
+    "sourceRule": "rules/core/actions-in-combat"
+  },
+  "grapple": {
+    "id": "action/grapple",
+    "name": "Grapple",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "attack replacement",
+    "summary": "Replace one attack from the Attack action with a contested Strength (Athletics) check to impose the grappled condition.",
+    "sourceRule": "rules/core/grapple-and-shove"
+  },
+  "shove": {
+    "id": "action/shove",
+    "name": "Shove",
+    "ruleset": "dnd-5e-2014",
+    "actionType": "attack replacement",
+    "summary": "Replace one attack from the Attack action with a contested Strength (Athletics) check to push a target 5 feet or knock it prone.",
+    "sourceRule": "rules/core/grapple-and-shove"
+  }
+}

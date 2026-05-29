@@ -1,0 +1,50 @@
+{
+  "strength": {
+    "id": "ability/strength",
+    "name": "Strength",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Strength measures bodily power, athletic training, and raw physical force.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["ability", "strength", "athletics", "force"]
+  },
+  "dexterity": {
+    "id": "ability/dexterity",
+    "name": "Dexterity",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Dexterity measures agility, reflexes, and balance.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["ability", "dexterity", "agility", "stealth", "ac"]
+  },
+  "constitution": {
+    "id": "ability/constitution",
+    "name": "Constitution",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Constitution measures health, stamina, and vital force.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["ability", "constitution", "stamina", "hit-points"]
+  },
+  "intelligence": {
+    "id": "ability/intelligence",
+    "name": "Intelligence",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Intelligence measures mental acuity, accuracy of recall, and reasoning.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["ability", "intelligence", "memory", "reason"]
+  },
+  "wisdom": {
+    "id": "ability/wisdom",
+    "name": "Wisdom",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Wisdom reflects perceptiveness, intuition, and attunement to the world.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["ability", "wisdom", "perception", "intuition"]
+  },
+  "charisma": {
+    "id": "ability/charisma",
+    "name": "Charisma",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Charisma measures force of personality and effectiveness in social interaction.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["ability", "charisma", "social", "personality"]
+  }
+}

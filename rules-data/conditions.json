@@ -1,0 +1,122 @@
+{
+  "blinded": {
+    "id": "condition/blinded",
+    "name": "Blinded",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A blinded creature cannot see, automatically fails sight-based checks, has disadvantage on its attacks, and is attacked with advantage.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "vision", "disadvantage", "advantage"]
+  },
+  "charmed": {
+    "id": "condition/charmed",
+    "name": "Charmed",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A charmed creature cannot attack the charmer or target the charmer with harmful abilities or magical effects, and the charmer has advantage on social checks against it.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "social", "control"]
+  },
+  "deafened": {
+    "id": "condition/deafened",
+    "name": "Deafened",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A deafened creature cannot hear and automatically fails hearing-based checks.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "hearing"]
+  },
+  "exhaustion": {
+    "id": "condition/exhaustion",
+    "name": "Exhaustion",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Exhaustion has six levels that stack from disadvantage on ability checks up to death.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "levels", "rest", "speed", "death"]
+  },
+  "frightened": {
+    "id": "condition/frightened",
+    "name": "Frightened",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A frightened creature has disadvantage on ability checks and attack rolls while the source of fear is in sight, and cannot willingly move closer to it.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "fear", "disadvantage", "movement"]
+  },
+  "grappled": {
+    "id": "condition/grappled",
+    "name": "Grappled",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A grappled creature's speed becomes 0, it cannot benefit from speed bonuses, and the condition ends if the grappler is incapacitated or the target is moved out of reach.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "movement", "speed-0", "grapple"]
+  },
+  "incapacitated": {
+    "id": "condition/incapacitated",
+    "name": "Incapacitated",
+    "ruleset": "dnd-5e-2014",
+    "summary": "An incapacitated creature cannot take actions or reactions.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "actions", "reactions"]
+  },
+  "invisible": {
+    "id": "condition/invisible",
+    "name": "Invisible",
+    "ruleset": "dnd-5e-2014",
+    "summary": "An invisible creature cannot be seen without magic or a special sense, is heavily obscured for hiding, is attacked with disadvantage, and attacks with advantage.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "vision", "hiding", "advantage"]
+  },
+  "paralyzed": {
+    "id": "condition/paralyzed",
+    "name": "Paralyzed",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A paralyzed creature is incapacitated, cannot move or speak, fails Strength and Dexterity saves, is attacked with advantage, and melee hits from within 5 feet are critical hits.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "incapacitated", "critical-hit", "speed-0"]
+  },
+  "petrified": {
+    "id": "condition/petrified",
+    "name": "Petrified",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A petrified creature becomes an inanimate substance, is incapacitated and unaware, fails Strength and Dexterity saves, has resistance to all damage, and is immune to poison and disease.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "stone", "resistance", "immune"]
+  },
+  "poisoned": {
+    "id": "condition/poisoned",
+    "name": "Poisoned",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A poisoned creature has disadvantage on attack rolls and ability checks.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "poison", "disadvantage"]
+  },
+  "prone": {
+    "id": "condition/prone",
+    "name": "Prone",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A prone creature must crawl or stand to end the condition, has disadvantage on attack rolls, and is easier to hit in melee but harder to hit at range.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "movement", "melee", "ranged"]
+  },
+  "restrained": {
+    "id": "condition/restrained",
+    "name": "Restrained",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A restrained creature's speed becomes 0, it attacks with disadvantage, attacks against it have advantage, and it has disadvantage on Dexterity saving throws.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "speed-0", "disadvantage", "advantage"]
+  },
+  "stunned": {
+    "id": "condition/stunned",
+    "name": "Stunned",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A stunned creature is incapacitated, cannot move, speaks only falteringly, fails Strength and Dexterity saves, and is attacked with advantage.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "incapacitated", "advantage", "saves"]
+  },
+  "unconscious": {
+    "id": "condition/unconscious",
+    "name": "Unconscious",
+    "ruleset": "dnd-5e-2014",
+    "summary": "An unconscious creature is incapacitated, cannot move or speak, drops what it holds, falls prone, fails Strength and Dexterity saves, and melee hits from within 5 feet are critical hits.",
+    "sourceRule": "rules/core/conditions",
+    "tags": ["condition", "incapacitated", "critical-hit", "prone"]
+  }
+}

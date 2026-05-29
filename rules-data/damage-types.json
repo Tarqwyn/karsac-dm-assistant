@@ -1,0 +1,106 @@
+{
+  "acid": {
+    "id": "damage-type/acid",
+    "name": "Acid",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Corrosive substances and dissolving effects deal acid damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "corrosive"]
+  },
+  "bludgeoning": {
+    "id": "damage-type/bludgeoning",
+    "name": "Bludgeoning",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Blunt force such as hammers, falling, and constriction deals bludgeoning damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "blunt", "impact"]
+  },
+  "cold": {
+    "id": "damage-type/cold",
+    "name": "Cold",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Freezing or frigid effects deal cold damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "ice", "freeze"]
+  },
+  "fire": {
+    "id": "damage-type/fire",
+    "name": "Fire",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Flames and intense heat deal fire damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "flame", "heat"]
+  },
+  "force": {
+    "id": "damage-type/force",
+    "name": "Force",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Pure magical energy in damaging form deals force damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "magic"]
+  },
+  "lightning": {
+    "id": "damage-type/lightning",
+    "name": "Lightning",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Electrical bolts and similar effects deal lightning damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "electric"]
+  },
+  "necrotic": {
+    "id": "damage-type/necrotic",
+    "name": "Necrotic",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Withering, deathly, or soul-draining effects deal necrotic damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "death", "withering"]
+  },
+  "piercing": {
+    "id": "damage-type/piercing",
+    "name": "Piercing",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Puncturing and impaling attacks deal piercing damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "puncture"]
+  },
+  "poison": {
+    "id": "damage-type/poison",
+    "name": "Poison",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Venom, toxins, and poisonous gas deal poison damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "toxin"]
+  },
+  "psychic": {
+    "id": "damage-type/psychic",
+    "name": "Psychic",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Mental assaults and psionic force deal psychic damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "mental", "psionic"]
+  },
+  "radiant": {
+    "id": "damage-type/radiant",
+    "name": "Radiant",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Holy or searing spirit-infused power deals radiant damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "holy", "light"]
+  },
+  "slashing": {
+    "id": "damage-type/slashing",
+    "name": "Slashing",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Cutting attacks from blades and claws deal slashing damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "cutting"]
+  },
+  "thunder": {
+    "id": "damage-type/thunder",
+    "name": "Thunder",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Concussive bursts of sound deal thunder damage.",
+    "sourceRule": "rules/core/damage-types",
+    "tags": ["damage-type", "sound", "concussion"]
+  }
+}

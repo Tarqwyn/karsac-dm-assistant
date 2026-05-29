@@ -1,0 +1,164 @@
+{
+  "acrobatics": {
+    "id": "skill/acrobatics",
+    "name": "Acrobatics",
+    "ability": "dexterity",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Balance, tumbling, and similar agile movement.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "dexterity", "balance", "movement"]
+  },
+  "animal-handling": {
+    "id": "skill/animal-handling",
+    "name": "Animal Handling",
+    "ability": "wisdom",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Calming, directing, or intuiting the intentions of animals.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "wisdom", "animal", "mount"]
+  },
+  "arcana": {
+    "id": "skill/arcana",
+    "name": "Arcana",
+    "ability": "intelligence",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Lore about spells, magic items, eldritch symbols, and magical traditions.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "intelligence", "magic", "lore"]
+  },
+  "athletics": {
+    "id": "skill/athletics",
+    "name": "Athletics",
+    "ability": "strength",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Climbing, jumping, swimming, and feats of physical exertion.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "strength", "climb", "jump", "swim"]
+  },
+  "deception": {
+    "id": "skill/deception",
+    "name": "Deception",
+    "ability": "charisma",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Hiding the truth through lies, misdirection, or false impressions.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "charisma", "lie", "social"]
+  },
+  "history": {
+    "id": "skill/history",
+    "name": "History",
+    "ability": "intelligence",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Lore about historical events, people, kingdoms, wars, and civilizations.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "intelligence", "history", "lore"]
+  },
+  "insight": {
+    "id": "skill/insight",
+    "name": "Insight",
+    "ability": "wisdom",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Reading intentions, motives, and emotional cues.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "wisdom", "social", "motives"]
+  },
+  "intimidation": {
+    "id": "skill/intimidation",
+    "name": "Intimidation",
+    "ability": "charisma",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Influencing someone through threats, hostility, or displays of force.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "charisma", "threat", "social"]
+  },
+  "investigation": {
+    "id": "skill/investigation",
+    "name": "Investigation",
+    "ability": "intelligence",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Finding clues and drawing deductions from evidence.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "intelligence", "clues", "deduction"]
+  },
+  "medicine": {
+    "id": "skill/medicine",
+    "name": "Medicine",
+    "ability": "wisdom",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Stabilizing a dying creature or diagnosing illness.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "wisdom", "healing", "stabilize"]
+  },
+  "nature": {
+    "id": "skill/nature",
+    "name": "Nature",
+    "ability": "intelligence",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Lore about terrain, plants, animals, weather, and natural cycles.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "intelligence", "nature", "terrain"]
+  },
+  "perception": {
+    "id": "skill/perception",
+    "name": "Perception",
+    "ability": "wisdom",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Spotting, hearing, or otherwise detecting something present.",
+    "sourceRule": "rules/core/hiding-stealth-perception",
+    "tags": ["skill", "wisdom", "sight", "hearing", "awareness"]
+  },
+  "performance": {
+    "id": "skill/performance",
+    "name": "Performance",
+    "ability": "charisma",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Entertaining an audience with music, dance, acting, or storytelling.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "charisma", "entertainment", "performance"]
+  },
+  "persuasion": {
+    "id": "skill/persuasion",
+    "name": "Persuasion",
+    "ability": "charisma",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Influencing others with tact, social grace, or good faith.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "charisma", "social", "negotiation"]
+  },
+  "religion": {
+    "id": "skill/religion",
+    "name": "Religion",
+    "ability": "intelligence",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Lore about deities, rites, prayers, cults, and holy symbols.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "intelligence", "religion", "lore"]
+  },
+  "sleight-of-hand": {
+    "id": "skill/sleight-of-hand",
+    "name": "Sleight of Hand",
+    "ability": "dexterity",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Legerdemain, concealment, and quick-fingered manipulation.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "dexterity", "legerdemain", "pickpocket"]
+  },
+  "stealth": {
+    "id": "skill/stealth",
+    "name": "Stealth",
+    "ability": "dexterity",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Sneaking, hiding, and avoiding notice.",
+    "sourceRule": "rules/core/hiding-stealth-perception",
+    "tags": ["skill", "dexterity", "hiding", "sneaking"]
+  },
+  "survival": {
+    "id": "skill/survival",
+    "name": "Survival",
+    "ability": "wisdom",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Tracking, navigating, predicting weather, and avoiding natural hazards.",
+    "sourceRule": "rules/core/ability-checks",
+    "tags": ["skill", "wisdom", "tracking", "wilderness"]
+  }
+}

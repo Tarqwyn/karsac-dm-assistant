@@ -1,0 +1,42 @@
+{
+  "blindsight": {
+    "id": "sense/blindsight",
+    "name": "Blindsight",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A creature with blindsight perceives its surroundings without relying on sight within a specific radius.",
+    "sourceRule": "rules/core/vision-and-light",
+    "tags": ["sense", "blindsight", "perception"]
+  },
+  "darkvision": {
+    "id": "sense/darkvision",
+    "name": "Darkvision",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Within its listed range, a creature sees darkness as dim light and sees only shades of gray there.",
+    "sourceRule": "rules/core/vision-and-light",
+    "tags": ["sense", "darkvision", "darkness"]
+  },
+  "passive-perception": {
+    "id": "sense/passive-perception",
+    "name": "Passive Perception",
+    "ruleset": "dnd-5e-2014",
+    "summary": "Passive Wisdom (Perception) is `10 + modifiers`, with `+5` for advantage and `-5` for disadvantage.",
+    "sourceRule": "rules/core/hiding-stealth-perception",
+    "tags": ["sense", "passive", "perception", "stealth"]
+  },
+  "tremorsense": {
+    "id": "sense/tremorsense",
+    "name": "Tremorsense",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A creature with tremorsense detects and pinpoints vibrations within a radius if it and the source touch the same ground or substance.",
+    "sourceRule": "rules/core/vision-and-light",
+    "tags": ["sense", "tremorsense", "vibration", "ground"]
+  },
+  "truesight": {
+    "id": "sense/truesight",
+    "name": "Truesight",
+    "ruleset": "dnd-5e-2014",
+    "summary": "A creature with truesight can see through normal and magical darkness, see invisibility, detect visual illusions, perceive true forms, and see into the Ethereal Plane within range.",
+    "sourceRule": "rules/core/vision-and-light",
+    "tags": ["sense", "truesight", "darkness", "illusion", "ethereal"]
+  }
+}

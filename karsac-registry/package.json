@@ -1,0 +1,23 @@
+{
+  "name": "karsac-registry",
+  "version": "1.0.0",
+  "description": "Deterministic metadata index over Karsac canon Markdown files",
+  "type": "module",
+  "scripts": {
+    "karsac:index": "tsx src/build-index.ts",
+    "karsac:lookup": "tsx src/lookup.ts",
+    "karsac:show": "tsx src/show.ts",
+    "karsac:ask": "tsx src/ask.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.2",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
