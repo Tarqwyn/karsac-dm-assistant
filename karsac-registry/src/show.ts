@@ -1,13 +1,8 @@
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import type { EntityMap } from './types.js';
 import { normalizeRelatedId } from './resolver.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = resolve(__dirname, '..');
-const INDEX_DIR = resolve(PROJECT_ROOT, '.karsac-index');
-const COLLECTIONS_ROOT = resolve(PROJECT_ROOT, '..', 'openwebui-runtime-collections');
+import { INDEX_DIR, COLLECTIONS_ROOT } from './paths.js';
 
 function loadJSON<T>(name: string): T {
   const p = resolve(INDEX_DIR, name);

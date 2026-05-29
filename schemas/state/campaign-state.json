@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/campaign-state.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/campaignFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "currentSession",
+        "currentChapter",
+        "currentScene",
+        "currentLocation",
+        "clock",
+        "progress",
+        "storageKey",
+        "uiStateIgnored"
+      ],
+      "properties": {
+        "currentSession": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "currentChapter": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "currentScene": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+        },
+        "currentLocation": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+        },
+        "clock": {
+          "type": "object",
+          "required": [
+            "value",
+            "max",
+            "tiers",
+            "meaning"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "tiers": {
+              "type": "object",
+              "required": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ],
+              "properties": {
+                "low": {
+                  "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+                },
+                "medium": {
+                  "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+                },
+                "high": {
+                  "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+                },
+                "critical": {
+                  "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+                }
+              },
+              "additionalProperties": false
+            },
+            "meaning": {
+              "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        "progress": {
+          "type": "object",
+          "required": [
+            "session",
+            "step",
+            "steps"
+          ],
+          "properties": {
+            "session": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "step": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "steps": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "storageKey": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "uiStateIgnored": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+        }
+      }
+    }
+  ]
+}

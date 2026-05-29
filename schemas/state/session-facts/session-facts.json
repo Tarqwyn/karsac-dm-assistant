@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/session-facts/session-facts.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/sessionFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "facts"
+      ],
+      "properties": {
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "label",
+              "scene",
+              "desc",
+              "knowledgeStatus",
+              "revealed",
+              "type",
+              "session",
+              "source",
+              "importStatus"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "label": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "scene": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "desc": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "knowledgeStatus": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "revealed": {
+                "type": "boolean"
+              },
+              "type": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "session": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "source": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "importStatus": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

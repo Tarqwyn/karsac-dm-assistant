@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/radar/session-radar.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/sessionFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "radar"
+      ],
+      "properties": {
+        "radar": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "nav",
+              "worldThreadId",
+              "title",
+              "surface",
+              "relation",
+              "hook",
+              "cueScenes",
+              "cueText",
+              "currentThreadStatus"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "nav": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "worldThreadId": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "title": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "surface": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "relation": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "hook": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "cueScenes": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+              },
+              "cueText": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "currentThreadStatus": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/threadStatus"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

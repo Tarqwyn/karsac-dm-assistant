@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/npcs-state.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/campaignFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "stateType",
+        "statusLabels",
+        "npcs"
+      ],
+      "properties": {
+        "stateType": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "statusLabels": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/npcStatusLabels"
+        },
+        "npcs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "role",
+              "status",
+              "location",
+              "knows",
+              "wants",
+              "hides",
+              "threads",
+              "chapters",
+              "entityRef",
+              "stateType",
+              "source",
+              "importStatus",
+              "network",
+              "yantravaq",
+              "instrument",
+              "isItem"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "name": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "role": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "status": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/npcStatus"
+              },
+              "location": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "knows": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "wants": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "hides": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "threads": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+              },
+              "chapters": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+              },
+              "entityRef": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+              },
+              "stateType": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "source": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "importStatus": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "network": {
+                "type": "boolean"
+              },
+              "yantravaq": {
+                "type": "boolean"
+              },
+              "instrument": {
+                "type": "boolean"
+              },
+              "isItem": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/world-threads.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/campaignFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "statusLabels",
+        "threads"
+      ],
+      "properties": {
+        "statusLabels": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/threadStatusLabels"
+        },
+        "threads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "type",
+              "origin",
+              "defaultStatus",
+              "currentStatus",
+              "summary",
+              "players",
+              "npcs",
+              "pokeWhen",
+              "closesWhen",
+              "autoTriggers"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "name": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "type": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "origin": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "defaultStatus": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/threadStatus"
+              },
+              "currentStatus": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/threadStatus"
+              },
+              "summary": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "players": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+              },
+              "npcs": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+              },
+              "pokeWhen": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "closesWhen": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "autoTriggers": {
+                "type": "array",
+                "items": {
+                  "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/autoTrigger"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

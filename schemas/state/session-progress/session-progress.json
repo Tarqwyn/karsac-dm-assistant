@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/session-progress/session-progress.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/sessionFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "currentStep",
+        "steps"
+      ],
+      "properties": {
+        "currentStep": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "index",
+              "label",
+              "pauseLabel",
+              "pauseClass",
+              "recap"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "label": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "pauseLabel": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "pauseClass": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+              },
+              "recap": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

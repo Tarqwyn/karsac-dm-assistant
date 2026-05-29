@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/party-state.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/campaignFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "currentParty",
+        "characters"
+      ],
+      "properties": {
+        "currentParty": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+        },
+        "partyLevel": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "partySize": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "characters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "class",
+              "status",
+              "wound",
+              "karsac",
+              "threads",
+              "npcs"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "name": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "class": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "status": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/partyCharacterStatus"
+              },
+              "wound": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "karsac": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "crow": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+              },
+              "namNote": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+              },
+              "dmNote": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+              },
+              "threads": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "hot",
+                    "text"
+                  ],
+                  "properties": {
+                    "hot": {
+                      "type": "boolean"
+                    },
+                    "text": {
+                      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "npcs": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

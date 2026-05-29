@@ -967,6 +967,627 @@ ${rulesBlock}${monsterBlock}`;
   ];
 }
 
+// ── State profile message builder ─────────────────────────────────────────────
+
+export interface StateContextData {
+  playerKnowledge: Record<string, unknown> | null;
+  campaignState:   Record<string, unknown> | null;
+  partyState:      Record<string, unknown> | null;
+  worldThreads:    Record<string, unknown> | null;
+  npcsState:       Record<string, unknown> | null;
+  itemsState:      Record<string, unknown> | null;
+  sessionFacts:    Record<string, unknown> | null;
+  sessionProgress: Record<string, unknown> | null;
+  handouts:        Record<string, unknown> | null;
+  radar:           Record<string, unknown> | null;
+}
+
+/**
+ * Build the model-facing messages for a state-profile query.
+ *
+ * Context is split into three clearly-labeled zones so the model cannot
+ * confuse available (DM-only) facts with confirmed player knowledge:
+ *
+ *   ZONE 1 — CONFIRMED PLAYER KNOWLEDGE  (known=true, posted=true only)
+ *   ZONE 2 — AVAILABLE — DM ONLY         (available facts, unposted handouts)
+ *   ZONE 3 — OPEN DM THREADS             (world threads by status, radar, NPCs)
+ */
+export function buildStateMessages(
+  ctx: StateContextData,
+  question: string,
+): Array<{ role: string; content: string }> {
+  const lq = question.toLowerCase();
+  const DIV = '═'.repeat(62);
+  const div = '─'.repeat(60);
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  function fmtThreadGroup(threads: unknown[], status: string): string {
+    const group = (threads as any[]).filter(t => t.currentStatus === status);
+    if (group.length === 0) return `  (none)`;
+    return group.map(t =>
+      `  - [${t.id}] ${t.name}  |  ${t.summary?.slice(0, 90) ?? ''}`
+    ).join('\n');
+  }
+
+  function npcMentioned(npc: any): boolean {
+    return npc.name.toLowerCase().split(/\s+/)
+      .some((w: string) => w.length > 3 && lq.includes(w));
+  }
+
+  // ── Extract shared data ───────────────────────────────────────────────────────
+
+  const cs  = (ctx.campaignState  as any) ?? {};
+  const ps  = (ctx.partyState     as any) ?? {};
+  const pk  = (ctx.playerKnowledge as any) ?? {};
+  const wt  = (ctx.worldThreads   as any) ?? {};
+  const ns  = (ctx.npcsState      as any) ?? {};
+  const is_ = (ctx.itemsState     as any) ?? {};
+
+  const knownFacts: string[]    = pk.knownFacts      ?? [];
+  const postedHandouts: string[] = pk.postedHandouts ?? [];
+  const notYetRevealed: string[] = pk.notYetRevealed ?? [];
+  const threads: any[]          = wt.threads         ?? [];
+  const npcs: any[]             = ns.npcs            ?? [];
+  const items: any[]            = is_.items          ?? [];
+  const chars: any[]            = ps.characters      ?? [];
+
+  // Session data (may be null if not loaded)
+  const allFacts: any[] = ctx.sessionFacts
+    ? ((ctx.sessionFacts as any).facts ?? []) : [];
+  const availableFacts = allFacts.filter(f => f.knowledgeStatus === 'available');
+  const confirmedFacts = allFacts.filter(f => f.knowledgeStatus === 'known');
+  const allHandouts: any[] = ctx.handouts
+    ? ((ctx.handouts as any).handouts ?? []) : [];
+  const postedHandoutDetails = allHandouts.filter(h => h.posted);
+  const unpostedHandouts     = allHandouts.filter(h => !h.posted);
+
+  // ── Campaign header (not zone-specific) ──────────────────────────────────────
+
+  const present   = chars.filter(c => c.status === 'present');
+  const potential = chars.filter(c => c.status === 'potential');
+  const clockVal  = cs.clock?.value ?? 0;
+  const clockTier = clockVal <= 3 ? 'Low' : clockVal <= 6 ? 'Medium' : clockVal <= 9 ? 'High' : 'Critical';
+
+  const header = [
+    `CAMPAIGN — Session ${cs.currentSession ?? '?'} / Chapter ${cs.currentChapter ?? '?'}`,
+    `Clock: ${clockVal}/${cs.clock?.max ?? 16} (${clockTier})  |  Progress: step ${cs.progress?.step ?? 0} of ${cs.progress?.steps ?? '?'}`,
+    `Party: ${present.map(c => c.name).join(', ') || 'none listed'}`,
+    ps.partyLevel   != null ? `Level: ${ps.partyLevel}` : `Level: not confirmed in state`,
+    ps.partySize    != null ? `Size: ${ps.partySize}`   : `Size: not confirmed in state`,
+    potential.length > 0    ? `Potential (not yet joined): ${potential.map(c => c.name).join(', ')}` : '',
+  ].filter(Boolean).join('\n');
+
+  // ── ZONE 1: Confirmed player knowledge ───────────────────────────────────────
+
+  const zone1Lines: string[] = [
+    DIV,
+    `ZONE 1 — CONFIRMED PLAYER KNOWLEDGE`,
+    `(facts marked known=true; handouts with posted=true)`,
+    `DO NOT attribute anything outside this zone to "the players".`,
+    DIV,
+  ];
+
+  if (knownFacts.length === 0) {
+    zone1Lines.push(`⚠ KNOWN FACTS: 0`);
+    zone1Lines.push(`  No facts are currently marked as revealed to players.`);
+    zone1Lines.push(`  State is a clean import — all session facts are still DM-only.`);
+    zone1Lines.push(`  Update after live play to mark facts as known.`);
+  } else {
+    zone1Lines.push(`Known facts (${knownFacts.length}):`);
+    for (const id of knownFacts) {
+      const f = allFacts.find(f => f.id === id);
+      zone1Lines.push(`  [KNOWN] [${id}] ${f?.label ?? id}`);
+    }
+  }
+
+  zone1Lines.push('');
+  if (postedHandouts.length === 0 && postedHandoutDetails.length === 0) {
+    zone1Lines.push(`⚠ POSTED HANDOUTS: 0 — players have seen no handouts yet.`);
+  } else {
+    const ids = postedHandouts.length > 0 ? postedHandouts : postedHandoutDetails.map(h => h.id);
+    zone1Lines.push(`Posted handouts: ${ids.join(', ')}`);
+  }
+
+  // ── ZONE 2: Available — DM only ──────────────────────────────────────────────
+
+  const zone2Lines: string[] = [
+    ``,
+    DIV,
+    `ZONE 2 — AVAILABLE — DM ONLY — NOT YET REVEALED TO PLAYERS`,
+    `(knowledgeStatus=available; posted=false)`,
+    `These facts exist in state but the players have not been told them.`,
+    `Label them as "available in state but not yet revealed" in your answer.`,
+    DIV,
+  ];
+
+  if (availableFacts.length > 0) {
+    zone2Lines.push(`Available session facts (${availableFacts.length}) — DM-only until revealed:`);
+    for (const f of availableFacts) {
+      zone2Lines.push(`  [NOT YET REVEALED] [${f.id}] [${f.scene ?? '?'}] ${f.label}`);
+      if (f.desc) zone2Lines.push(`    desc: ${f.desc}`);
+    }
+  } else if (ctx.sessionFacts) {
+    zone2Lines.push(`  (no available facts — all have been revealed or none loaded)`);
+  } else {
+    zone2Lines.push(`  (session facts not loaded for this query)`);
+  }
+
+  zone2Lines.push('');
+  if (unpostedHandouts.length > 0) {
+    zone2Lines.push(`Unposted handouts (not yet seen by players):`);
+    for (const h of unpostedHandouts) {
+      zone2Lines.push(`  [NOT YET POSTED] [${h.id}] ${h.label} — scene: ${h.scene ?? '?'}`);
+    }
+  }
+
+  // ── ZONE 3: Open DM threads ───────────────────────────────────────────────────
+
+  const zone3Lines: string[] = [
+    ``,
+    DIV,
+    `ZONE 3 — OPEN DM THREADS`,
+    `(world threads by status, radar, NPC state, growth items)`,
+    DIV,
+    ``,
+    `HOT — actionable now:`,
+    fmtThreadGroup(threads, 'hot'),
+    ``,
+    `SIMMERING — active, not yet urgent:`,
+    fmtThreadGroup(threads, 'simmering'),
+    ``,
+    `DORMANT — known but not yet surfaced:`,
+    fmtThreadGroup(threads, 'dormant'),
+    ``,
+    `CLOSED / ABANDONED:`,
+    fmtThreadGroup(threads, 'closed'),
+    fmtThreadGroup(threads, 'abandoned'),
+  ];
+
+  // Radar (full entries when loaded)
+  if (ctx.radar) {
+    const radarItems: any[] = (ctx.radar as any).radar ?? [];
+    zone3Lines.push(``, `DM RADAR — session focus:`, div);
+    for (const r of radarItems) {
+      zone3Lines.push(`  Thread ${r.id.toUpperCase()}: ${r.title} [${r.currentThreadStatus ?? '?'}]`);
+      zone3Lines.push(`    surface: ${r.surface}`);
+      zone3Lines.push(`    hook: ${r.hook}`);
+    }
+  }
+
+  // NPCs — full entry for named ones, one-liner for others
+  const mentionedNpcs = npcs.filter(npcMentioned);
+  const restNpcs      = npcs.filter(n => !npcMentioned(n));
+  if (npcs.length > 0) {
+    zone3Lines.push(``, `NPC STATE:`, div);
+    for (const n of mentionedNpcs) {
+      zone3Lines.push(`${n.name} [${n.status}] — ${n.location}`);
+      zone3Lines.push(`  knows: ${n.knows}`);
+      zone3Lines.push(`  wants: ${n.wants}`);
+      zone3Lines.push(`  hides: ${n.hides}`);
+      if (n.threads?.length) {
+        for (const t of n.threads) zone3Lines.push(`  · ${t}`);
+      }
+    }
+    for (const n of restNpcs) {
+      zone3Lines.push(`  ${n.name} [${n.status}] — ${n.location}`);
+    }
+  }
+
+  // Growth items
+  if (items.length > 0) {
+    zone3Lines.push(``, `GROWTH ITEMS:`, div);
+    for (const item of items) {
+      zone3Lines.push(`  ${item.name} (${item.form}) — owner: ${item.owner} — state: ${item.state}`);
+      zone3Lines.push(`    next: ${item.nextTrigger ?? '?'} → ${item.nextState ?? '?'}`);
+    }
+  }
+
+  // Session progress (when loaded)
+  if (ctx.sessionProgress) {
+    const sp = ctx.sessionProgress as any;
+    const steps: any[] = sp.steps ?? [];
+    zone3Lines.push(``, `SESSION PROGRESS — ${sp.sessionId ?? 'session-2'}:`, div);
+    zone3Lines.push(`Current step: ${sp.currentStep ?? 0} of ${steps.length}`);
+    for (const s of steps) {
+      zone3Lines.push(`  Step ${s.index}: ${s.label}${s.pauseClass === 'pause' || s.pauseClass === 'end' ? ` ← ${s.pauseLabel}` : ''}`);
+    }
+  }
+
+  // ── Detect query focus — used for context ordering and compression ───────────
+
+  const isChapterPrep  = /chapter\s*3|pick\s+up|carry\s+forward|chapter\s+prep|next\s+chapter|what\s+should\s+chapter|what\s+should\s+happen\s+next|how\s+should\s+the\s+next\s+chapter|what\s+threads\s+should\s+carry/i.test(question);
+  // facts-focused: user is asking what facts are available / not yet revealed
+  const isFocusedOnFacts = /\bfacts?\b.*(?:available|reveal|not\s+yet)\b|(?:available|unrevealed)\s+facts?\b|\bnot\s+yet\s+revealed\b/i.test(question);
+
+  // ── Story arc data — computed once, used in both context block and user message ─
+
+  // Hoisted so both the storyArcBlock (for context) and the user message can see them.
+  let storyArcBlock    = '';
+  let arcIsAtChapterEnd    = false;
+  let arcNarrativePhase    = '';
+  let arcTransitionLines: string[] = [];
+  let arcRecapBullets:    string[] = [];
+  let arcEndStepRecap:    string[] = [];   // what the final chapter step says will happen
+  let arcRemainingLabels: string[] = [];
+
+  if (isChapterPrep) {
+    const sp = ctx.sessionProgress as any ?? null;
+    const sessionSteps: any[] = sp?.steps ?? [];
+    const currentStep: number = cs.progress?.step ?? sp?.currentStep ?? 0;
+    const totalSteps = sessionSteps.length;
+    const chapter = cs.currentChapter ?? '?';
+    const session = cs.currentSession ?? '?';
+
+    const currentStepData = sessionSteps[currentStep];
+    const lastStepData    = sessionSteps[totalSteps - 1];
+    arcIsAtChapterEnd     = currentStepData?.pauseClass === 'end';
+    const isAtStrongPause = currentStepData?.pauseClass === 'pause';
+    const remainingSteps  = sessionSteps.slice(currentStep + 1);
+    arcRemainingLabels    = remainingSteps.map((s: any) => s.label);
+    arcEndStepRecap       = lastStepData?.recap ?? [];
+
+    // Narrative phase
+    if (totalSteps === 0 || currentStep === 0) {
+      arcNarrativePhase = 'session opening / prelude — chapter has not yet begun in earnest';
+    } else if (arcIsAtChapterEnd) {
+      arcNarrativePhase = 'chapter conclusion — ready for transition';
+    } else if (currentStep < Math.floor(totalSteps / 2)) {
+      arcNarrativePhase = 'early chapter — setup and orientation phase';
+    } else if (isAtStrongPause) {
+      arcNarrativePhase = `mid-chapter investigation phase — at a strong pause point (${currentStepData?.pauseLabel ?? ''})`;
+    } else {
+      arcNarrativePhase = 'mid-to-late chapter — development and escalation phase';
+    }
+
+    // Arc transition note (multi-line for context block readability)
+    if (arcIsAtChapterEnd) {
+      arcTransitionLines = [
+        `Chapter ${chapter} is complete. Chapter ${Number(chapter) + 1} planning is immediate.`,
+      ];
+    } else {
+      const remaining = arcRemainingLabels.join(' → ');
+      arcTransitionLines = [
+        `Chapter ${chapter} is NOT yet complete.`,
+        `Remaining steps: ${remaining || 'none listed'}.`,
+        `Chapter ${Number(chapter) + 1} planning = CARRY-FORWARD planning. Finish Chapter ${chapter} first.`,
+      ];
+    }
+
+    // Recap from last completed pause point
+    const lastPauseStep = sessionSteps.slice(0, currentStep + 1)
+      .filter((s: any) => s.pauseClass === 'pause' || s.pauseClass === 'end')
+      .pop();
+    arcRecapBullets = lastPauseStep?.recap ?? currentStepData?.recap ?? [];
+
+    // Build the context block version of the arc data
+    const hotThreads      = threads.filter(t => t.currentStatus === 'hot');
+    const simmerThreads   = threads.filter(t => t.currentStatus === 'simmering');
+    const arcLines = [
+      `${'═'.repeat(62)}`,
+      `STORY ARC POSITION (deterministic — for model orientation)`,
+      `${'═'.repeat(62)}`,
+      `Chapter: ${chapter}  |  Session: ${session}  |  Step: ${currentStep} of ${totalSteps - 1}`,
+      `Current step label: ${currentStepData?.label ?? 'unknown'}`,
+      `Narrative phase: ${arcNarrativePhase}`,
+      ``,
+      ...arcTransitionLines,
+    ];
+    if (arcRecapBullets.length > 0) {
+      arcLines.push(``, `What has been established (last pause recap):`);
+      for (const b of arcRecapBullets) arcLines.push(`  · ${b}`);
+    }
+    if (arcEndStepRecap.length > 0) {
+      arcLines.push(``, `What Chapter ${chapter} is building toward (end-step recap):`);
+      for (const b of arcEndStepRecap) arcLines.push(`  · ${b}`);
+    }
+    if (hotThreads.length > 0) {
+      arcLines.push(``, `HOT narrative pressure (carry into next chapter):`);
+      for (const t of hotThreads) arcLines.push(`  · [${t.id}] ${t.name}`);
+    }
+    if (simmerThreads.length > 0) {
+      arcLines.push(``, `SIMMERING (available to surface):`);
+      for (const t of simmerThreads) arcLines.push(`  · [${t.id}] ${t.name}`);
+    }
+    storyArcBlock = arcLines.join('\n');
+  }
+
+  // For facts-focused queries, compress Zone 3 NPC block (just name/status) to reduce context noise
+  const zone3LinesForFacts: string[] = [
+    ``,
+    DIV,
+    `ZONE 3 — OPEN DM THREADS (compressed — NPC detail omitted for facts query)`,
+    DIV,
+    ``,
+    `HOT — actionable now:`,
+    fmtThreadGroup(threads, 'hot'),
+    ``,
+    `SIMMERING — active, not yet urgent:`,
+    fmtThreadGroup(threads, 'simmering'),
+    ``,
+    `NPC STATUS (summary only):`,
+    ...npcs.map(n => `  ${n.name} [${n.status}]`),
+  ];
+
+  // ── Assemble full context block ───────────────────────────────────────────────
+  // Chapter-prep: arc block first, then zones.
+  // Facts-focused: Zone 2 first (model reads it before NPC noise).
+  // Default: Zone 1 → Zone 2 → Zone 3.
+
+  const contextBlock = isChapterPrep
+    ? [ storyArcBlock, '',
+        header, '',
+        ...zone1Lines,
+        ...zone2Lines,
+        ...zone3Lines,
+      ].join('\n')
+    : isFocusedOnFacts
+    ? [ header, '',
+        ...zone2Lines,
+        ...zone1Lines,
+        ...zone3LinesForFacts,
+      ].join('\n')
+    : [ header, '',
+        ...zone1Lines,
+        ...zone2Lines,
+        ...zone3Lines,
+      ].join('\n');
+
+  // ── Output format: detect Chapter 3 / chapter-prep questions ─────────────────
+
+  const outputFormat = isChapterPrep
+    ? `CHAPTER PLANNING RULES:
+- Begin with ## Story arc position. Do not skip it. Do not move it.
+- Read the STORY ARC POSITION block in the state data and report it accurately.
+- If the chapter is NOT complete, say so clearly before making any recommendations.
+- Separate "complete Chapter N" tasks from "carry into Chapter N+1" planning.
+- Do not invent scenes or NPCs not present in the state data.
+
+## Story arc position
+(Report from the STORY ARC POSITION block: current chapter/session/step, narrative phase,
+whether Chapter 2 is complete or still in progress, what has been established, what pressure is hot.)
+
+## Current table state
+(One or two sentences on where things actually stand right now — chapter, step, phase.)
+
+## Confirmed player knowledge
+(ZONE 1 only. If empty, say so clearly and do not list available facts here.)
+
+## Available but not yet revealed
+(ZONE 2 facts — label each as "available in state but not yet revealed to players".)
+
+## Open threads to carry forward
+(ZONE 3 threads by currentStatus — hot, simmering, dormant. Use the thread IDs and names from state.)
+
+## Strong Chapter 3 candidates
+(Threads or available facts most ready to surface. Label DM-only items. Do not invent new ones.)
+
+## Suggested opening pressure
+(One or two concrete entry points grounded in state — do not invent scenes or facts.)
+
+## State gaps / needs update
+(Null party level/size, missing confirmed knowledge, entityRef gaps, items needing manual update.)`
+    : `## Current state
+## Player knowledge
+(ZONE 1 only — do not attribute available facts to players.)
+## Open threads
+## Not yet revealed
+(ZONE 2 — label as DM-only / not yet revealed.)
+## Useful DM notes
+## Gaps / needs update`;
+
+  // ── System message ─────────────────────────────────────────────────────────────
+
+  const system = `You are Karsac State Analyst.
+
+You report on table-progress state for the DM — what has happened at this table, what the party currently knows, and which threads are active.
+
+KNOWLEDGE BOUNDARY — READ BEFORE ANSWERING:
+
+The state context below is divided into three zones. You MUST respect this boundary:
+
+ZONE 1 — CONFIRMED PLAYER KNOWLEDGE:
+  Only facts marked known=true and handouts with posted=true.
+  These are the ONLY things the players know.
+  If Zone 1 is empty, the players know nothing yet.
+
+ZONE 2 — AVAILABLE — DM ONLY — NOT YET REVEALED:
+  Facts with knowledgeStatus=available and unposted handouts.
+  Players have NOT been told these. Do NOT say "the players know" about anything in Zone 2.
+  You MAY suggest Zone 2 facts as Chapter 3 candidates, but you MUST label them:
+  "available in state but not yet revealed to players."
+
+ZONE 3 — OPEN DM THREADS:
+  World threads, radar, NPC state, growth items.
+  These describe what the DM is tracking — not what the players know.
+
+FORBIDDEN PHRASES (never write these unless Zone 1 contains evidence):
+  - "the players know that..."
+  - "the party knows that..."
+  - "the party has discovered..."
+  - "the party has learned..."
+  - "it has been revealed that..." (unless a Zone 1 fact says so)
+  - treating any Zone 2 fact as confirmed player knowledge
+
+REQUIRED PHRASES when referencing Zone 2:
+  - "available in state but not yet revealed to players"
+  - "DM-only until surfaced at the table"
+  - "not yet disclosed to players"
+
+OTHER RULES:
+  - If knownFacts is 0, write "Players have no confirmed knowledge yet" and do not speculate.
+  - If partyLevel or partySize is null, state it has not been confirmed.
+  - Use currentStatus for thread status, not defaultStatus.
+  - YOUR ANSWER MUST ONLY REFERENCE FACTS, NPCS, LOCATIONS, AND ITEMS NAMED IN THE STATE DATA BELOW.
+  - Do NOT invent new facts, scenes, NPCs, or events not present in the state data.
+  - If a fact is not listed in ZONE 2, it does not exist in this state — do not mention it.
+  - Do not draw on D&D or campaign knowledge beyond what is explicitly in the state data below.
+  - For chapter-planning questions: read the STORY ARC POSITION block first and report it accurately.
+  - If the current chapter is NOT complete, use conditional language throughout:
+      · Use "candidate", "likely", "if [outcome], then" — not "should", "will", "the chapter opens with".
+      · Do NOT produce a single definitive opening scene.
+      · Tie every recommendation to a specific story arc condition or thread state.
+  - If knownFacts=0 or facts are only "available", keep all recommendations conditional.
+  - Tie recommendations to the story arc (what Chapter N is building toward) — not only to hot threads.
+  - Do not recommend a fixed opening scene unless the state indicates the previous chapter is complete.
+
+OUTPUT FORMAT:
+${outputFormat}
+
+STATE DATA:
+${div}
+${contextBlock}`;
+
+  // ── For chapter-prep: build the arc section text deterministically ──────────
+  // We include it in the user message as a pre-written first section so the
+  // model cannot omit or reorder it. The model continues from ## Current table state.
+
+  if (isChapterPrep && storyArcBlock) {
+    const arcSectionText = buildArcSectionMarkdown(
+      cs, threads,
+      arcNarrativePhase, arcIsAtChapterEnd,
+      arcTransitionLines, arcRecapBullets,
+      arcEndStepRecap, arcRemainingLabels,
+    );
+
+    // When the current chapter is incomplete, produce conditional carry-forward
+    // planning — not a definitive Chapter 3 opening.
+    const chapterUserMessage = arcIsAtChapterEnd
+      ? `Answer this chapter planning question:
+"${question}"
+
+Use EXACTLY the following headings IN THIS ORDER:
+
+${arcSectionText}
+
+## Likely arc transition
+[What the story is moving into. Grounded in the end-step recap and hot threads. 1–3 sentences.]
+
+## Current table state
+[Where things stand right now: chapter complete, key resolved threads, what carries over.]
+
+## Confirmed player knowledge
+[ZONE 1 only. If empty, write "Players have no confirmed knowledge yet."]
+
+## Open threads to carry forward
+[ZONE 3 threads by currentStatus. Use thread IDs and names from state.]
+
+## Strong Chapter 3 candidates
+[Threads or Zone 2 facts most ready to surface next chapter. Label DM-only items. Do not invent.]
+
+## Suggested opening pressure
+[One or two concrete entry points grounded in state.]
+
+## State gaps / needs update
+[Null party level/size, missing confirmed knowledge, entityRef gaps.]`
+
+      : `Answer this chapter planning question:
+"${question}"
+
+IMPORTANT: The current chapter is NOT complete. Use conditional language throughout.
+Use "candidate", "likely", "if [outcome], then", "may" — not "should", "will", "the chapter opens with".
+
+Use EXACTLY the following headings IN THIS ORDER:
+
+${arcSectionText}
+
+## Likely arc transition
+[What the story is building toward as Chapter ${cs.currentChapter ?? 2} concludes.
+Derive from: the end-step recap in the arc block, hot threads, simmering threads.
+Use conditional language — the transition is not decided yet.]
+
+## Chapter ${Number(cs.currentChapter ?? 2) + 1} outcomes that will shape Chapter ${Number(cs.currentChapter ?? 2) + 1}
+[What Chapter ${cs.currentChapter ?? 2} needs to resolve before Chapter ${Number(cs.currentChapter ?? 2) + 1} begins.
+List each as a binary outcome or open question: "If X happens...", "Whether Y resolves...".
+Draw from: remaining step labels, hot threads, end-step recap.
+Do not invent outcomes not grounded in state data.]
+
+## Conditional Chapter ${Number(cs.currentChapter ?? 2) + 1} openings
+[2–3 opening scenarios, each conditional on a different Chapter ${cs.currentChapter ?? 2} outcome.
+Format: "If [Chapter ${cs.currentChapter ?? 2} outcome], Chapter ${Number(cs.currentChapter ?? 2) + 1} opens with [candidate entry point]."
+Do NOT produce a single definitive opening.
+Label any scenario that uses Zone 2 facts as "DM-only — not yet revealed to players."]
+
+## Threads likely to survive regardless
+[Threads that will carry forward irrespective of how Chapter ${cs.currentChapter ?? 2} resolves.
+Use thread IDs and names from ZONE 3. Explain briefly why each survives any outcome.]
+
+## State gaps / needs update
+[Null party level/size, facts not yet marked revealed, entityRef gaps, items needing manual update.]`;
+
+    return [
+      { role: 'system', content: system },
+      { role: 'user',   content: chapterUserMessage },
+    ];
+  }
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user',   content: question },
+  ];
+}
+
+/**
+ * Build the pre-generated ## Story arc position section for the chapter-prep
+ * user message. Uses pre-computed arc values (not the raw arcBlock string)
+ * to avoid fragile regex extraction.
+ */
+function buildArcSectionMarkdown(
+  cs: any,
+  threads: any[],
+  narrativePhase: string,
+  isAtChapterEnd: boolean,
+  transitionLines: string[],
+  recapBullets: string[],
+  endStepRecap: string[],
+  remainingLabels: string[],
+): string {
+  const chapter = cs.currentChapter ?? '?';
+  const session = cs.currentSession ?? '?';
+  const step    = cs.progress?.step ?? 0;
+  const hotThreads    = threads.filter(t => t.currentStatus === 'hot');
+  const simmerThreads = threads.filter(t => t.currentStatus === 'simmering');
+
+  const lines: string[] = [
+    `## Story arc position`,
+    ``,
+    `**Chapter:** ${chapter}  |  **Session:** ${session}  |  **Progress step:** ${step}`,
+    `**Narrative phase:** ${narrativePhase}`,
+    ``,
+    ...transitionLines,
+  ];
+
+  if (!isAtChapterEnd && remainingLabels.length > 0) {
+    lines.push(`**Remaining Chapter ${chapter} steps:** ${remainingLabels.join(' → ')}`);
+  }
+
+  lines.push('');
+
+  if (recapBullets.length > 0) {
+    lines.push(`**Established so far:**`);
+    for (const b of recapBullets) lines.push(`- ${b}`);
+    lines.push('');
+  }
+
+  if (endStepRecap.length > 0) {
+    lines.push(`**Chapter ${chapter} is building toward:**`);
+    for (const b of endStepRecap) lines.push(`- ${b}`);
+    lines.push('');
+  }
+
+  if (hotThreads.length > 0) {
+    lines.push(`**Hot threads (active pressure):** ${hotThreads.map(t => t.name).join('; ')}`);
+  }
+  if (simmerThreads.length > 0) {
+    lines.push(`**Simmering threads (available to surface):** ${simmerThreads.map(t => t.name).join('; ')}`);
+  }
+
+  // Collapse consecutive blank lines
+  return lines
+    .filter((l, i, a) => !(l === '' && (a[i - 1] === '' || i === 0)))
+    .join('\n');
+}
+
 export function buildDeepLoreExtractionMessages(
   canon: CanonFile,
 ): Array<{ role: string; content: string }> {

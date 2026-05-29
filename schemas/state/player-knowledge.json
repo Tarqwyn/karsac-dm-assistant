@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/player-knowledge.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/campaignFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "scope",
+        "sessionBasis",
+        "knownFacts",
+        "postedHandouts",
+        "activeThreads",
+        "unresolvedQuestions",
+        "notYetRevealed"
+      ],
+      "properties": {
+        "scope": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "sessionBasis": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "knownFacts": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+        },
+        "postedHandouts": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+        },
+        "activeThreads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "name": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "status": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/threadStatus"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "unresolvedQuestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "player",
+              "question"
+            ],
+            "properties": {
+              "player": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "question": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "notYetRevealed": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+        },
+        "note": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        }
+      }
+    }
+  ]
+}

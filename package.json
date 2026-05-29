@@ -1,0 +1,20 @@
+{
+  "name": "karsac-dm-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Registry-guided domain AI runtime for the Karsac D&D campaign.",
+  "scripts": {
+    "install:registry": "npm --prefix karsac-registry install",
+    "validate:state": "node scripts/validate-state-schemas.js",
+    "validate": "npm run validate:state && npm test",
+    "test": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry test",
+    "karsac:index": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:index",
+    "karsac:lookup": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:lookup --",
+    "karsac:show": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:show --",
+    "karsac:ask": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:ask --"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "dotenv-cli": "^7.4.4"
+  }
+}

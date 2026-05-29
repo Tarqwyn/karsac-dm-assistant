@@ -1,0 +1,835 @@
+{
+  "id": "npcs-state",
+  "type": "npcs-state",
+  "stateType": "npc-state",
+  "campaign": "karsac",
+  "source": "KarsacTracker/karsac-campaign.js",
+  "importStatus": "imported",
+  "statusLabels": {
+    "ally": "Ally",
+    "threat": "Threat",
+    "neutral": "Neutral",
+    "unknown": "Unknown",
+    "missing": "Missing",
+    "historical": "Historical",
+    "dead": "Dead"
+  },
+  "npcs": [
+    {
+      "id": "vishara",
+      "name": "Vishara",
+      "role": "The First Instrument — Principle of Dissipation",
+      "status": "threat",
+      "location": "Unknown — operating through agents and slow influence",
+      "knows": "One of three Instruments. The Principle of Dissipation — works through erosion, not force. Does not possess. Does not replace. Bends what is already there. Has been shaping Jarl Mathr since the beginning. Fears what Dugweb could still do.",
+      "wants": "The cage to close without anyone noticing it was built.",
+      "hides": "Its full nature. The other two Instruments are campaigns 2 and 3.",
+      "threads": [
+        "Works through the same methods Erik identified: attention, vagueness, slow forgetting",
+        "Jarl Mathr is its primary political instrument in Lösweg — shaped from the start, not possessed",
+        "Did not replace Mathr. Made Mathr more completely the worst version of himself.",
+        "Fears Dugweb — has ensured Mathr keeps Lösweg invisible to him during annual visits",
+        "Mathr's family appeared in Lösweg sixty years ago with no origin story — Vishara's placement",
+        "The other two Instruments are campaigns 2 and 3 — no threads pointing there yet"
+      ],
+      "chapters": [
+        "Campaign 1"
+      ],
+      "entityRef": "forces/vishara",
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": true,
+      "isItem": false
+    },
+    {
+      "id": "mathr",
+      "name": "Jarl Mathr",
+      "role": "Council Jarl — Vishara's political instrument in Lösweg",
+      "status": "threat",
+      "location": "Lösweg — council seat",
+      "knows": "Power second only to Jarl Beorn. Shaped by Vishara since the beginning — his family appeared sixty years ago, already positioned. Duty hardened into severity, pragmatism into willingness to make extreme choices. Arranged Shadow-Walker passage to Halvash through Aldric Vane. Has managed every Dugweb visit for sixty years. Beorn trusts him completely. Does not appear to have aged in sixty years.",
+      "wants": "For Lösweg to survive by becoming harder. To serve what he believes is Lösweg's future.",
+      "hides": "Nothing he is aware of hiding. Does not know the full purpose of Vishara's interest in him.",
+      "threads": [
+        "His family appeared sixty years ago with no origin story — Serris flagged this. Party does not yet know it points at Mathr.",
+        "Arranged Shadow-Walker passage via Aldric Vane — told Vane only 'three passengers, quiet transit'",
+        "Has not visibly aged in sixty years — Vane has never questioned this. The arithmetic is damning.",
+        "Not possessed — Vishara shaped him by amplifying what was already there",
+        "Has managed every Dugweb visit to keep Vishara under cover",
+        "Beorn trusts him implicitly — sixty years of careful evidence",
+        "Beorn is the key: if the cover is pulled back properly, Beorn would act",
+        "The token from the end fight is Mathr's — not Vane's. It points directly at him."
+      ],
+      "chapters": [
+        "Ch.2 (off-screen)",
+        "Future"
+      ],
+      "entityRef": "npcs/jarl-mathr",
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "beorn",
+      "name": "Jarl Beorn",
+      "role": "Council leader — personal ally of Dugweb",
+      "status": "unknown",
+      "location": "Lösweg — council seat",
+      "knows": "Leads the Lösweg council. Deep personal relationship with King Dugweb. Trusts Mathr completely. Is not foolish. Is deceived.",
+      "wants": "The security of Lösweg. To honour his relationship with Dugweb.",
+      "hides": "Nothing deliberately — he is not compromised, only deceived.",
+      "threads": [
+        "Not corrupted — deceived. There is a path through this.",
+        "If a real case is built, Beorn would act against Mathr",
+        "His relationship with Dugweb is the most direct route to bringing Dugweb's attention east",
+        "Mathr has kept him in the dark for sixty years — thoroughly and patiently",
+        "Vishara fears Beorn acting — which is why Mathr has been so careful"
+      ],
+      "chapters": [
+        "Future"
+      ],
+      "entityRef": "npcs/jarl-beorn",
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "erik",
+      "name": "Erik",
+      "role": "Cleric of Ezrah — architect of the network",
+      "status": "missing",
+      "location": "Unknown — deeper in Karsac",
+      "knows": "One of the five who stopped the Shade of Qadim al-Sharr. Understood the Shade was a symptom, not the disease. Built a quiet counter-network across Karsac and Exandria — never an army, a web of memory. Recognised the enemy works through attention, vagueness, and slow forgetting. Successfully moved artefacts out of Karsac to the Cobalt Soul in Exandria.",
+      "wants": "To keep enough of the world awake for when the cage opens.",
+      "hides": "His location. His full picture of Maharuq. The complete shape of the network — compartmentalised deliberately.",
+      "threads": [
+        "Disappeared five years ago — went deeper into Karsac, still moving, still watching",
+        "The Yantravaq identified him as the network's centre and moved against him",
+        "Recruited the Cobalt monk on Halvash 28 years ago — anchor of the Exandrian network",
+        "Placed Maret in Torweg — gave impossible fragment as proof of his watching",
+        "Left the note for Pell Duvash: 'stay, and tell the truth to whoever comes'",
+        "The coded message refers to him only as 'the Cleric' — Serris does not know who this is",
+        "Maret knows his face, not his name",
+        "Network relies heavily on Veyr — the language of crossing boundaries"
+      ],
+      "chapters": [
+        "Ch.1 (shadow)",
+        "Ch.2 (shadow)"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "cobalt_monk",
+      "name": "The Cobalt Monk",
+      "role": "Exandrian network hub — recently killed",
+      "status": "dead",
+      "location": "Dead — road to Bysaes Tyl",
+      "knows": "Recruited by Erik on Halvash 28 years ago. Became the centre of the Exandrian network. Recruited the Buyer 25 years ago. Was the courier collecting items from Serris twice a year — intended recipient of the manifest. Knew he was discovered.",
+      "wants": "Nothing now.",
+      "hides": "Whatever he knew died with him unless the message reaches Serris.",
+      "threads": [
+        "Ambushed on the road to Bysaes Tyl — almost certainly Yantravaq",
+        "Gave Erwing a dying promise: find Cumbria, reach Halvash, get the coded message to Serris",
+        "Was the intended recipient of the Pryzi manifest — his death means it never arrived",
+        "Coded message: 'Get word to the Cleric. I am discovered, trust no one, continue the work. It is now more important than ever. They are close to discovery. We must not allow them to succeed.'",
+        "Name and full history to be fleshed out later"
+      ],
+      "chapters": [
+        "Background"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "buyer",
+      "name": "The Buyer",
+      "role": "Aeorian relic dealer — Exandrian network node",
+      "status": "ally",
+      "location": "Syrinlya",
+      "knows": "Thirty years handling Aeorian relics. Recruited 25 years ago by the Cobalt monk. Sees the adversary's face as violent suppression of old knowledge. Does not know Karsac. Does not know Erik's name or face. Pays Cumbria a retainer.",
+      "wants": "To have sent the scroll case to the right hands.",
+      "hides": "Twenty-five years of varied success and loss.",
+      "threads": [
+        "Under long-term surveillance by the Employer — years of suspicion, no actionable evidence yet",
+        "Sending the party east was uncharacteristically loud — triggered Davan's hire",
+        "The Cobalt monk is dead — the Buyer almost certainly does not know yet",
+        "Cumbria is on retainer — his most reliable and irreplaceable logistics asset",
+        "The other Glasswake captain is in the Employer's orbit — the Buyer does not know"
+      ],
+      "chapters": [
+        "Ch.1 (opening)"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "employer",
+      "name": "The Employer",
+      "role": "Yantravaq mid/high agent — Exandrian operations",
+      "status": "threat",
+      "location": "Exandria — exact location unknown",
+      "knows": "Mid to high ranking Yantravaq agent. Has spent years watching the Buyer. Suspects the Buyer is a network node but has never gathered enough evidence to act. Arranged the Halvash theft under direct instruction from above. Has the second Glasswake captain in his network without that captain knowing. Believes Cumbria is simply a hired hand.",
+      "wants": "To understand what is at play. To build a case against the Buyer.",
+      "hides": "His identity. His affiliation. His growing agitation. His hold over the second Glasswake captain.",
+      "threads": [
+        "Has the second Glasswake captain in his network — the Halvash route is partially watched",
+        "Believes Cumbria is out of the loop — will not move against her while this holds",
+        "The Halvash theft was ordered from above his usual level",
+        "Davan will not work for him again — may not accept this quietly",
+        "Trail back to him from Halvash is effectively cold",
+        "Will become increasingly aggrieved as the party succeeds in Lösweg",
+        "Hooded, educated voice, salt and something herbal — Davan's description only"
+      ],
+      "chapters": [
+        "Ch.1 (off-screen)",
+        "Ch.2 (off-screen)"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": true,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "cumbria",
+      "name": "Captain Cumbria",
+      "role": "Captain, The Windmere — Buyer's logistics asset",
+      "status": "ally",
+      "location": "Halvash — sails at dawn",
+      "knows": "One of only two western captains alive who know the Glasswake. Has spent years moving letters and cargo for the Buyer — never asking what or why. Paid a retainer, not per job. Knows there is a bigger picture. Has made a deliberate decision not to look for what it might be — discipline, not ignorance.",
+      "wants": "Her business, her route, her freedom to keep working.",
+      "hides": "The quiet satisfaction of being trusted. Has guessed more of the shape of things than she lets on.",
+      "threads": [
+        "On retainer to the Buyer — available, not hired per job, no transaction trail",
+        "One of only two people who can make the Glasswake crossing — irreplaceable",
+        "Erwing is coming to find her in Syrinlya — she is his next step toward Halvash",
+        "The second Glasswake captain is in the Employer's orbit — Cumbria does not know",
+        "If the Employer concludes she knows more than she should, her protected status ends",
+        "Sails at dawn — told the company once. Will not remind them."
+      ],
+      "chapters": [
+        "Ch.1",
+        "Ch.2 (minor)"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "second_captain",
+      "name": "The Second Captain",
+      "role": "Glasswake captain — unknowing Yantravaq asset",
+      "status": "unknown",
+      "location": "Unknown — western waters",
+      "knows": "One of only two captains alive who know the Glasswake. Has no idea he is in the Employer's network.",
+      "wants": "His business and his route.",
+      "hides": "Nothing deliberately — he does not know what he is.",
+      "threads": [
+        "The Employer has access to him without his knowledge — the Halvash route is compromised on one side",
+        "Anyone the Buyer tries to move east via this captain could be watched",
+        "Name and nature of the Employer's hold not yet established"
+      ],
+      "chapters": [
+        "Background"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "davan",
+      "name": "Davan Reish",
+      "role": "Independent operative — reluctant asset",
+      "status": "neutral",
+      "location": "Exandria — returned to report",
+      "knows": "Highly skilled operative with his own moral code. Watched the party all the way through the Frigid Depths, unnoticed. Took an almost instant dislike to the Employer. Filed his report — professional and complete.",
+      "wants": "To be done with this job and stay done.",
+      "hides": "Whether he allowed himself to be discovered on Halvash on purpose. He isn't entirely sure himself.",
+      "threads": [
+        "Filed his report — professional, complete, exactly what was contracted",
+        "Will not work for the Employer again if he can help it",
+        "The Employer may not release him quietly as the party's activities become more costly",
+        "If the party treated him fairly, he owes them one — that debt is live",
+        "Could be dragged back into orbit depending on the Employer's agitation"
+      ],
+      "chapters": [
+        "Ch.1"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "serris",
+      "name": "Serris",
+      "role": "Cobalt Soul scholar — Halvash conduit",
+      "status": "ally",
+      "location": "Halvash (Cobalt Soul archive) — shaken after the archive encounter",
+      "knows": "Three years on Halvash documenting Lösweg oral histories. Knows there is a land to the east. Was holding the Pryzi manifest and key pouch for the next courier. Shadow-Walkers got the key. Manifest is with the company. Matched scroll case symbols to the Greyback document. Flagged a family with no origin story sixty years ago — this is Mathr's family.",
+      "wants": "To understand what the oral histories mean. To come to Lösweg.",
+      "hides": "How frightened he is. Nobody has asked him what was stolen yet.",
+      "threads": [
+        "Is a conduit — small enough to go unnoticed, competent enough to be effective",
+        "The coded message is coming via Erwing — when decoded: 'get word to the Cleric'",
+        "Serris does not know who the Cleric is even after decoding",
+        "The manifest is in Veyr — partially legible to the Skald, not fully readable yet",
+        "The key is gone east with the Shadow-Walkers — to the Pryzi vault",
+        "Flagged a family with no origin story — this is Mathr's family. The party doesn't know this yet.",
+        "Nobody has asked what was stolen yet — this conversation is coming"
+      ],
+      "chapters": [
+        "Ch.1",
+        "Ch.2 (correspondence)"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "erwing",
+      "name": "Erwing Smallfoot",
+      "role": "Halfling monk — promise keeper (PC or NPC)",
+      "status": "ally",
+      "location": "En route — Syrinlya direction",
+      "knows": "Almost nothing. Made a promise to a dying monk he barely knew. Following it faithfully: find Cumbria, go to Halvash, give the coded message to Serris.",
+      "wants": "To keep his promise.",
+      "hides": "Nothing deliberately. Simply doesn't know.",
+      "threads": [
+        "Carries the coded message — does not know what it says or why it matters",
+        "Looking for Cumbria in Syrinlya — she is his gateway to Halvash",
+        "If PC: background belongs to the player — notes kept light",
+        "If NPC: knows nothing beyond the next step of the promise"
+      ],
+      "chapters": [
+        "Potential Ch.2"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "edvar",
+      "name": "Edvar Solm",
+      "role": "Harbourmaster, Halvash",
+      "status": "ally",
+      "location": "Halvash (fixed) — came to the Meridian early morning",
+      "knows": "Second-generation Halvashi. Fluent Lösweg. Knows the Buyer's letter was not routine. More frightened than he looks. Wrote the party a letter of introduction in Lösweg. Pulled every string available and found a Lösweg vessel sitting off the eastern coast with figures matching Shadow-Walker description in a launch.",
+      "wants": "For Halvash to keep functioning.",
+      "hides": "The depth of his fear and how much he has quietly inferred.",
+      "threads": [
+        "Spotted Davan Reish and tipped the party quietly",
+        "Came to the Meridian early morning to deliver the Shadow-Walker intelligence — came himself, no message",
+        "Fixed on Halvash — his identity is the threshold between worlds",
+        "Handed translation duties to Sygna for the voyage"
+      ],
+      "chapters": [
+        "Ch.1"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "drek",
+      "name": "D'rek",
+      "role": "Innkeeper, The Meridian Inn",
+      "status": "ally",
+      "location": "Halvash (Meridian Inn)",
+      "knows": "Twenty years on Halvash. Arrived as someone else. Knows more about the Lösweg quarter's troubles than she has told anyone.",
+      "wants": "For the island to keep functioning.",
+      "hides": "What she knows about Lösweg.",
+      "threads": [
+        "Lösweg quarter quiet three months running — more than she's said",
+        "Trusted Cumbria's judgment in bringing the party"
+      ],
+      "chapters": [
+        "Ch.1"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "floki",
+      "name": "Floki",
+      "role": "Crew chief, The Greyback",
+      "status": "ally",
+      "location": "Halvash → Greyback",
+      "knows": "Almost no Common. Waited six weeks on Halvash. Knows the warrior presence at their Torweg departure was not a courtesy. Saw the Jarl's token after the end fight. Worried for the company after the archive encounter.",
+      "wants": "To understand what is wrong in Lösweg and get his crew home safely.",
+      "hides": "His grandmother's prophecy is a fact, not a story.",
+      "threads": [
+        "Grandmother's prophecy: 'when they come from the east, the thing sleeping under the Yngondi Wastes will be close to waking'",
+        "Cargo aboard the Greyback — party agreed to view it at daylight",
+        "Thrall at the Whale-Road wore Lösweg clothing — Floki recognised it, said nothing",
+        "Saw the token — said 'we should not be in Torweg when morning comes'. Token is Mathr's.",
+        "The Whale-Road question: how did the Shadow-Walkers get to Halvash? Jarl Mathr arranged it. Floki does not know this yet."
+      ],
+      "chapters": [
+        "Ch.1",
+        "Ch.2"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "sygna",
+      "name": "Sygna",
+      "role": "Crew member / translator, The Greyback",
+      "status": "ally",
+      "location": "Greyback",
+      "knows": "Eleven years with Floki. Lösweg acquired functionally. Reads Floki better than most people read their own family.",
+      "wants": "Nothing personal. Does the job and watches.",
+      "hides": "Nothing deliberately.",
+      "threads": [
+        "Translations rougher and slower than Edvar's — occasionally wrong in ways that matter",
+        "Will flag 'that one mattered' when Floki says something significant"
+      ],
+      "chapters": [
+        "Ch.2"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "vane",
+      "name": "Aldric Vane",
+      "role": "Under-chieftain, Torweg — loyal instrument of Jarl Mathr",
+      "status": "threat",
+      "location": "Torweg",
+      "knows": "Age 33. Has worked for Mathr for fifteen years, as his father did before him. Has never questioned Mathr. Was told to arrange quiet transit for three passengers. Does not know who the passengers were. The token used by the household warriors is Mathr's token, not his.",
+      "wants": "To serve Mathr faithfully.",
+      "hides": "Nothing deliberately — he simply has never looked closely enough.",
+      "threads": [
+        "Age 33, fifteen years in service — his father served Mathr before him. Mathr has been in Lösweg sixty years and does not appear to have aged. Vane has never done that arithmetic.",
+        "If the ageing question is raised directly, the cognitive dissonance is visible and uncomfortable",
+        "Arranged transit for three passengers on Mathr's orders — did not know who they were",
+        "The token from the end fight is Mathr's token, not Vane's — evidence points past him to Mathr",
+        "If the party shows him the token, a loyal man confronts the first evidence that what he serves may not be what he thought",
+        "Not a villain — a loyal man who has never needed to look closely at anything"
+      ],
+      "chapters": [
+        "Ch.2"
+      ],
+      "entityRef": "npcs/aldric-vane",
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": true,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "maret",
+      "name": "Maret",
+      "role": "NPC — Lösweg-born, Torweg native",
+      "status": "ally",
+      "location": "Torweg → Valweg direction",
+      "knows": "Lösweg-born, grew up in Torweg. Met Erik three years ago. Knows Torweg has been wrong longer than three months. Knows Vane is not what he appears but cannot prove it.",
+      "wants": "To repay the debt to Erik. To survive what they've walked into.",
+      "hides": "Why they left Torweg. The depth of what Erik told them.",
+      "threads": [
+        "Placed by Erik — the repayment of a debt",
+        "Carries an impossible fragment proving Erik's watching",
+        "Points party toward Valweg",
+        "Knows Erik's face, not his name"
+      ],
+      "chapters": [
+        "Ch.2"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "brix",
+      "name": "Brix",
+      "role": "First mate, The Coldfront",
+      "status": "neutral",
+      "location": "Torweg (Saltbone Inn, evenings)",
+      "knows": "What Tor Ashfen found when he went back to Torweg. Believes the change started before he went back — happening slowly, to many people.",
+      "wants": "To be believed. Needs patience, not pressure.",
+      "hides": "Everything until DC 13 Persuasion or good roleplay.",
+      "threads": [
+        "First glimpse of Vishara's sustained influence — slow reorientation, not possession",
+        "Ashfen still in Torweg, functional but not entirely himself",
+        "Implies it has been happening to many people for a long time"
+      ],
+      "chapters": [
+        "Ch.2"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "ashfen",
+      "name": "Tor Ashfen",
+      "role": "Captain, The Coldfront",
+      "status": "unknown",
+      "location": "Torweg",
+      "knows": "Went back to Torweg. Found out what was wrong. Came back different.",
+      "wants": "Unknown — possibly no longer entirely himself.",
+      "hides": "What he found. What is being done to him.",
+      "threads": [
+        "Asks different questions, doesn't remember old jokes — slow reorientation consistent with Vishara's influence",
+        "Still in Torweg, still working — not dramatically changed, just wrong"
+      ],
+      "chapters": [
+        "Ch.2"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "duvash",
+      "name": "Pell Duvash",
+      "role": "Merchant / intermediary",
+      "status": "neutral",
+      "location": "Torweg (upper market trading house)",
+      "knows": "Three consignments of old objects, Stormwatch origin, moving north toward Yngondi direction. Received a note: 'stay, and tell the truth to whoever comes.'",
+      "wants": "To get out of Torweg alive.",
+      "hides": "Nothing, once he talks.",
+      "threads": [
+        "The note is Erik's fingerprint — nobody names it yet",
+        "Objects moving north before the party arrived",
+        "Assassins sent by Vane's organisation on Mathr's authority",
+        "Needs extracting from Torweg"
+      ],
+      "chapters": [
+        "Ch.2"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "halvashi_thief",
+      "name": "The Halvashi Thief",
+      "role": "Local cut-out — Ch.1 Scene 6",
+      "status": "dead",
+      "location": "Dead — Halvash archive alley",
+      "knows": "Hired to steal the manifest and key pouch. Did not speak or understand Veyr. Examined the pouch — guessed at a key.",
+      "wants": "Nothing now.",
+      "hides": "Nothing he didn't give up.",
+      "threads": [
+        "Hired by the Issylran merchant — could describe the person, not name them",
+        "Was never meant to survive — Shadow-Walkers were the real movers",
+        "Trail back west through him ends here",
+        "Skald confirmed via limited Veyr: the manifest is an inventory, not the Greyback cargo"
+      ],
+      "chapters": [
+        "Ch.1"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "issylran_merchant",
+      "name": "The Issylran Merchant",
+      "role": "Yantravaq cut-out — Halvash",
+      "status": "unknown",
+      "location": "Halvash — keeping a very low profile",
+      "knows": "Paid by the Employer to arrange the theft. Told only what he needed to know.",
+      "wants": "To not be found.",
+      "hides": "His connection to the Employer.",
+      "threads": [
+        "The only westward link between the Employer and the Halvash operation",
+        "Trail to him is cold unless the company actively goes looking",
+        "Issylran — operates on the eastern side of Halvash's divided community",
+        "Name and appearance not yet established"
+      ],
+      "chapters": [
+        "Ch.1 (off-screen)"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": true,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "losweg_captain",
+      "name": "The Lösweg Captain",
+      "role": "Unknown captain — carrier of the key and manifest",
+      "status": "unknown",
+      "location": "Unknown — Lösweg waters",
+      "knows": "Gave the manifest and key pouch to Serris on Halvash for safekeeping. Knows the Whale-Road. Has no connection to the Shadow-Walker passage.",
+      "wants": "Unknown.",
+      "hides": "Unknown.",
+      "threads": [
+        "Unconnected to the Shadow-Walker passage — that was Jarl Mathr's arrangement",
+        "The only named link between the key's origin and Halvash — a live thread",
+        "Knows the Whale-Road",
+        "Name and identity not yet established"
+      ],
+      "chapters": [
+        "Ch.1 (off-screen)"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "dugweb",
+      "name": "King Dugweb",
+      "role": "King of Zörsdkog — one of the five",
+      "status": "historical",
+      "location": "Zörsdkog",
+      "knows": "Used Kurogane — meteoric steel — to kill the Shade. Now a king carrying a victory he has never fully explained to himself. Annual visit to Lösweg approaching. Has a genuine deep relationship with Jarl Beorn.",
+      "wants": "Unknown currently — but Vishara fears what he could still do.",
+      "hides": "The full weight of what they stopped.",
+      "threads": [
+        "Annual visit approaching — Mathr has managed this for sixty years, keeping himself and Vishara invisible",
+        "Vishara fears Dugweb — he could still act, and Kurogane is not of earth",
+        "His relationship with Beorn is the most direct route to bringing his attention to what is happening",
+        "Lösweg is a vassal state of Zörsdkog — Dugweb has standing to act if given reason"
+      ],
+      "chapters": [
+        "Background",
+        "Future"
+      ],
+      "entityRef": "npcs/king-dugweb",
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "shadow_walkers",
+      "name": "The Yngondi Shadow-Walkers",
+      "role": "Yantravaq agents — three in Ch.1, one dead",
+      "status": "threat",
+      "location": "Departed Halvash — carrying the Pryzi key",
+      "knows": "Sent to retrieve the key to the Pryzi Mountain vault. Got to Halvash via passage arranged by Jarl Mathr through Aldric Vane. One is dead. Two departed with the key.",
+      "wants": "Mission complete. The Pryzi vault is now accessible to the Yantravaq.",
+      "hides": "Organisation, employer, origin.",
+      "threads": [
+        "Got to Halvash via Jarl Mathr's arrangement — Vane arranged the transit, knew nothing of who they were",
+        "The Pryzi key is in Shadow-Walker possession — the vault can now be opened",
+        "The manifest is still with the company — a loose end",
+        "One dead Shadow-Walker left behind — geometric markings on the skin correspond to oldest Lösweg oral history sections",
+        "Bone disc left behind — matches nothing in Serris's archive, Floki said 'impossible'",
+        "Not seen outside the Wastes in living memory",
+        "Serris is shaken by the dead Walker — the body is evidence nobody has fully examined yet"
+      ],
+      "chapters": [
+        "Ch.1"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": true,
+      "instrument": false,
+      "isItem": false
+    },
+    {
+      "id": "pryzi_manifest",
+      "name": "The Pryzi Manifest",
+      "role": "Key item — inventory of artefacts sent west",
+      "status": "unknown",
+      "location": "With the company",
+      "knows": "N/A",
+      "wants": "N/A",
+      "hides": "N/A",
+      "threads": [
+        "Written in Veyr — partially legible to the Skald, not fully readable yet",
+        "Skald confirmed: an inventory of artefacts, not the Greyback cargo",
+        "Was Erik's tradecraft — manifest travelled separately from artefacts as verification",
+        "The artefacts are now held by the Cobalt Soul in Exandria — manifest was meant to marry up with them on arrival",
+        "The intended recipient — the Cobalt monk — is dead. It never arrived.",
+        "A fluent Veyr reader in Karsac will be needed to unlock its full contents"
+      ],
+      "chapters": [
+        "Ch.1",
+        "Ch.2"
+      ],
+      "entityRef": "items/pryzi-manifest",
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": true
+    },
+    {
+      "id": "pryzi_vault",
+      "name": "The Pryzi Vault",
+      "role": "Key location — second artefact cache, Karsac",
+      "status": "threat",
+      "location": "Pryzi Mountains, Karsac — sealed until now",
+      "knows": "N/A",
+      "wants": "N/A",
+      "hides": "N/A",
+      "threads": [
+        "Contains a second collection of artefacts — separate from the Greyback cargo",
+        "Was sealed until the Shadow-Walkers retrieved the key",
+        "The Yantravaq can now open it — contents unknown to the company",
+        "The manifest may describe its contents — but the company can't fully read it yet",
+        "Getting there without the key will be very challenging"
+      ],
+      "chapters": [
+        "Future"
+      ],
+      "entityRef": "places/pryzi-vault",
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": false,
+      "yantravaq": true,
+      "instrument": false,
+      "isItem": true
+    },
+    {
+      "id": "karsac_artefacts",
+      "name": "Karsac Artefacts (Exandria)",
+      "role": "Key item — artefacts moved west by Erik's network",
+      "status": "unknown",
+      "location": "Cobalt Soul, Exandria",
+      "knows": "N/A",
+      "wants": "N/A",
+      "hides": "N/A",
+      "threads": [
+        "Successfully moved out of Karsac by Erik's network",
+        "Now held by the Cobalt Soul in Exandria — safe for now",
+        "The manifest was meant to verify their arrival — it never did. The Cobalt Soul may not know what they have.",
+        "Their nature, origin, and significance unknown to the company — a future thread",
+        "The Cobalt monk's death means nobody in the network may know they arrived safely"
+      ],
+      "chapters": [
+        "Background",
+        "Future"
+      ],
+      "entityRef": null,
+      "stateType": "npc-state",
+      "source": "KarsacTracker/karsac-campaign.js",
+      "importStatus": "imported",
+      "network": true,
+      "yantravaq": false,
+      "instrument": false,
+      "isItem": true
+    }
+  ]
+}

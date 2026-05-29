@@ -1,4 +1,4 @@
-export type Profile = 'canon' | 'prose' | 'deep-lore' | 'rules' | 'design';
+export type Profile = 'canon' | 'prose' | 'deep-lore' | 'rules' | 'design' | 'state';
 
 export interface RouteResult {
   profile: Profile;
@@ -92,6 +92,57 @@ const WEAK_PROSE_TERMS = [
   'narration', 'scene', 'voice',
 ] as const;
 
+// State profile — table-progress queries (longer phrases first to prevent partial shadowing).
+// Fires after design (step 4) and before deep-lore (step 5).
+const STATE_TERMS = [
+  // Player knowledge
+  'what does the party know',
+  'what do the players know',
+  'party currently know',
+  'player knowledge',
+  'party knowledge',
+  // Revelation state
+  'what has been revealed',
+  'not yet revealed',
+  'unrevealed facts',
+  'unrevealed fact',
+  'what facts are available',
+  'available facts',
+  // Thread state
+  'active threads',
+  'open threads',
+  'hot threads',
+  'simmering threads',
+  'dormant threads',
+  'which threads',
+  'open after session',
+  'thread status',
+  'thread state',
+  // Session / campaign state
+  'what happened in session',
+  'session progress',
+  'session state',
+  'campaign state',
+  'party state',
+  'npc state',
+  'item state',
+  // Handouts
+  'posted handouts',
+  'handouts have been posted',
+  'what handouts',
+  // Chapter prep / hooks
+  'chapter 3',
+  'what should chapter',
+  'what should happen next',
+  'what happens next',
+  'how should the next chapter',
+  'next chapter start',
+  'carry forward',
+  'what threads should carry',
+  'what hooks',
+  'open hooks',
+] as const;
+
 const CANON_TERMS = [
   'tell me about', 'tell me',
   'who is', 'who are',
@@ -138,6 +189,7 @@ function findMatchedTerms(lq: string, terms: readonly string[]): string[] {
  *   2. strong prose terms    → prose  (write/boxed text/dialogue — beats design)
  *   3. rules terms           → rules
  *   4. design terms          → design
+ *   4.5 state terms          → state  (table-progress, player knowledge, threads)
  *   5. deep-lore terms       → deep-lore
  *   6. weak prose terms      → prose  (describe/scene/narration)
  *   7. canon terms           → canon
@@ -185,6 +237,16 @@ export function routeQuestion(question: string): RouteResult {
       profile: 'design',
       reason: `matched design terms: ${designMatched.slice(0, 3).join(', ')}`,
       matchedTerms: designMatched,
+    };
+  }
+
+  // Step 4.5: state terms — table-progress questions (after design, before deep-lore)
+  const stateMatched = findMatchedTerms(lq, STATE_TERMS);
+  if (stateMatched.length > 0) {
+    return {
+      profile: 'state',
+      reason: `matched state terms: ${stateMatched.slice(0, 3).join(', ')}`,
+      matchedTerms: stateMatched,
     };
   }
 

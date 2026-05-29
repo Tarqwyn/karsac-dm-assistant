@@ -1,0 +1,37 @@
+{
+  "id": "campaign-state",
+  "type": "campaign-state",
+  "campaign": "karsac",
+  "currentSession": 2,
+  "currentChapter": 2,
+  "currentScene": null,
+  "currentLocation": null,
+  "clock": {
+    "value": 0,
+    "max": 16,
+    "tiers": {
+      "low": "0–3",
+      "medium": "4–6",
+      "high": "7–9",
+      "critical": "10–16"
+    },
+    "meaning": "Imported from tracker DEFAULT_STATE — 0 = start of session"
+  },
+  "progress": {
+    "session": 2,
+    "step": 0,
+    "steps": 8
+  },
+  "storageKey": "karsac.campaign.v1",
+  "source": "KarsacTracker/karsac-app.js",
+  "importStatus": "imported",
+  "uiStateIgnored": [
+    "mode",
+    "drawerOpen",
+    "npcOpen",
+    "worldTab",
+    "npcFilter",
+    "expandedEntry",
+    "expandedThread"
+  ]
+}

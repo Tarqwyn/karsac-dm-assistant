@@ -1,0 +1,172 @@
+{
+  "id": "player-knowledge",
+  "type": "player-knowledge",
+  "campaign": "karsac",
+  "scope": "party",
+  "sessionBasis": "session-2",
+  "knownFacts": [],
+  "postedHandouts": [],
+  "activeThreads": [
+    {
+      "id": "bone-disc",
+      "name": "The bone disc — impossible",
+      "status": "hot"
+    },
+    {
+      "id": "pryzi-key-gone",
+      "name": "The Pryzi key — gone east",
+      "status": "hot"
+    },
+    {
+      "id": "manifest-locked",
+      "name": "The Pryzi manifest — still locked",
+      "status": "simmering"
+    },
+    {
+      "id": "what-was-stolen",
+      "name": "What was stolen — nobody has asked yet",
+      "status": "simmering"
+    },
+    {
+      "id": "coded-message-incoming",
+      "name": "The coded message — Erwing coming",
+      "status": "simmering"
+    },
+    {
+      "id": "brix-ashfen-influence",
+      "name": "Brix — first sign of Vishara's reach",
+      "status": "simmering"
+    },
+    {
+      "id": "duvash-extract",
+      "name": "Pell Duvash — needs to be found and extracted",
+      "status": "simmering"
+    },
+    {
+      "id": "mathr-arithmetic",
+      "name": "Jarl Mathr — the ageing that doesn't add up",
+      "status": "simmering"
+    },
+    {
+      "id": "vane-token-mathr",
+      "name": "The token — it belongs to Mathr, not Vane",
+      "status": "hot"
+    },
+    {
+      "id": "korvann-rune-disc",
+      "name": "Korvann — the original is in his pocket",
+      "status": "hot"
+    },
+    {
+      "id": "ragnfridd-tradition-shadow",
+      "name": "Ragnfridd — the tradition speaks back",
+      "status": "hot"
+    },
+    {
+      "id": "xyrrath-phial-ashvein",
+      "name": "Xyrrath — the phial was already home",
+      "status": "simmering"
+    },
+    {
+      "id": "rowan-crow-karsac",
+      "name": "Rowan — the Crow brought him here for a reason",
+      "status": "simmering"
+    }
+  ],
+  "unresolvedQuestions": [
+    {
+      "player": "korvann",
+      "question": "The bone disc markings are the original of the rune he has been hunting — he does not know this yet. The disc is in the party's pocket."
+    },
+    {
+      "player": "korvann",
+      "question": "The rune appeared across Exandria and Wildemount in the wake of undead activity and a malevolent intelligence — connected to whatever the Shadow-Walkers ultimately serve."
+    },
+    {
+      "player": "ragnfridd",
+      "question": "Verse of the Sea — spoken at the archive encounter. Xyrrath's whispers reacted in near-affirmation of the words themselves. The tradition was recognised by something that should not know it."
+    },
+    {
+      "player": "ragnfridd",
+      "question": "The Shadow-Walker markings correspond to the oldest sections of the Lösweg oral histories. Ragnfridd carries those histories. He may be able to read what Serris cannot."
+    },
+    {
+      "player": "xyrrath",
+      "question": "The whispers reacted to Ragnfridd's Verse of the Sea — not to the damage reduction, to the words. Something Xyrrath carries knows the Löswegiann oral tradition."
+    },
+    {
+      "player": "xyrrath",
+      "question": "The phial — acid outside as protection, black goo inside as the real substance. The phial itself is Ashvein, mined only beneath Halvash. He was already there. He does not know this yet."
+    },
+    {
+      "player": "rowan",
+      "question": "The Crow — has appeared to Rowan since boyhood, to him alone. It is a promise. The time for repayment is getting closer. Karsac is where that promise starts to be kept."
+    },
+    {
+      "player": "rowan",
+      "question": "His name. The mad king who died alone in Karsac was named Rowahn. Rowan does not know this. The name has been in the Thornevale line ever since the ancestor named her son after the man she lost."
+    },
+    {
+      "player": "erwing_pc",
+      "question": "Carries the coded message from the Cobalt monk to Serris — does not know what it says, why it matters, or what it will set in motion when delivered."
+    },
+    {
+      "player": "erwing_pc",
+      "question": "Looking for Cumbria in Syrinlya — she is his gateway to Halvash. One step at a time. He is already further into this than he knows."
+    }
+  ],
+  "notYetRevealed": [
+    "edvar-trawler",
+    "west-closed",
+    "yngondi-named",
+    "floki-prophecy",
+    "six-artefacts",
+    "maw-named",
+    "scroll-warm",
+    "carver-spiral",
+    "deepwhale",
+    "hag-cargo",
+    "thrall-cloth",
+    "maw-smell",
+    "oath-ring-given",
+    "oath-ring-inscription",
+    "flag-half",
+    "welcome-wrong",
+    "brynja-cadence",
+    "crow-archives",
+    "fisherman-stitch",
+    "black-pin",
+    "brynja-record",
+    "brynja-artefact",
+    "vane-orders",
+    "dugweb-visit",
+    "beorn-name",
+    "ashfen-questions",
+    "ashfen-arrest",
+    "maw-tooling",
+    "aeorian-note",
+    "duvash-three-letters",
+    "kohlmar",
+    "duvash-attacked",
+    "mathr-no-antecedent",
+    "vane-elevated",
+    "mathr-arithmetic",
+    "vane-token",
+    "third-letter",
+    "vane-realises",
+    "vane-retired",
+    "truthspeaker-arrived",
+    "ashvein-recognised",
+    "operation-mathr",
+    "brynja-handover",
+    "dugweb-7wk"
+  ],
+  "source": [
+    "corpus/state/session-facts/session-2.json",
+    "corpus/state/handouts/session-2.json",
+    "corpus/state/world-threads.json",
+    "corpus/state/party-state.json"
+  ],
+  "importStatus": "imported",
+  "note": "No facts revealed in DEFAULT_STATE — all facts have knowledgeStatus \"available\". Run tracker in a live session to log facts as known."
+}

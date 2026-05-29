@@ -1,0 +1,240 @@
+{
+  "id": "party-state",
+  "type": "party-state",
+  "campaign": "karsac",
+  "currentParty": [
+    "korvann",
+    "ragnfridd",
+    "xyrrath",
+    "rowan"
+  ],
+  "partyLevel": null,
+  "partySize": null,
+  "source": "KarsacTracker/karsac-campaign.js",
+  "importStatus": "imported",
+  "characters": [
+    {
+      "id": "korvann",
+      "name": "Korvann",
+      "class": "Air Ashari Ranger · Elf",
+      "status": "present",
+      "wound": "He persuaded his unit to follow the trail. The attack fell on the settlement behind them. His sister Caeli was among the dead. He has never decided whether that makes him a fool or a weapon.",
+      "karsac": "He has been following a corrupted copy of the bone disc markings for ten years without knowing what they are. The original is in the party's possession. The moment he sees it will reframe ten years of his life.",
+      "crow": null,
+      "namNote": null,
+      "dmNote": null,
+      "threads": [
+        {
+          "hot": true,
+          "text": "The bone disc markings are the original of the rune he has been hunting — he does not know this yet. The disc is in the party's pocket."
+        },
+        {
+          "hot": true,
+          "text": "The rune appeared across Exandria and Wildemount in the wake of undead activity and a malevolent intelligence — connected to whatever the Shadow-Walkers ultimately serve."
+        },
+        {
+          "hot": false,
+          "text": "The corrupted rune: always angular, central point, smaller strokes, always slightly different — as if many hands copied it from the same wrong source. The source is the Shadow-Walker tradition."
+        },
+        {
+          "hot": false,
+          "text": "The malevolent intelligence — a figure in old armour at the edge of sight, watching, testing, withdrawing. Still unresolved."
+        },
+        {
+          "hot": false,
+          "text": "Caeli — his sister, dead in the settlement. The grief that has driven ten years of hunting."
+        },
+        {
+          "hot": false,
+          "text": "Rowan — known through years of parallel dangerous work. A recognised survivor of the same road."
+        }
+      ],
+      "npcs": [
+        "The Yngondi Shadow-Walkers — the geometric markings on their skin are the original Korvann has been following in corrupted form for ten years.",
+        "Serris — flagged the bone disc markings as corresponding to the oldest sections of the Lösweg oral histories.",
+        "Floki — said 'impossible' when he saw the bone disc."
+      ]
+    },
+    {
+      "id": "ragnfridd",
+      "name": "Ragnfridd",
+      "class": "Skald · Lösweg-born",
+      "status": "present",
+      "wound": "Carries the full oral tradition of his people. The weight of every battle, every death, every truth. Not baggage — power. But the tradition is responding to things he has never encountered before, and he does not yet know what that means.",
+      "karsac": "Ragnfridd is from Lösweg. He is walking into his own people's crisis without knowing the full shape of it. The tradition he carries is the same tradition the Shadow-Walkers' markings belong to — the oldest stratum. Something in Karsac recognises what he carries.",
+      "crow": null,
+      "namNote": null,
+      "dmNote": null,
+      "threads": [
+        {
+          "hot": true,
+          "text": "Verse of the Sea — spoken at the archive encounter. Xyrrath's whispers reacted in near-affirmation of the words themselves. The tradition was recognised by something that should not know it."
+        },
+        {
+          "hot": true,
+          "text": "The Shadow-Walker markings correspond to the oldest sections of the Lösweg oral histories. Ragnfridd carries those histories. He may be able to read what Serris cannot."
+        },
+        {
+          "hot": false,
+          "text": "Something in Lösweg is wrong. He is Löswegiann. What does he already know or sense that the others don't?"
+        },
+        {
+          "hot": false,
+          "text": "The Whale-Road is sacred Lösweg knowledge. The Shadow-Walkers used it — arranged by Jarl Mathr. A betrayal the tradition holds sacred."
+        },
+        {
+          "hot": false,
+          "text": "Floki's grandmother's prophecy — 'when they come from the east, the thing sleeping under the Yngondi Wastes will be close to waking.' Ragnfridd came from the east too."
+        },
+        {
+          "hot": false,
+          "text": "The packing list is in Veyr. Ragnfridd confirmed it as an artefact inventory. A fluent Veyr reader in Karsac will unlock more."
+        }
+      ],
+      "npcs": [
+        "Floki — Lösweg-born. Ragnfridd can communicate with him more directly than most of the party.",
+        "Sygna — translator on the Greyback. Ragnfridd's Lösweg may sometimes be more accurate.",
+        "Serris — three years studying the oral histories. Ragnfridd carries them. That meeting has not fully happened yet.",
+        "Jarl Mathr — arranged Shadow-Walker passage via the Whale-Road. A betrayal Ragnfridd's tradition will feel viscerally."
+      ]
+    },
+    {
+      "id": "xyrrath",
+      "name": "Xyrrath",
+      "class": "Carries a presence — whispers, acid, hunger",
+      "status": "present",
+      "wound": "Took a throwing spike from the Shadow-Walkers at the archive. Nearly went down. The presence inside him responded to what happened in that moment in a way he may not have expected.",
+      "karsac": "Xyrrath carries a presence — a remnant, memory, or surviving echo from an ancient conflict connected to Karsac. It was likely created or shaped to resist Maharuq or the Deep, but it learned from the thing it fought. It is not necessarily evil, but it may have forgotten the difference between what it was before that fight and what it became during it. It recognises the old signs: the scroll case, the symbols, the artefacts. It drove him toward Karsac because it knows the way home.",
+      "crow": null,
+      "namNote": null,
+      "dmNote": "DM note: The phial Xyrrath carries is made of Ashvein — the rare black volcanic glass-metal mined only beneath Halvash. He does not know this yet. When he investigates the material, it will connect him to Halvash and Karsac's deeper geology. The black goo inside is the player's thread to investigate in their own time — hold it open.",
+      "threads": [
+        {
+          "hot": true,
+          "text": "The whispers reacted to Ragnfridd's Verse of the Sea — not to the damage reduction, to the words. Something Xyrrath carries knows the Löswegiann oral tradition."
+        },
+        {
+          "hot": true,
+          "text": "The phial — acid outside as protection, black goo inside as the real substance. The phial itself is Ashvein, mined only beneath Halvash. He was already there. He does not know this yet."
+        },
+        {
+          "hot": false,
+          "text": "The presence: not evil, but shaped by terrible methods. Created to resist Maharuq or the Deep — and learned from the thing it fought. It may have forgotten the difference."
+        },
+        {
+          "hot": false,
+          "text": "The presence recognises the scroll case, the symbols, the artefacts. It drove him east because it knows what these signs mean."
+        },
+        {
+          "hot": false,
+          "text": "Ashvein: magic binds to it more readily and deeply than ordinary materials. This may be why whatever Xyrrath carries has survived — the container is the reason for the survival."
+        },
+        {
+          "hot": false,
+          "text": "He has been hinting to the party about the phial. Nobody has picked it up yet. He reads this correctly as a long game."
+        },
+        {
+          "hot": false,
+          "text": "Karsac predates the gods. Whatever is old enough to predate the gods was present when whatever Xyrrath carries came into being."
+        }
+      ],
+      "npcs": [
+        "Ragnfridd — the Verse he spoke triggered the whispers' response. That moment is between them now.",
+        "Serris — three years studying the oral histories. If the whispers know the tradition, Serris's archive is the starting point.",
+        "Floki — said 'impossible' when he saw the bone disc. The disc's markings are from the same tradition the whispers recognised."
+      ]
+    },
+    {
+      "id": "rowan",
+      "name": "Rowan Thornevale",
+      "class": "Sorcerer · House Thornevale",
+      "status": "present",
+      "wound": "His magic awakened violently at sixteen — not the gentle Thornevale inheritance but a traumatic rupture fuelled by rage and grief over Alice. He nearly killed Valric. His father exiled him to protect the elder son. He left with nothing but his sword and the memory of people he couldn't save. The Crow was there when he left. It is always there.",
+      "karsac": "The Thornevales are an old pre-Calamity family with a forgotten connection to Karsac. When the Divine Gate was created, a Thornevale ancestor and her betrothed were caught on the wrong side of a wall nobody else knew was being built. He died alone in Karsac — recorded in Khôràna's history books as Rowahn, the mad king. She made it back, pregnant, and eventually succumbed to madness from knowing a truth nobody else could see. She named their son after the man she lost. That name has echoed down the Thornevale line ever since — until it landed on the one child the family magic did not recognise.",
+      "crow": "The Crow has appeared to Rowan since he was a boy. Not to his siblings. Not to his parents. To him alone. It is not just the Thornevale emblem — it is a promise. Something saw what happened at the Divine Gate and marked the debt. The time for repayment is getting closer. Rowan is the first Thornevale in generations clean enough for the Crow to find.",
+      "namNote": "The mad king who died alone in Karsac was named Rowahn. Rowan does not know he is named for his ancestor. He does not know his ancestor's name is in Karsac's history books. He does not know they are the same name.",
+      "dmNote": "DM note: Rowahn is a small section in Khôràna's history books — the mad king who died alone knowing a truth nobody else believed. Rowan finds his ancestor through those history books, not through the oral tradition. That is the right path — earned through travel into Karsac.",
+      "threads": [
+        {
+          "hot": true,
+          "text": "The Crow — has appeared to Rowan since boyhood, to him alone. It is a promise. The time for repayment is getting closer. Karsac is where that promise starts to be kept."
+        },
+        {
+          "hot": true,
+          "text": "His name. The mad king who died alone in Karsac was named Rowahn. Rowan does not know this. The name has been in the Thornevale line ever since the ancestor named her son after the man she lost."
+        },
+        {
+          "hot": false,
+          "text": "Zaksabaz — the city-state where Rowahn died. Khôràna's history books contain a footnote about him. Someone in Karsac may know that name — or recognise Rowan's."
+        },
+        {
+          "hot": false,
+          "text": "Khôràna — a city-state in Karsac, once powerful. The history books there contain the footnote about Rowahn. A live location thread."
+        },
+        {
+          "hot": false,
+          "text": "The ancestor who returned — pregnant, eventually succumbed to madness. She founded the current Thornevale line carrying something from Karsac she didn't understand."
+        },
+        {
+          "hot": false,
+          "text": "The Thornevale bloodline contamination passed down through the line — except to Rowan. His siblings carry it. He doesn't. That is why the Crow found him."
+        },
+        {
+          "hot": false,
+          "text": "Rowan's late violent awakening was abnormal even within the family. His power may not be the family inheritance — it may be the debt beginning to wake."
+        },
+        {
+          "hot": false,
+          "text": "In Karsac, no one knows the Thornevale name. He can discover who he is when that story cannot speak for or against him."
+        },
+        {
+          "hot": false,
+          "text": "Alice and André — the vow made in the dungeon is still live: control the power, prove worth, return."
+        }
+      ],
+      "npcs": [
+        "King Dugweb — used Kurogane, meteoric steel not of earth. The Thornevale falling-star myth and the Divine Gate separation may point at related origin forces.",
+        "Serris — documenting Lösweg oral histories. Pre-Calamity Karsac connections may have left traces in related scholarship.",
+        "Khôràna — not yet a person, a location: the city-state whose history books contain the footnote about Rowahn."
+      ]
+    },
+    {
+      "id": "erwing_pc",
+      "name": "Erwing Smallfoot",
+      "class": "Halfling Monk · Promise keeper",
+      "status": "potential",
+      "wound": "Found as an infant at the edge of an ancient grove. Never knew his parents. Raised by druids who recognised discipline in him but knew his path would lead beyond the grove.",
+      "karsac": "Carries a coded message he cannot read, from a dying man he barely knew, to a scholar he has never met, on an island at the threshold of a continent most of the world does not know exists. He is the unknowing carrier of the most important piece of intelligence currently in motion.",
+      "crow": null,
+      "namNote": null,
+      "dmNote": null,
+      "threads": [
+        {
+          "hot": true,
+          "text": "Carries the coded message from the Cobalt monk to Serris — does not know what it says, why it matters, or what it will set in motion when delivered."
+        },
+        {
+          "hot": true,
+          "text": "Looking for Cumbria in Syrinlya — she is his gateway to Halvash. One step at a time. He is already further into this than he knows."
+        },
+        {
+          "hot": false,
+          "text": "Found as an infant at the edge of an ancient grove — origin unknown. In Karsac, where everything old has a name and a reason, that absence may eventually mean something."
+        },
+        {
+          "hot": false,
+          "text": "The elder druid who was his closest mentor had once wandered far beyond the forest and spoke of those who walked as guides. Who was that elder? What did they know?"
+        },
+        {
+          "hot": false,
+          "text": "His promise is his entire motivation — not ideological, not informed, not equipped for what he is walking into. That simplicity is both vulnerability and strength."
+        }
+      ],
+      "npcs": [
+        "Captain Cumbria — his next step. She will get him to Halvash without asking what he is carrying.",
+        "Serris — the intended recipient of the message. Will be changed by receiving it. Erwing will not know what he has set in motion.",
+        "The Cobalt Monk — dead. Made Erwing promise something enormous without explaining what it was."
+      ]
+    }
+  ]
+}

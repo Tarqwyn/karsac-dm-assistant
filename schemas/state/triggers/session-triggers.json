@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/triggers/session-triggers.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/sessionFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "triggers"
+      ],
+      "properties": {
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "on",
+              "id",
+              "threadId",
+              "setStatus"
+            ],
+            "properties": {
+              "on": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "id": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "threadId": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+              },
+              "setStatus": {
+                "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/threadStatus"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
+}

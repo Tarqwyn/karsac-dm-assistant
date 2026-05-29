@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/_shared.json",
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "campaignFile": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "campaign",
+        "source",
+        "importStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "type": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "campaign": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "source": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            {
+              "$ref": "#/$defs/stringArray"
+            }
+          ]
+        },
+        "importStatus": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "sessionFile": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/campaignFile"
+        },
+        {
+          "type": "object",
+          "required": [
+            "sessionId"
+          ],
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "pattern": "^session-[A-Za-z0-9._-]+$"
+            }
+          }
+        }
+      ]
+    },
+    "threadStatus": {
+      "type": "string",
+      "enum": [
+        "hot",
+        "simmering",
+        "dormant",
+        "closed",
+        "abandoned"
+      ]
+    },
+    "npcStatus": {
+      "type": "string",
+      "enum": [
+        "ally",
+        "threat",
+        "neutral",
+        "unknown",
+        "missing",
+        "historical",
+        "dead"
+      ]
+    },
+    "partyCharacterStatus": {
+      "type": "string",
+      "enum": [
+        "present",
+        "potential",
+        "absent"
+      ]
+    },
+    "growthItemState": {
+      "type": "string",
+      "enum": [
+        "sleeping",
+        "named",
+        "awakened",
+        "ascendant"
+      ]
+    },
+    "threadStatusLabels": {
+      "type": "object",
+      "required": [
+        "hot",
+        "simmering",
+        "dormant",
+        "closed",
+        "abandoned"
+      ],
+      "properties": {
+        "hot": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "simmering": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "dormant": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "closed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "abandoned": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "npcStatusLabels": {
+      "type": "object",
+      "required": [
+        "ally",
+        "threat",
+        "neutral",
+        "unknown",
+        "missing",
+        "historical",
+        "dead"
+      ],
+      "properties": {
+        "ally": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "threat": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "neutral": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "unknown": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "missing": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "historical": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "dead": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "autoTrigger": {
+      "type": "object",
+      "required": [
+        "on",
+        "id",
+        "setStatus"
+      ],
+      "properties": {
+        "on": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "setStatus": {
+          "$ref": "#/$defs/threadStatus"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -285,3 +285,92 @@ describe('routeQuestion — design profile', () => {
     expect(r.matchedTerms.some(t => t.includes('encounter'))).toBe(true);
   });
 });
+
+// ── State routing ─────────────────────────────────────────────────────────────
+
+describe('routeQuestion — state profile', () => {
+  it('acceptance: "What does the party currently know?" → state', () => {
+    expect(routeQuestion('What does the party currently know?').profile).toBe('state');
+  });
+
+  it('acceptance: "Which threads are still open after Session 2?" → state', () => {
+    expect(routeQuestion('Which threads are still open after Session 2?').profile).toBe('state');
+  });
+
+  it('acceptance: "What should Chapter 3 pick up from the current state?" → state', () => {
+    expect(routeQuestion('What should Chapter 3 pick up from the current state?').profile).toBe('state');
+  });
+
+  it('"What does the party know about Mathr?" → state', () => {
+    expect(routeQuestion('What does the party currently know about Mathr?').profile).toBe('state');
+  });
+
+  it('"What facts are available in Session 2 but not yet revealed?" → state', () => {
+    expect(routeQuestion('What facts are available in Session 2 but not yet revealed?').profile).toBe('state');
+  });
+
+  it('"Which threads are hot right now?" → state', () => {
+    expect(routeQuestion('Which threads are hot right now?').profile).toBe('state');
+  });
+
+  it('"What handouts have been posted?" → state', () => {
+    expect(routeQuestion('What handouts have been posted?').profile).toBe('state');
+  });
+
+  it('"What hooks are open going into Chapter 3?" → state', () => {
+    expect(routeQuestion('What hooks are open going into Chapter 3?').profile).toBe('state');
+  });
+
+  it('"player knowledge" alone → state', () => {
+    expect(routeQuestion('Show me the player knowledge summary').profile).toBe('state');
+  });
+
+  it('"active threads" → state', () => {
+    expect(routeQuestion('List the active threads after session 2').profile).toBe('state');
+  });
+
+  it('"unrevealed facts" → state', () => {
+    expect(routeQuestion('What unrevealed facts should I surface in Chapter 3?').profile).toBe('state');
+  });
+
+  it('"not yet revealed" → state', () => {
+    expect(routeQuestion('What is not yet revealed to the players?').profile).toBe('state');
+  });
+
+  it('"simmering threads" → state', () => {
+    expect(routeQuestion('Which threads are simmering after the session?').profile).toBe('state');
+  });
+
+  // Conflict checks — state must not shadow other profiles
+  it('design beats state for encounter queries', () => {
+    expect(routeQuestion('I need an encounter for the party on the road').profile).toBe('design');
+  });
+
+  it('rules beats state for rule queries', () => {
+    expect(routeQuestion('How does concentration work?').profile).toBe('rules');
+  });
+
+  it('deep-lore not displaced for "what is really happening" queries', () => {
+    expect(routeQuestion('What is really happening in Torweg?').profile).toBe('deep-lore');
+  });
+
+  it('prose not displaced for boxed-text queries', () => {
+    expect(routeQuestion('Write boxed text for Chapter 3 opening').profile).toBe('prose');
+  });
+});
+
+// ── Story arc / chapter-prep routing additions ────────────────────────────────
+
+describe('routeQuestion — state: chapter-prep routing variants', () => {
+  it('"What should happen next?" → state', () => {
+    expect(routeQuestion('What should happen next?').profile).toBe('state');
+  });
+
+  it('"How should the next chapter start?" → state', () => {
+    expect(routeQuestion('How should the next chapter start?').profile).toBe('state');
+  });
+
+  it('"What threads should carry forward?" → state', () => {
+    expect(routeQuestion('What threads should carry forward into the next session?').profile).toBe('state');
+  });
+});

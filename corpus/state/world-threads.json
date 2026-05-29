@@ -1,0 +1,495 @@
+{
+  "id": "world-threads",
+  "type": "world-threads",
+  "campaign": "karsac",
+  "source": "KarsacTracker/karsac-campaign.js",
+  "importStatus": "imported",
+  "statusLabels": {
+    "hot": "Hot",
+    "simmering": "Simmering",
+    "dormant": "Dormant",
+    "closed": "Closed",
+    "abandoned": "Abandoned"
+  },
+  "threads": [
+    {
+      "id": "bone-disc",
+      "name": "The bone disc — impossible",
+      "type": "world",
+      "origin": "ch1",
+      "defaultStatus": "hot",
+      "currentStatus": "hot",
+      "summary": "The bone disc left by the dead Shadow-Walker matches nothing in Serris's archive. Floki said 'impossible.' Nobody has examined it closely yet.",
+      "players": [
+        "korvann",
+        "ragnfridd"
+      ],
+      "npcs": [
+        "serris",
+        "floki",
+        "shadow_walkers"
+      ],
+      "pokeWhen": "Scene 2 — when the Greyback cargo is viewed and Floki reacts to the bone disc again. Or when Korvann examines the carving on the Greyback barrels. The bone disc is in the party's possession right now.",
+      "closesWhen": "Party understands what the bone disc markings are and where they come from — the Shadow-Walker tradition, the oldest stratum of Lösweg oral history.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "carver-spiral",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "yngondi-named",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "pryzi-key-gone",
+      "name": "The Pryzi key — gone east",
+      "type": "world",
+      "origin": "ch1",
+      "defaultStatus": "hot",
+      "currentStatus": "hot",
+      "summary": "Two Shadow-Walkers departed Halvash carrying the Pryzi Mountain vault key. The vault can now be opened. The manifest, which may describe its contents, is with the company — but they can't fully read it.",
+      "players": [],
+      "npcs": [
+        "shadow_walkers",
+        "pryzi_vault",
+        "pryzi_manifest"
+      ],
+      "pokeWhen": "When the party discusses what was stolen from the archive, or when Serris is finally asked directly what the Shadow-Walkers took. 'They got the key. I was keeping it for the next courier.'",
+      "closesWhen": "Party recovers the key, or reaches the vault, or learns what the vault contains — distant.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "six-artefacts",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "manifest-locked",
+      "name": "The Pryzi manifest — still locked",
+      "type": "world",
+      "origin": "ch1",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "The manifest is in Veyr — an inventory of artefacts. The Skald confirmed the gist but cannot fully read it. A fluent Veyr reader in Karsac will unlock it.",
+      "players": [
+        "ragnfridd"
+      ],
+      "npcs": [
+        "serris",
+        "pryzi_manifest"
+      ],
+      "pokeWhen": "When the party passes through a settlement with scholars, archivists, or people who look educated. 'We have a document in Veyr we cannot fully read — does anyone here know the language?'",
+      "closesWhen": "Party finds a fluent Veyr reader in Karsac who can translate the full manifest.",
+      "autoTriggers": []
+    },
+    {
+      "id": "what-was-stolen",
+      "name": "What was stolen — nobody has asked yet",
+      "type": "world",
+      "origin": "ch1",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "Serris was holding the key pouch AND the manifest. The Shadow-Walkers got the key. The manifest is with the party. Nobody has sat with Serris and asked what exactly was taken and why. The question of the key's origin is open.",
+      "players": [],
+      "npcs": [
+        "serris"
+      ],
+      "pokeWhen": "Any time before Scene 2 ends — Serris is available. 'You've been holding these items for the courier network. What exactly did they take, and where was that key going?'",
+      "closesWhen": "Party has the full picture of the key, the vault, and the Lösweg captain who delivered both to Serris.",
+      "autoTriggers": []
+    },
+    {
+      "id": "coded-message-incoming",
+      "name": "The coded message — Erwing coming",
+      "type": "world",
+      "origin": "ch1",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "Erwing Smallfoot is en route, carrying a coded message from the dying Cobalt monk to Serris. He doesn't know what it says. When decoded: 'Get word to the Cleric. I am discovered. Trust no one. Continue the work.'",
+      "players": [
+        "erwing_pc"
+      ],
+      "npcs": [
+        "erwing",
+        "cobalt_monk",
+        "serris"
+      ],
+      "pokeWhen": "When the party returns toward Halvash, or when Serris mentions the courier hasn't arrived yet. This lands in a future session — keep simmering until then.",
+      "closesWhen": "Message decoded and Serris understands the instruction — though 'the Cleric' will still be a mystery to him.",
+      "autoTriggers": []
+    },
+    {
+      "id": "deepwhale-followed",
+      "name": "The Deepwhale — recognised something",
+      "type": "world",
+      "origin": "ch1",
+      "defaultStatus": "dormant",
+      "currentStatus": "dormant",
+      "summary": "A Deepwhale followed the Windmere both crossings of the Glasswake. It recognised something aboard the ship. Not hunger — interest.",
+      "players": [
+        "xyrrath"
+      ],
+      "npcs": [],
+      "pokeWhen": "At sea in future sessions — if the party crosses open water. Or if Xyrrath investigates the phial and its nature. The Deepwhale was drawn to the phial (or the presence inside it).",
+      "closesWhen": "Party understands what the Deepwhale was drawn to and why — deep future thread.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "deepwhale",
+          "setStatus": "simmering"
+        }
+      ]
+    },
+    {
+      "id": "vishara-maw-torweg",
+      "name": "The Maw — Vishara's tooth in Torweg",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "dormant",
+      "currentStatus": "dormant",
+      "summary": "The Maw is an embedded Yantravaq presence in Torweg, coordinating Vishara's slow influence. Not a single entity but an organisation — they smell. When the party first hears of Ashfen, they are glimpsing its edge.",
+      "players": [],
+      "npcs": [
+        "ashfen",
+        "brix",
+        "vane"
+      ],
+      "pokeWhen": "Scene 3 (sea hag scene) — when the hag's cargo origin is traced back to Torweg. Or during the Brix encounter when he describes Ashfen's change. 'Something came back with him. Something that was already there.'",
+      "closesWhen": "Party dismantles the Maw's operation in Torweg, or exposes Vane's connection to it — future.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "maw-named",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "maw-tooling",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "maw-smell",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "brix-ashfen-influence",
+      "name": "Brix — first sign of Vishara's reach",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "Brix has watched Tor Ashfen change since he went back to Torweg. Asks different questions, doesn't remember old jokes. Not possessed — reoriented. This is the first visible evidence of Vishara working at scale on real people.",
+      "players": [],
+      "npcs": [
+        "brix",
+        "ashfen"
+      ],
+      "pokeWhen": "Saltbone Inn, evening. Brix is there most nights. He needs patience, not pressure. DC 13 Persuasion or good roleplay opens him up. Plant this moment early in the Torweg scenes.",
+      "closesWhen": "Party understands that Ashfen's change is systematic and deliberate — part of a pattern across Torweg. Leads into the Maw thread.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "ashfen-questions",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "duvash-extract",
+      "name": "Pell Duvash — needs to be found and extracted",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "Duvash is a merchant in Torweg's upper market. He has been receiving consignments of old objects moving north toward Yngondi. Erik's note told him to 'stay and tell the truth to whoever comes.' Vane's people want him dead.",
+      "players": [],
+      "npcs": [
+        "duvash",
+        "maret",
+        "vane"
+      ],
+      "pokeWhen": "When the party first enters Torweg market area. Maret can point toward him — 'there is someone in the upper market who has been asking the wrong kind of questions and receiving the wrong kind of visitors.' The party needs to reach him before Vane's people do.",
+      "closesWhen": "Duvash is safely extracted from Torweg and has told the party what he knows about the three consignments moving north.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "duvash-three-letters",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "duvash-attacked",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "mathr-arithmetic",
+      "name": "Jarl Mathr — the ageing that doesn't add up",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "Mathr has served on the Lösweg council for sixty years and does not appear to have aged. Vane has been in his service for fifteen years following his father who served before him. Nobody has done the arithmetic.",
+      "players": [],
+      "npcs": [
+        "mathr",
+        "vane"
+      ],
+      "pokeWhen": "During the Vane confrontation scene, or when Vane is questioned about his length of service. Ask 'how long has Mathr held that position?' The arithmetic emerges from a direct question Vane has never been asked.",
+      "closesWhen": "Party has a complete picture of Mathr's history and confronts him about it — or brings the case to Beorn.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "mathr-no-antecedent",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "mathr-arithmetic",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "vane-token-mathr",
+      "name": "The token — it belongs to Mathr, not Vane",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "hot",
+      "currentStatus": "hot",
+      "summary": "The token the household warriors used at the end of Session 1 is Jarl Mathr's personal token, not Vane's. Floki recognised it. Vane does not use his own token — he acts as Mathr's extension, not independently. The evidence points past Vane to Mathr.",
+      "players": [],
+      "npcs": [
+        "vane",
+        "mathr",
+        "floki"
+      ],
+      "pokeWhen": "When the party is trying to determine who sent the warriors, or when questioning Vane. Show him the token — 'is this yours?' Watch the moment it isn't.",
+      "closesWhen": "Party presents the token as evidence to Beorn, or confronts Mathr with it — this thread leads directly to operation-mathr.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "vane-token",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "vane-orders",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "vane-realises",
+          "setStatus": "closed"
+        }
+      ]
+    },
+    {
+      "id": "operation-mathr",
+      "name": "Operation Mathr — building the case",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "dormant",
+      "currentStatus": "dormant",
+      "summary": "To bring down Mathr's influence without destroying Lösweg requires a complete case: the token, the arithmetic, the Shadow-Walker arrangement, Beorn's trust. Each fact the party discovers is a brick in the wall.",
+      "players": [],
+      "npcs": [
+        "mathr",
+        "beorn",
+        "vane",
+        "dugweb"
+      ],
+      "pokeWhen": "After Vane realises — when he faces the choice of what to do with the truth. 'If I bring this to Beorn alone, Mathr destroys me. If you take it with me, there's a chance.' This thread becomes active only once Vane realises.",
+      "closesWhen": "Mathr is removed from power in a way that doesn't shatter Lösweg — complex, future arc.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "operation-mathr",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "vane-elevated",
+          "setStatus": "simmering"
+        }
+      ]
+    },
+    {
+      "id": "brynja-record",
+      "name": "Brynja's record — the Mathr family origin",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "dormant",
+      "currentStatus": "dormant",
+      "summary": "Brynja is an archivist in Torweg whose records contain the document that traces where Jarl Mathr's family came from. Nobody has connected this to Serris's flagged 'family with no origin story' yet. The party doesn't know Brynja exists.",
+      "players": [],
+      "npcs": [
+        "mathr",
+        "serris"
+      ],
+      "pokeWhen": "Scene 4 — when the party is in Torweg and hears of an archivist who has been asking questions about old family records, or when someone mentions 'a woman who keeps records no one else wants.' She is not seeking trouble — she found it by being thorough.",
+      "closesWhen": "Brynja's record connects to Serris's flag and the party understands the full sixty-year origin of Mathr's family in Lösweg.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "brynja-record",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "brynja-cadence",
+          "setStatus": "simmering"
+        },
+        {
+          "on": "fact",
+          "id": "brynja-artefact",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "aeorian-note-ashvein",
+      "name": "The Aeorian note — Thread B (Xyrrath's thread)",
+      "type": "world",
+      "origin": "ch2",
+      "defaultStatus": "dormant",
+      "currentStatus": "dormant",
+      "summary": "A note found in the Torweg scenes references Aeorian materials and mentions Ashvein — the black volcanic glass-metal mined only beneath Halvash. Xyrrath's phial is made of Ashvein. He was already standing over the source and didn't know.",
+      "players": [
+        "xyrrath"
+      ],
+      "npcs": [],
+      "pokeWhen": "When H12 (the Aeorian note) is given to the party — point it toward Xyrrath first. 'Does any of this mean something to you?' The phial reacts — the whispers recognise the word.",
+      "closesWhen": "Xyrrath understands what the phial is made of and begins investigating what that means — leads to the presence's origin story.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "aeorian-note",
+          "setStatus": "hot"
+        },
+        {
+          "on": "handout",
+          "id": "H12",
+          "setStatus": "hot"
+        },
+        {
+          "on": "fact",
+          "id": "ashvein-recognised",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "korvann-rune-disc",
+      "name": "Korvann — the original is in his pocket",
+      "type": "player",
+      "origin": "ch1",
+      "defaultStatus": "hot",
+      "currentStatus": "hot",
+      "summary": "Korvann has been following corrupted copies of the bone disc markings for ten years. The original is in the party's possession right now. The moment he sees it — really looks — will reframe a decade of his life.",
+      "players": [
+        "korvann"
+      ],
+      "npcs": [
+        "shadow_walkers",
+        "serris",
+        "floki"
+      ],
+      "pokeWhen": "Scene 2 — when Floki reacts to the bone disc. Turn to Korvann: 'The markings on this disc — they look familiar to you in a way you don't have words for yet. Floki is saying something you need to hear.'",
+      "closesWhen": "Korvann understands the full chain: his corrupted rune → the Shadow-Walker tradition → the bone disc → the oldest oral history stratum. This is a long arc.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "carver-spiral",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "ragnfridd-tradition-shadow",
+      "name": "Ragnfridd — the tradition speaks back",
+      "type": "player",
+      "origin": "ch1",
+      "defaultStatus": "hot",
+      "currentStatus": "hot",
+      "summary": "The Shadow-Walker markings correspond to the oldest sections of the Lösweg oral histories that Ragnfridd carries. Something in Karsac recognised the words he spoke at the archive. The tradition is responding to things he has never encountered before.",
+      "players": [
+        "ragnfridd"
+      ],
+      "npcs": [
+        "serris",
+        "floki",
+        "shadow_walkers"
+      ],
+      "pokeWhen": "Scene 2 — when bone disc is examined. 'Ragnfridd, Serris tells you the markings on this disc match passages in the oldest sections of the oral histories — the sections nobody else alive can recite in full. You might be able to read what no one else can.'",
+      "closesWhen": "Ragnfridd can decode the Shadow-Walker tradition using the oral history — and understands what it means that the tradition was being preserved in this way.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "yngondi-named",
+          "setStatus": "hot"
+        }
+      ]
+    },
+    {
+      "id": "xyrrath-phial-ashvein",
+      "name": "Xyrrath — the phial was already home",
+      "type": "player",
+      "origin": "ch1",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "The phial Xyrrath carries is made of Ashvein — black volcanic glass-metal mined only under Halvash. He was standing over its source. The black substance inside it, and what it contains, is his thread to investigate in his own time.",
+      "players": [
+        "xyrrath"
+      ],
+      "npcs": [],
+      "pokeWhen": "When H12 (Aeorian note) is handed over in Thread B scenes — the note references Ashvein. Look at Xyrrath. The whispers react to the word. Hold this open, don't push.",
+      "closesWhen": "Xyrrath investigates the phial's composition and understands its significance — and what it means that the thing inside it was drawn back to where the material came from.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "ashvein-recognised",
+          "setStatus": "hot"
+        },
+        {
+          "on": "handout",
+          "id": "H12",
+          "setStatus": "simmering"
+        }
+      ]
+    },
+    {
+      "id": "rowan-crow-karsac",
+      "name": "Rowan — the Crow brought him here for a reason",
+      "type": "player",
+      "origin": "ch1",
+      "defaultStatus": "simmering",
+      "currentStatus": "simmering",
+      "summary": "The Crow has appeared to Rowan since boyhood, to him alone. Karsac is where the debt begins to be paid. His ancestor Rowahn is in the history books of Khôràna. Rowan does not know the name Rowahn, does not know they share it, does not know his ancestor died here.",
+      "players": [
+        "rowan"
+      ],
+      "npcs": [
+        "serris"
+      ],
+      "pokeWhen": "When the party hears of Khôràna, or any reference to old city-states of inner Karsac. 'A city that kept records going back before the Calamity.' That is the thread. Don't push — let him find it.",
+      "closesWhen": "Rowan finds the footnote about Rowahn in Khôràna's history books — long arc, planned as a found rather than given moment.",
+      "autoTriggers": [
+        {
+          "on": "fact",
+          "id": "crow-archives",
+          "setStatus": "hot"
+        }
+      ]
+    }
+  ]
+}

@@ -1,14 +1,9 @@
-import { resolve, dirname, relative } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import { mkdirSync, writeFileSync } from 'fs';
 import fg from 'fast-glob';
 import { parseFile, extractSections } from './parser.js';
 import type { EntityMap, AliasMap, RelationshipMap, SectionMap } from './types.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = resolve(__dirname, '..');
-const COLLECTIONS_ROOT = resolve(PROJECT_ROOT, '..', 'openwebui-runtime-collections');
-const INDEX_DIR = resolve(PROJECT_ROOT, '.karsac-index');
+import { COLLECTIONS_ROOT, INDEX_DIR } from './paths.js';
 
 async function buildIndex(): Promise<void> {
   console.log(`Scanning: ${COLLECTIONS_ROOT}`);

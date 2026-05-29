@@ -1,0 +1,99 @@
+{
+  "id": "session-2-progress",
+  "type": "session-progress",
+  "sessionId": "session-2",
+  "campaign": "karsac",
+  "source": "KarsacTracker/karsac-session-2.js",
+  "importStatus": "imported",
+  "currentStep": 0,
+  "steps": [
+    {
+      "index": 0,
+      "label": "Prelude",
+      "pauseLabel": "Not a pause point yet",
+      "pauseClass": null,
+      "recap": [
+        "The company has turned east and committed to Lösweg.",
+        "Halvash left them with the bone disc, the manifest, and a trail that points toward Torweg.",
+        "Floki, Sygna, Serris, and Ragnfridd are all meaningful going into the chapter."
+      ]
+    },
+    {
+      "index": 1,
+      "label": "The Meridian",
+      "pauseLabel": "Soft pause only",
+      "pauseClass": null,
+      "recap": [
+        "The west is closed whether they like it or not.",
+        "Edvar and Floki have pushed them onto the Greyback and into Lösweg.",
+        "The chapter has committed to pursuit rather than retreat."
+      ]
+    },
+    {
+      "index": 2,
+      "label": "Cargo & Map",
+      "pauseLabel": "Soft pause only",
+      "pauseClass": null,
+      "recap": [
+        "The cargo is real, old, and too important to be ordinary freight.",
+        "The Maw is now a named inland location tied to the artefacts.",
+        "The voyage has changed from travel to investigation."
+      ]
+    },
+    {
+      "index": 3,
+      "label": "The Whale-Road",
+      "pauseLabel": "Soft pause only",
+      "pauseClass": null,
+      "recap": [
+        "Something on the Whale-Road wants the cargo specifically.",
+        "The sea encounter confirms the artefacts are already pulling attention.",
+        "Torweg is no longer just a destination; it is part of the problem."
+      ]
+    },
+    {
+      "index": 4,
+      "label": "Torweg Arrival & Brynja",
+      "pauseLabel": "Pause 1 · Strong stop",
+      "pauseClass": "pause",
+      "recap": [
+        "Torweg is wrong on arrival, and Brynja knows enough to be worried without knowing everything.",
+        "Vane has been moving cargo south on Mathr's orders.",
+        "The city has opened into four real investigation threads: Brix, the Maw, Duvash, and the Records."
+      ]
+    },
+    {
+      "index": 5,
+      "label": "Investigation Threads",
+      "pauseLabel": "Pause 2 · Strong stop",
+      "pauseClass": "pause",
+      "recap": [
+        "Mathr's family story does not add up cleanly in the records or in oral history.",
+        "The Maw, the artefacts, and the Halvash violence are part of one structure, not isolated mysteries.",
+        "The south dock is now the pressure point where the players can force the next answer."
+      ]
+    },
+    {
+      "index": 6,
+      "label": "South Dock & Vane",
+      "pauseLabel": "Late stop if needed",
+      "pauseClass": null,
+      "recap": [
+        "Aldric Vane is a loyal servant, not the true architect of what is happening.",
+        "Vane arranged transit and cargo movement on Mathr's authority without understanding the full crime.",
+        "The confrontation should leave the table ready for the Truthspeaker and the real reveal."
+      ]
+    },
+    {
+      "index": 7,
+      "label": "Truthspeaker & Closing",
+      "pauseLabel": "Chapter end",
+      "pauseClass": "end",
+      "recap": [
+        "The operation belongs to Mathr, not Vane.",
+        "The Truthspeaker and the Ashvein pin widen the conspiracy beyond Torweg.",
+        "The next road is north to Valweg before Dugweb's visit if they want any clean chance to expose this."
+      ]
+    }
+  ]
+}

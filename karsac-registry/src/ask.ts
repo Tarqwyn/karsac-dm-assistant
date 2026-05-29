@@ -1,25 +1,20 @@
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
 import { routeQuestion } from './router.js';
 import type { RouteResult } from './router.js';
 import { execSync } from 'child_process';
 import type { AliasMap, EntityMap } from './types.js';
+import { INDEX_DIR, DEBUG_DIR, COLLECTIONS_ROOT, RULES_DATA_DIR, STATE_ROOT } from './paths.js';
 import {
   resolveQuestion, resolveRulesQuestion, loadCanonFile,
   buildMessages, buildProseMessages, buildRulesMessages, buildDesignMessages,
   buildDeepLoreMessages, buildDeepLoreExtractionMessages, buildDeepLoreFromFactsMessages,
   buildExtractionMessages, buildComparisonFromFactsMessages,
+  buildStateMessages,
   isComparisonQuestion, normalizeRelatedId,
   type CanonFile, type FactPacket, type ScoredMatch, type StructuredEntry,
+  type StateContextData,
 } from './resolver.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = resolve(__dirname, '..');
-const INDEX_DIR = resolve(PROJECT_ROOT, '.karsac-index');
-const DEBUG_DIR = resolve(INDEX_DIR, 'debug');
-const COLLECTIONS_ROOT = resolve(PROJECT_ROOT, '..', 'openwebui-runtime-collections');
-const RULES_DATA_DIR = resolve(PROJECT_ROOT, '..', 'rules-data');
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 
@@ -69,6 +64,13 @@ const PROFILES: Record<string, KarsacProfile> = {
     model: process.env.DESIGN_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
     temperature: 0.5,
     topP: 0.85,
+    defaultMode: 'dm',
+  },
+  state: {
+    name: 'state',
+    model: process.env.STATE_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
+    temperature: 0.15,
+    topP: 0.7,
     defaultMode: 'dm',
   },
 };
@@ -1355,6 +1357,50 @@ async function extractThenAnalyse(
   return response;
 }
 
+// ── State context loader ──────────────────────────────────────────────────────
+
+interface LoadedStateContext extends StateContextData {
+  loadedFiles: string[];
+}
+
+function loadStateContext(question: string): LoadedStateContext {
+  const lq = question.toLowerCase();
+  const loadedFiles: string[] = [];
+
+  function readState(relPath: string): Record<string, unknown> | null {
+    const p = resolve(STATE_ROOT, relPath);
+    if (!existsSync(p)) return null;
+    loadedFiles.push(`corpus/state/${relPath}`);
+    return JSON.parse(readFileSync(p, { encoding: 'utf-8' })) as Record<string, unknown>;
+  }
+
+  // Core files — always loaded
+  const playerKnowledge = readState('player-knowledge.json');
+  const campaignState   = readState('campaign-state.json');
+  const partyState      = readState('party-state.json');
+  const worldThreads    = readState('world-threads.json');
+  const npcsState       = readState('npcs-state.json');
+  const itemsState      = readState('items-state.json');
+
+  // Session-specific files — load when the query mentions session/facts/handouts/progress/radar
+  const needsSession =
+    lq.includes('session') || lq.includes('fact') || lq.includes('handout') ||
+    lq.includes('progress') || lq.includes('step') || lq.includes('radar') ||
+    lq.includes('reveal') || lq.includes('available') || lq.includes('chapter 3') ||
+    lq.includes('carry forward') || lq.includes('pick up');
+
+  const sessionFacts    = needsSession ? readState('session-facts/session-2.json') : null;
+  const sessionProgress = needsSession ? readState('session-progress/session-2.json') : null;
+  const handouts        = needsSession ? readState('handouts/session-2.json') : null;
+  const radar           = needsSession ? readState('radar/session-2.json') : null;
+
+  return {
+    playerKnowledge, campaignState, partyState, worldThreads,
+    npcsState, itemsState, sessionFacts, sessionProgress, handouts,
+    radar, loadedFiles,
+  };
+}
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -1533,6 +1579,23 @@ async function main(): Promise<void> {
         }
       }
     }
+    return;
+  }
+
+  // ── state: own path — reads corpus/state JSON files, no entity resolution ────
+  if (profile.name === 'state') {
+    process.stderr.write(`→ Model:  ${profile.model} @ ${OLLAMA_HOST}\n`);
+    process.stderr.write(`\nProfile:\n  ${profile.name}\n`);
+    process.stderr.write(`\nStrategy:\n  state-corpus-direct\n`);
+
+    const stateCtx = loadStateContext(question);
+
+    process.stderr.write(`\nState files loaded:\n`);
+    for (const f of stateCtx.loadedFiles) process.stderr.write(`  - ${f}\n`);
+    process.stderr.write('\n');
+
+    const stateMessages = buildStateMessages(stateCtx, question);
+    await callOllama(stateMessages, { profile });
     return;
   }
 

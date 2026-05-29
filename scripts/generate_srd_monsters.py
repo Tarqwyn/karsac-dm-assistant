@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import unicodedata
@@ -16,10 +17,23 @@ RAG_ROOT = SCRIPT_DIR.parent
 ASYLUM_ROOT = RAG_ROOT.parent.parent
 PDF_PATH = ASYLUM_ROOT / "SRD-OGL_V5.1.pdf"
 BBOX_CACHE = Path("/tmp/srd51-bbox.html")
-COLLECTIONS_ROOT = RAG_ROOT / "openwebui-runtime-collections"
+
+
+def resolve_from_root(default: Path, env_name: str) -> Path:
+    raw = os.environ.get(env_name)
+    if not raw:
+        return default.resolve()
+    path = Path(raw)
+    if path.is_absolute():
+        return path.resolve()
+    return (RAG_ROOT / path).resolve()
+
+
+CORPUS_ROOT = resolve_from_root(RAG_ROOT / "corpus", "KARSAC_CORPUS_ROOT")
+COLLECTIONS_ROOT = resolve_from_root(CORPUS_ROOT / "collections", "KARSAC_COLLECTIONS_DIR")
 SRD_MONSTER_DIR = COLLECTIONS_ROOT / "karsac-monsters-srd-2014"
 KARSAC_MONSTER_DIR = COLLECTIONS_ROOT / "karsac-monsters-karsac"
-RULES_DATA_DIR = RAG_ROOT / "rules-data"
+RULES_DATA_DIR = resolve_from_root(CORPUS_ROOT / "rules-data", "KARSAC_RULES_DATA_DIR")
 MONSTERS_JSON_PATH = RULES_DATA_DIR / "monsters.json"
 REPORT_PATH = RAG_ROOT / "karsac-registry" / ".karsac-index" / "monster-data-report.md"
 
