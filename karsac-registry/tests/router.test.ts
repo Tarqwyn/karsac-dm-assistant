@@ -374,3 +374,65 @@ describe('routeQuestion — state: chapter-prep routing variants', () => {
     expect(routeQuestion('What threads should carry forward into the next session?').profile).toBe('state');
   });
 });
+
+// ── Encounter-design routing ──────────────────────────────────────────────────
+
+describe('routeQuestion — encounter-design profile', () => {
+  it('"Design a non-combat dock encounter in Valweg using Mathr agents" → encounter-design', () => {
+    expect(routeQuestion('Design a non-combat dock encounter in Valweg using Mathr agents').profile).toBe('encounter-design');
+  });
+
+  it('"Create a social encounter for the party arrival" → encounter-design', () => {
+    expect(routeQuestion('Create a social encounter for the party arrival at the harbour').profile).toBe('encounter-design');
+  });
+
+  it('"Use the false customs officers to create a Valweg arrival scene" → encounter-design', () => {
+    expect(routeQuestion('Use the false customs officers to create a Valweg arrival scene').profile).toBe('encounter-design');
+  });
+
+  it('"What non-monster encounter should happen when the party arrives in Valweg?" → encounter-design', () => {
+    expect(routeQuestion('What non-monster encounter should happen when the party arrives in Valweg?').profile).toBe('encounter-design');
+  });
+
+  it('"Customs inspection at the port" → encounter-design', () => {
+    expect(routeQuestion('Help me design a customs inspection at the port of Valweg').profile).toBe('encounter-design');
+  });
+
+  it('"Give me a combat encounter with bandits" → design (not encounter-design)', () => {
+    expect(routeQuestion('Give me a combat encounter with bandits on the road').profile).toBe('design');
+  });
+
+  it('"Design a road encounter for the party" → design (not encounter-design)', () => {
+    expect(routeQuestion('Design a road encounter for the party near Lösweg').profile).toBe('design');
+  });
+
+  it('encounter-design fires before design for non-combat qualifiers', () => {
+    // "social encounter" is encounter-design (step 3.5); "encounter" alone is design (step 4)
+    const r = routeQuestion('Build a social encounter for the arrival in Valweg');
+    expect(r.profile).toBe('encounter-design');
+  });
+});
+
+// ── Combat encounter routing ──────────────────────────────────────────────────
+
+describe('routeQuestion — combat encounter routing', () => {
+  it('"Give me a fight with bandits on the road" → design', () => {
+    expect(routeQuestion('Give me a fight with bandits on the road').profile).toBe('design');
+  });
+
+  it('"I want a fight for tonight" → design', () => {
+    expect(routeQuestion('I want a fight for tonight near the coast road').profile).toBe('design');
+  });
+
+  it('"Set up an ambush by road agents near Valweg" → design', () => {
+    expect(routeQuestion('Set up an ambush by road agents near Valweg').profile).toBe('design');
+  });
+
+  it('"Combat scene with bandits blocking the road" → design', () => {
+    expect(routeQuestion('Combat scene with bandits blocking the road near Torweg').profile).toBe('design');
+  });
+
+  it('"Give me a fight" does not route to encounter-design', () => {
+    expect(routeQuestion('Give me a fight with road agents on the coast road').profile).not.toBe('encounter-design');
+  });
+});

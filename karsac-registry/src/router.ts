@@ -1,4 +1,4 @@
-export type Profile = 'canon' | 'prose' | 'deep-lore' | 'rules' | 'design' | 'state';
+export type Profile = 'canon' | 'prose' | 'deep-lore' | 'rules' | 'design' | 'state' | 'encounter-design';
 
 export interface RouteResult {
   profile: Profile;
@@ -55,6 +55,12 @@ const DESIGN_TERMS = [
   'design me an', 'design me a',
   'build a creature', 'design a creature',
   'build an npc', 'design an npc',
+  // Combat encounter requests (fight/ambush/battle language → monster encounter design)
+  'give me a fight', 'want a fight', 'set up a fight',
+  'fight with', 'fight against',
+  'ambush on the road', 'ambush by',
+  'attack on the road', 'bandit attack',
+  'combat scene', 'a fight on',
 ] as const;
 
 const DEEP_LORE_TERMS = [
@@ -143,6 +149,36 @@ const STATE_TERMS = [
   'open hooks',
 ] as const;
 
+const ENCOUNTER_DESIGN_TERMS = [
+  'social encounter',
+  'npc encounter',
+  'non-monster encounter',
+  'build a scene',
+  'create a scene',
+  'customs inspection',
+  'dock encounter',
+  'dock scene',
+  'dock delay',
+  'interrogation scene',
+  'interrogation encounter',
+  'faction pressure',
+  'procedural delay',
+  'social obstruction',
+  'use adversaries',
+  'using adversaries',
+  'false customs',
+  'mathr agents',
+  'arrival scene',
+  'valweg arrival',
+  'what non-monster',
+  'witness pressure',
+  'public accusation',
+  'false hospitality',
+  'market surveillance',
+  'formal audience',
+  'bribery attempt',
+] as const;
+
 const CANON_TERMS = [
   'tell me about', 'tell me',
   'who is', 'who are',
@@ -188,6 +224,7 @@ function findMatchedTerms(lq: string, terms: readonly string[]): string[] {
  *   1. player-facing guard   → prose  (mode=player)
  *   2. strong prose terms    → prose  (write/boxed text/dialogue — beats design)
  *   3. rules terms           → rules
+ *   3.5 encounter-design     → encounter-design  (social/non-monster encounter design)
  *   4. design terms          → design
  *   4.5 state terms          → state  (table-progress, player knowledge, threads)
  *   5. deep-lore terms       → deep-lore
@@ -227,6 +264,16 @@ export function routeQuestion(question: string): RouteResult {
       profile: 'rules',
       reason: `matched rules terms: ${rulesMatched.slice(0, 3).join(', ')}`,
       matchedTerms: rulesMatched,
+    };
+  }
+
+  // Step 3.5: encounter-design terms — social/non-monster encounter design (before generic design)
+  const encounterDesignMatched = findMatchedTerms(lq, ENCOUNTER_DESIGN_TERMS);
+  if (encounterDesignMatched.length > 0) {
+    return {
+      profile: 'encounter-design',
+      reason: `matched encounter-design terms: ${encounterDesignMatched.slice(0, 3).join(', ')}`,
+      matchedTerms: encounterDesignMatched,
     };
   }
 

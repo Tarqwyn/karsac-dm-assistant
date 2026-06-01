@@ -15,3 +15,5 @@ export const CORPUS_ROOT = resolveFromProject('../corpus', process.env.KARSAC_CO
 export const COLLECTIONS_ROOT = resolveFromProject('../corpus/collections', process.env.KARSAC_COLLECTIONS_DIR);
 export const RULES_DATA_DIR = resolveFromProject('../corpus/rules-data', process.env.KARSAC_RULES_DATA_DIR);
 export const STATE_ROOT = resolveFromProject('../corpus/state', process.env.KARSAC_STATE_DIR);
+export const ADVERSARY_CORPUS_ROOT = resolveFromProject('../corpus/adversary-corpus/karsac-adversaries', process.env.KARSAC_ADVERSARY_DIR);
+export const ENCOUNTER_PATTERNS_ROOT = resolveFromProject('../corpus/encounter-patterns/non-monster', process.env.KARSAC_PATTERNS_DIR);

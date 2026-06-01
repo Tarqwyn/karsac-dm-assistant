@@ -194,6 +194,21 @@ export function compileEncounterBrief(
   b.push('You may not write:');
   b.push('  a different creature list, new monster names, new mechanics, stat changes, or invented canon facts.');
 
+  b.push('');
+  b.push('Required output structure — use EXACTLY these headings in this order:');
+  b.push('1. ## Provisional encounter concept');
+  b.push('2. ## Why it fits Karsac');
+  b.push('3. ## Encounter setup');
+  b.push('4. ## Creatures / opposition');
+  b.push('5. ## Terrain and pressure');
+  b.push('6. ## What this reveals');
+  b.push('7. ## Running it at the table');
+  b.push('8. ## Scaling options');
+  b.push('9. ## Player-safe description');
+  b.push('10. ## Canon status');
+  b.push('');
+  b.push('Start your response with: ## Provisional encounter concept');
+
   return {
     intent,
     plan,

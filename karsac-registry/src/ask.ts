@@ -4,17 +4,21 @@ import { routeQuestion } from './router.js';
 import type { RouteResult } from './router.js';
 import { execSync } from 'child_process';
 import type { AliasMap, EntityMap } from './types.js';
-import { INDEX_DIR, DEBUG_DIR, COLLECTIONS_ROOT, RULES_DATA_DIR, STATE_ROOT } from './paths.js';
+import { INDEX_DIR, DEBUG_DIR, COLLECTIONS_ROOT, RULES_DATA_DIR, STATE_ROOT, ADVERSARY_CORPUS_ROOT, ENCOUNTER_PATTERNS_ROOT } from './paths.js';
 import {
   resolveQuestion, resolveRulesQuestion, loadCanonFile,
   buildMessages, buildProseMessages, buildRulesMessages, buildDesignMessages,
   buildDeepLoreMessages, buildDeepLoreExtractionMessages, buildDeepLoreFromFactsMessages,
   buildExtractionMessages, buildComparisonFromFactsMessages,
-  buildStateMessages,
+  buildStateMessages, buildEncounterDesignMessages,
   isComparisonQuestion, normalizeRelatedId,
   type CanonFile, type FactPacket, type ScoredMatch, type StructuredEntry,
-  type StateContextData,
+  type StateContextData, type EncounterDesignCtx,
 } from './resolver.js';
+import {
+  loadScoredAdversaries, loadScoredPatterns, getNpcBaseSummaries,
+  type ScoredAdversary, type ScoredPattern,
+} from './encounter-design.js';
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 
@@ -71,6 +75,13 @@ const PROFILES: Record<string, KarsacProfile> = {
     model: process.env.STATE_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
     temperature: 0.15,
     topP: 0.7,
+    defaultMode: 'dm',
+  },
+  'encounter-design': {
+    name: 'encounter-design',
+    model: process.env.ENCOUNTER_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
+    temperature: 0.4,
+    topP: 0.85,
     defaultMode: 'dm',
   },
 };
@@ -1114,6 +1125,7 @@ function scoreMonsterCandidates(
   monstersData: Record<string, MonsterEntry>,
   signals: ReturnType<typeof extractDesignSignals>,
   maxResults: number,
+  question = '',
 ): MonsterCandidate[] {
   const { terrainSignals, destinationSignals, regionSignals, displacementSignals, partyInfo } = signals;
   const scored: MonsterCandidate[] = [];
@@ -1121,6 +1133,24 @@ function scoreMonsterCandidates(
   for (const [key, monster] of Object.entries(monstersData)) {
     let score = 0;
     const reasons: string[] = [];
+
+    // Explicit request boost: if the user names this creature directly, it MUST be
+    // selected. A +25 boost ensures it always tops terrain/region candidates.
+    // Check the key, hyphen-normalised key, and monster name (all with optional plural 's').
+    if (question) {
+      const nameForms = [
+        key,
+        key.replace(/-/g, ' '),
+        (monster.name ?? key).toLowerCase(),
+      ];
+      for (const form of nameForms) {
+        if (form && new RegExp(`\\b${form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}s?\\b`, 'i').test(question)) {
+          score += 25;
+          reasons.push(`explicit-request: ${form}`);
+          break;
+        }
+      }
+    }
     const nativeTo = new Set(monster.displacement?.nativeTo ?? []);
     const canMoveTo = new Set(monster.displacement?.canMoveTo ?? []);
     const monsterTerrain = new Set(monster.terrain ?? []);
@@ -1222,7 +1252,7 @@ function loadDesignContext(
 
     const signals = extractDesignSignals(question, resolvedIds);
     partyInfo = signals.partyInfo;
-    monsterCandidates = scoreMonsterCandidates(monstersData, signals, DESIGN_MAX_MONSTERS);
+    monsterCandidates = scoreMonsterCandidates(monstersData, signals, DESIGN_MAX_MONSTERS, question);
 
     // noSuitableMonsters: corpus exists but all top candidates are CR-penalised out of band
     if (monsterCandidates.length === 0) {
@@ -1398,6 +1428,40 @@ function loadStateContext(question: string): LoadedStateContext {
     playerKnowledge, campaignState, partyState, worldThreads,
     npcsState, itemsState, sessionFacts, sessionProgress, handouts,
     radar, loadedFiles,
+  };
+}
+
+// ── Encounter-design context loader ──────────────────────────────────────────
+
+function loadEncounterDesignContext(question: string): EncounterDesignCtx {
+  const adversaries = loadScoredAdversaries(ADVERSARY_CORPUS_ROOT, question, 3);
+  const patterns = loadScoredPatterns(ENCOUNTER_PATTERNS_ROOT, question, 2);
+
+  // Collect all mechanical_base refs across matched adversaries
+  const allBases = [...new Set(adversaries.flatMap(a => a.mechanicalBase))];
+  const npcBases = getNpcBaseSummaries(allBases);
+
+  // Minimal state summary — load core state files only
+  function readStateFile(relPath: string): Record<string, unknown> | null {
+    const p = resolve(STATE_ROOT, relPath);
+    if (!existsSync(p)) return null;
+    try {
+      return JSON.parse(readFileSync(p, { encoding: 'utf-8' })) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+
+  const campaignState   = readStateFile('campaign-state.json');
+  const partyState      = readStateFile('party-state.json');
+  const worldThreads    = readStateFile('world-threads.json');
+  const playerKnowledge = readStateFile('player-knowledge.json');
+
+  return {
+    adversaries,
+    patterns,
+    npcBases,
+    stateData: { campaignState, partyState, worldThreads, playerKnowledge },
   };
 }
 
@@ -1579,6 +1643,38 @@ async function main(): Promise<void> {
         }
       }
     }
+    return;
+  }
+
+  // ── encounter-design: own path — no entity resolution ───────────────────────
+  if (profile.name === 'encounter-design') {
+    process.stderr.write(`→ Model:  ${profile.model} @ ${OLLAMA_HOST}\n`);
+    process.stderr.write(`\nProfile:\n  ${profile.name}\n`);
+    process.stderr.write(`\nStrategy:\n  encounter-design-adversary-plus-patterns\n`);
+
+    const edCtx = loadEncounterDesignContext(question);
+
+    process.stderr.write(`\nAdversaries selected:\n`);
+    if (edCtx.adversaries.length > 0) {
+      for (const adv of edCtx.adversaries) {
+        process.stderr.write(`  - ${adv.id}  (score: ${adv.score}  reasons: ${adv.scoreReasons.slice(0, 3).join(', ')})\n`);
+      }
+    } else {
+      process.stderr.write(`  - none matched\n`);
+    }
+
+    process.stderr.write(`\nPatterns matched:\n`);
+    if (edCtx.patterns.length > 0) {
+      for (const pat of edCtx.patterns) {
+        process.stderr.write(`  - ${pat.id}  (score: ${pat.score})\n`);
+      }
+    } else {
+      process.stderr.write(`  - none matched\n`);
+    }
+    process.stderr.write('\n');
+
+    const edMessages = buildEncounterDesignMessages(edCtx, question);
+    await callOllama(edMessages, { profile });
     return;
   }
 

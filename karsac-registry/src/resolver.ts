@@ -1588,6 +1588,234 @@ function buildArcSectionMarkdown(
     .join('\n');
 }
 
+// ── Encounter-design profile message builder ──────────────────────────────────
+
+import type { ScoredAdversary, ScoredPattern } from './encounter-design.js'
+
+export interface EncounterDesignCtx {
+  adversaries: ScoredAdversary[]
+  patterns: ScoredPattern[]
+  npcBases: Record<string, string>
+  stateData: {
+    campaignState: Record<string, unknown> | null
+    partyState: Record<string, unknown> | null
+    worldThreads: Record<string, unknown> | null
+    playerKnowledge: Record<string, unknown> | null
+  }
+}
+
+export function buildEncounterDesignMessages(
+  ctx: EncounterDesignCtx,
+  question: string,
+): Array<{ role: string; content: string }> {
+  const div = '─'.repeat(60)
+
+  // ── Campaign state summary ─────────────────────────────────────────────────
+  const cs = (ctx.stateData.campaignState as any) ?? {}
+  const ps = (ctx.stateData.partyState as any) ?? {}
+  const wt = (ctx.stateData.worldThreads as any) ?? {}
+  const pk = (ctx.stateData.playerKnowledge as any) ?? {}
+
+  const stateSummaryLines: string[] = []
+  if (cs.currentSession) stateSummaryLines.push(`Session: ${cs.currentSession}  Chapter: ${cs.currentChapter ?? '?'}`)
+  if (ps.partyLevel) stateSummaryLines.push(`Party level: ${ps.partyLevel}  Size: ${ps.partySize ?? '?'}`)
+  if (cs.clock?.value != null) stateSummaryLines.push(`Clock: ${cs.clock.value}/${cs.clock.max ?? 16}`)
+  const hotThreads: any[] = (wt.threads ?? []).filter((t: any) => t.currentStatus === 'hot')
+  if (hotThreads.length > 0) stateSummaryLines.push(`Hot threads: ${hotThreads.map((t: any) => t.name).join(', ')}`)
+  const knownFacts: string[] = pk.knownFacts ?? []
+  stateSummaryLines.push(`Confirmed player knowledge: ${knownFacts.length} facts`)
+
+  const stateSummary = stateSummaryLines.length > 0
+    ? stateSummaryLines.join('\n')
+    : '(no campaign state loaded)'
+
+  // ── Adversary context block ───────────────────────────────────────────────
+  const adversaryLines: string[] = []
+  for (const adv of ctx.adversaries) {
+    adversaryLines.push(`### ${adv.id}`)
+    adversaryLines.push(`Summary: ${adv.summary}`)
+    adversaryLines.push(`Opposition type: ${adv.oppositionType.join(', ')}`)
+    adversaryLines.push(`Encounter roles: ${adv.encounterRoles.join(', ')}`)
+    adversaryLines.push(`Campaign use: ${adv.campaignUse.join(', ')}`)
+    adversaryLines.push(`Mechanical base: ${adv.mechanicalBase.join(', ')}`)
+    adversaryLines.push(`Can know: ${adv.canKnow.join(' | ')}`)
+    adversaryLines.push(`Must not know: ${adv.mustNotKnow.join(' | ')}`)
+    adversaryLines.push(`Tactics: ${adv.tactics.join(' | ')}`)
+    if (adv.escalation.low) adversaryLines.push(`Escalation low: ${adv.escalation.low}`)
+    if (adv.escalation.medium) adversaryLines.push(`Escalation medium: ${adv.escalation.medium}`)
+    if (adv.escalation.high) adversaryLines.push(`Escalation high: ${adv.escalation.high}`)
+    adversaryLines.push(`Player-safe reveal: ${adv.playerSafeReveal.join(' | ')}`)
+    adversaryLines.push(`DM only: ${adv.dmOnly.join(' | ')}`)
+    adversaryLines.push(``)
+    adversaryLines.push(adv.content.trim())
+    adversaryLines.push(``)
+    adversaryLines.push(div)
+  }
+
+  // ── Pattern context block ─────────────────────────────────────────────────
+  const patternLines: string[] = []
+  for (const pat of ctx.patterns) {
+    patternLines.push(`### ${pat.id}`)
+    patternLines.push(`Summary: ${pat.summary}`)
+    patternLines.push(``)
+    patternLines.push(pat.content.trim())
+    patternLines.push(``)
+    patternLines.push(div)
+  }
+
+  // ── NPC bases block ───────────────────────────────────────────────────────
+  const npcBaseLines: string[] = []
+  for (const [ref, summary] of Object.entries(ctx.npcBases)) {
+    npcBaseLines.push(`${ref}: ${summary}`)
+  }
+
+  // ── System message ────────────────────────────────────────────────────────
+  const system = `You are Karsac Non-Monster Encounter Designer.
+
+DESIGN PRINCIPLE:
+Select encounter PURPOSE first. Then adversary. Then mechanical bases. Generate combat tactics as FALLBACK only.
+
+OUTPUT CONTRACT:
+You must produce exactly these 13 sections in this exact order. Do not rename, skip, or reorder them.
+
+1. ## Encounter: [brief scene name]
+2. ## Encounter Type
+3. ## Campaign Purpose
+4. ## Cast
+5. ## Opening Beat
+6. ## What the Opposition Wants
+7. ## What the Players Can Notice
+8. ## Pressure Ladder
+9. ## Checks and Mechanics
+10. ## Player Choices
+11. ## Outcomes
+12. ## Combat Fallback
+13. ## State Updates
+14. ## Follow-up Hooks
+
+PLAYER-SAFE CLUE RULE:
+If the adversary has player_safe_reveal entries, the encounter MUST use at least one of them directly in ## What the Players Can Notice.
+Do not replace core clues with weaker invented alternatives.
+The player_safe_reveal entries are canonical clue designs — use them as written or very closely.
+
+DM-ONLY RULE:
+dm_only and must_not_know entries inform the scene and DM notes only.
+They MUST NOT appear in read-aloud text, ## What the Players Can Notice, ## Opening Beat (player-facing portion), or ## Player Choices.
+If you need to state a DM-only fact, place it in ## Campaign Purpose or ## Cast (DM-facing sections only).
+
+NPC BASE RULE — READ CAREFULLY:
+If the user specifies NPC types (e.g. "a noble, two guards, and a spy") or the adversary specifies mechanical_base, use those EXACT bases with EXACT quantities.
+DO NOT merge two bases into a single NPC (e.g. NEVER "Noble, Spy - modified" — that is one NPC with two bases, which is WRONG).
+DO NOT upgrade: guard → veteran, noble → veteran, spy → assassin — unless the user explicitly asks.
+DO NOT invent modified stat blocks or assign extra AC/HP/attacks beyond the standard base.
+Each NPC gets ONE mechanical base. List them separately.
+CORRECT:   "Lead official — Noble base | Two escorts — Guard base | Informant — Spy base"
+INCORRECT: "Lead official — Noble/Spy modified | Captain — Veteran (Guard upgrade)"
+If you reference a mechanical base, cite it as: "uses the loaded SRD 5.1 [base name] base".
+
+KARSAC FACTION RULE:
+- If Mathr is the relevant faction, name the faction as Mathr. Do NOT convert Mathr pressure into Vane pressure.
+- Use Vane ONLY where the retrieved corpus explicitly names Vane as relevant to this specific scene.
+- The Mathr sigil (crown-over-wave token) and the Vane house mark are DISTINCT symbols. They cannot be used interchangeably.
+- False customs authority and dock documents point to the MATHR seal, not a Vane house mark.
+- Do not invent Karsac NPC surnames, family names, house names, or personal names not present in the adversary corpus or canon. Use role placeholders ("the lead official", "the escort pair", "the senior officer") if specific names are not given.
+- Do not invent payment thresholds, toll rates, or Vane-specific administrative details not present in corpus.
+
+FACTION INVENTION RULE:
+DO NOT invent named noble houses (e.g. "House Valerius"), invented family control structures, or invented payment thresholds.
+If no faction is named in the query or retrieved adversaries, use neutral role language: "a corrupt official", "an unnamed patron", "a local power", "a minor official's backer".
+If you need a placeholder NPC name, use role-based labels: "the lead official", "the senior inspector", "the escort pair" — NOT house-based invented names.
+KARSAC STYLE RULE:
+Use only period-appropriate physical items. Prefer: seals, ledgers, wax marks, cargo tallies, warrant papers, dock tokens, folded authority documents, witness marks, hand signals, watchers in taverns, copied manifests.
+DO NOT invent: scanners, tracking devices, modern files, surveillance technology, forensic devices, or magical tracking beyond what the corpus explicitly describes.
+
+ENCOUNTER DESIGN CONTEXT
+${div}
+
+CAMPAIGN STATE:
+${stateSummary}
+
+SELECTED ADVERSARIES:
+${adversaryLines.length > 0 ? adversaryLines.join('\n') : '(none matched)'}
+
+ENCOUNTER PATTERNS:
+${patternLines.length > 0 ? patternLines.join('\n') : '(none matched)'}
+
+NPC MECHANICAL BASES:
+${npcBaseLines.length > 0 ? npcBaseLines.join('\n') : '(none referenced)'}
+${div}`
+
+  // ── Build player-safe clue injection from top adversary ─────────────────
+  const topAdversaryClues = ctx.adversaries[0]?.playerSafeReveal ?? []
+  const clueBlock = topAdversaryClues.length > 0
+    ? `REQUIRED — include at least one of these player_safe_reveal clues directly:\n` +
+      topAdversaryClues.map(c => `  • "${c}"`).join('\n') + `\n` +
+      `Do not replace these with weaker invented alternatives.`
+    : `Include player-observable clues grounded in the scene context.`
+
+  // ── Detect explicit NPC base specification in the query ────────────────────
+  const hasExplicitNpcBases = /\b(?:a |one |two |three |four )?\b(?:noble|guard|spy|scout|veteran|bandit|thug|commoner|priest|mage|acolyte)\b/i.test(question)
+  const npcBaseConstraint = hasExplicitNpcBases
+    ? `\nIMPORTANT: The user specified explicit NPC bases in the query. Use EXACTLY those bases with EXACTLY those quantities. Do NOT merge, modify, or upgrade them. Each NPC gets ONE base only.\n`
+    : ''
+
+  // ── User message ──────────────────────────────────────────────────────────
+  const user = `Design this encounter:
+"${question}"
+${npcBaseConstraint}
+Use EXACTLY these headings IN THIS ORDER. Do not rename, skip, or reorder them.
+
+# Encounter: [write a brief scene name — 2-5 words]
+
+## Encounter Type
+[e.g. social obstruction, information extraction, procedural delay, faction pressure]
+
+## Campaign Purpose
+[Why does this encounter exist in the story? What pressure, clue, choice or consequence does it create?]
+
+## Cast
+[List the NPCs. For each: role, Karsac adversary source if used, D&D mechanical base (ONE per NPC), what they want, what they know, what they must not know.
+If the user specified NPC types, use those EXACT bases. Do not merge bases. Do not invent house names — use role labels.]
+
+## Opening Beat
+[A short DM-facing scene description to open the encounter — 2-4 sentences.]
+
+## What the Opposition Wants
+[The actual objective: delay, extract information, separate the party, create a legal pretext, etc.]
+
+## What the Players Can Notice
+[${clueBlock}
+Add DC values: DC 10 obvious / DC 12 useful / DC 15 deep suspicion / DC 18+ operational detail.]
+
+## Pressure Ladder
+Low: [routine pressure]
+Medium: [more specific/invasive]
+High: [risk of detention, exposure, combat, or public confrontation]
+
+## Checks and Mechanics
+[List likely checks (Insight, Investigation, Perception, Persuasion, Deception, Intimidation, Sleight of Hand, Stealth, History, etc). For each: what does success / partial success / failure mean?]
+
+## Player Choices
+[At least 3 meaningful approaches: comply, challenge, bribe, split group, distraction, follow, expose, etc.]
+
+## Outcomes
+[Clear success, partial success, costly success, failure, fail-forward consequence. The encounter should move the story forward even on failure.]
+
+## Combat Fallback
+[Only if violence is plausible. Use generic NPC bases. Make clear combat is not the intended centre.]
+
+## State Updates
+[Suggested campaign state changes after the scene.]
+
+## Follow-up Hooks
+[2-4 consequences or next scenes.]`
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ]
+}
+
 export function buildDeepLoreExtractionMessages(
   canon: CanonFile,
 ): Array<{ role: string; content: string }> {
