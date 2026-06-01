@@ -436,3 +436,97 @@ describe('routeQuestion — combat encounter routing', () => {
     expect(routeQuestion('Give me a fight with road agents on the coast road').profile).not.toBe('encounter-design');
   });
 });
+
+// ── Adversary-design routing ──────────────────────────────────────────────────
+
+describe('routeQuestion — adversary-design profile', () => {
+  it('test 1: "Design a Mathr dock interrogator based on the Spy NPC" → adversary-design', () => {
+    expect(routeQuestion('Design a Mathr dock interrogator based on the Spy NPC. I want them to be more social than combat.').profile).toBe('adversary-design');
+  });
+
+  it('test 2: "Create a road agent captain using the Bandit base" → adversary-design', () => {
+    expect(routeQuestion('Create a road agent captain using the Bandit base, but make them feel dangerous without being supernatural.').profile).toBe('adversary-design');
+  });
+
+  it('test 3: "Make me a Maw-touched customs official using Noble as the base" → adversary-design', () => {
+    expect(routeQuestion('Make me a Maw-touched customs official using Noble as the base.').profile).toBe('adversary-design');
+  });
+
+  it('test 4: "Design an adversary called The Salt-Witness" → adversary-design', () => {
+    expect(routeQuestion('Design an adversary called The Salt-Witness. They should be a social threat, not a boss fight.').profile).toBe('adversary-design');
+  });
+
+  it('test 5: "Create a full stat block for a veteran housecarl of Mathr" → adversary-design', () => {
+    expect(routeQuestion('Create a full stat block for a veteran housecarl of Mathr.').profile).toBe('adversary-design');
+  });
+
+  it('"give me a stat block for a Karsac spy" → adversary-design', () => {
+    expect(routeQuestion('Give me a stat block for a Karsac spy.').profile).toBe('adversary-design');
+  });
+
+  it('"use spy as a base but make them Karsac-specific" → adversary-design', () => {
+    expect(routeQuestion('Use spy as a base but make them Karsac-specific.').profile).toBe('adversary-design');
+  });
+
+  it('"use the noble base but make them a manipulative court official" → adversary-design', () => {
+    expect(routeQuestion('Use the noble base but make them a manipulative court official.').profile).toBe('adversary-design');
+  });
+
+  it('"design a Mathr dock agent with a stat block" → adversary-design', () => {
+    expect(routeQuestion('Design a Mathr dock agent with a stat block.').profile).toBe('adversary-design');
+  });
+
+  // Conflict checks — adversary-design must NOT shadow encounter or design
+
+  it('"Design a dock encounter using Mathr agents" → encounter-design (not adversary-design)', () => {
+    expect(routeQuestion('Design a dock encounter using Mathr agents.').profile).toBe('encounter-design');
+  });
+
+  it('"Give me a fight with bandits on the road" → design (not adversary-design)', () => {
+    expect(routeQuestion('Give me a fight with bandits on the road.').profile).toBe('design');
+  });
+
+  it('"Build a social encounter at Valweg" → encounter-design (not adversary-design)', () => {
+    expect(routeQuestion('Build a social encounter at Valweg for the party arrival.').profile).toBe('encounter-design');
+  });
+});
+
+// ── Adversary-design vs encounter-design conflict resolution ──────────────────
+
+describe('routeQuestion — adversary/encounter conflict resolution', () => {
+  it('"stat block" beats "false customs" — adversary-design wins', () => {
+    expect(routeQuestion(
+      'Create a full stat block for a Mathr false customs officer using Spy as the base'
+    ).profile).toBe('adversary-design');
+  });
+
+  it('"dock encounter" without stat block → encounter-design', () => {
+    expect(routeQuestion(
+      'Create a dock encounter using false customs officers'
+    ).profile).toBe('encounter-design');
+  });
+
+  it('"design an encounter" with stat block → encounter-design (scene intent is explicit)', () => {
+    expect(routeQuestion(
+      'Design a dock encounter using a spy-based agent with a full stat block'
+    ).profile).toBe('encounter-design');
+  });
+
+  it('"create an adversary based on the guard" routes to adversary-design', () => {
+    expect(routeQuestion(
+      'Create an adversary based on the guard for a Mathr gate checkpoint'
+    ).profile).toBe('adversary-design');
+  });
+
+  it('"custom NPC" routes to adversary-design', () => {
+    expect(routeQuestion(
+      'Create a custom NPC for a Mathr informant'
+    ).profile).toBe('adversary-design');
+  });
+
+  it('"full stat block" routes to adversary-design', () => {
+    expect(routeQuestion(
+      'Give me a full stat block for a veteran road agent who serves Mathr'
+    ).profile).toBe('adversary-design');
+  });
+});

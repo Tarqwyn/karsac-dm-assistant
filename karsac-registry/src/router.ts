@@ -1,4 +1,4 @@
-export type Profile = 'canon' | 'prose' | 'deep-lore' | 'rules' | 'design' | 'state' | 'encounter-design';
+export type Profile = 'canon' | 'prose' | 'deep-lore' | 'rules' | 'design' | 'state' | 'encounter-design' | 'adversary-design';
 
 export interface RouteResult {
   profile: Profile;
@@ -149,6 +149,71 @@ const STATE_TERMS = [
   'open hooks',
 ] as const;
 
+// Adversary-design terms — fire at step 3.25, before encounter-design (3.5) and design (4).
+// These indicate the user wants to CREATE an adversary (stat block, adaptation),
+// not design an encounter scene.
+const ADVERSARY_DESIGN_TERMS = [
+  // Explicit adversary creation
+  'design me an adversary',
+  'create an adversary',
+  'make me an adversary',
+  'design an adversary',
+  'create a villain',
+  'design a villain',
+  // Stat block requests
+  'stat block',
+  'statblock',
+  // Using a named base
+  'using the spy',
+  'using the noble',
+  'using the guard',
+  'using the veteran',
+  'using the bandit',
+  'using the thug',
+  'using the scout',
+  'using the mage',
+  'using the priest',
+  'using the acolyte',
+  'using the assassin',
+  'using spy as',
+  'using noble as',
+  'using guard as',
+  'using veteran as',
+  'using bandit as',
+  'based on the spy',
+  'based on the noble',
+  'based on the guard',
+  'based on the veteran',
+  'based on the bandit',
+  'based on a spy',
+  'based on a noble',
+  'based on a guard',
+  'based on a veteran',
+  'based on a bandit',
+  'use spy as',
+  'use noble as',
+  'use guard as',
+  'use veteran as',
+  'use bandit as',
+  'use the spy',
+  'use the noble',
+  'use the guard',
+  'use the veteran',
+  'use the bandit',
+  // Karsac-specific creature adaptation
+  'maw-touched',
+  'vishara-touched',
+  // Generic adversary creation phrases
+  'custom npc enemy',
+  'custom npc',
+  'custom adversary',
+  'villain stat',
+  'turn this into a stat',
+  'turn this idea into a',
+  'make me an npc enemy',
+  'full stat block',
+] as const;
+
 const ENCOUNTER_DESIGN_TERMS = [
   'social encounter',
   'npc encounter',
@@ -224,7 +289,8 @@ function findMatchedTerms(lq: string, terms: readonly string[]): string[] {
  *   1. player-facing guard   → prose  (mode=player)
  *   2. strong prose terms    → prose  (write/boxed text/dialogue — beats design)
  *   3. rules terms           → rules
- *   3.5 encounter-design     → encounter-design  (social/non-monster encounter design)
+ *   3.25 adversary-design    → adversary-design  (create/adapt a stat block — outranks encounter-design unless scene intent is explicit)
+ *   3.5 encounter-design     → encounter-design  (social/non-monster encounter scene)
  *   4. design terms          → design
  *   4.5 state terms          → state  (table-progress, player knowledge, threads)
  *   5. deep-lore terms       → deep-lore
@@ -267,7 +333,20 @@ export function routeQuestion(question: string): RouteResult {
     };
   }
 
-  // Step 3.5: encounter-design terms — social/non-monster encounter design (before generic design)
+  // Step 3.25: adversary-design terms — create/adapt a stat block (BEFORE encounter-design)
+  // Exception: explicit encounter/scene intent wins over adversary intent.
+  const EXPLICIT_ENCOUNTER_SCENE =
+    /\bdesign\s+an?\s+encounter\b|\bcreate\s+an?\s+(?:scene|encounter)\b|\b(?:dock|gate|arrival|road)\s+encounter\b|\bencounter\s+scene\b/i
+  const adversaryDesignMatched = findMatchedTerms(lq, ADVERSARY_DESIGN_TERMS);
+  if (adversaryDesignMatched.length > 0 && !EXPLICIT_ENCOUNTER_SCENE.test(lq)) {
+    return {
+      profile: 'adversary-design',
+      reason: `matched adversary-design terms: ${adversaryDesignMatched.slice(0, 3).join(', ')}`,
+      matchedTerms: adversaryDesignMatched,
+    };
+  }
+
+  // Step 3.5: encounter-design terms — social/non-monster encounter scene design
   const encounterDesignMatched = findMatchedTerms(lq, ENCOUNTER_DESIGN_TERMS);
   if (encounterDesignMatched.length > 0) {
     return {

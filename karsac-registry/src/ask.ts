@@ -10,7 +10,7 @@ import {
   buildMessages, buildProseMessages, buildRulesMessages, buildDesignMessages,
   buildDeepLoreMessages, buildDeepLoreExtractionMessages, buildDeepLoreFromFactsMessages,
   buildExtractionMessages, buildComparisonFromFactsMessages,
-  buildStateMessages, buildEncounterDesignMessages,
+  buildStateMessages, buildEncounterDesignMessages, buildAdversaryDesignMessages,
   isComparisonQuestion, normalizeRelatedId,
   type CanonFile, type FactPacket, type ScoredMatch, type StructuredEntry,
   type StateContextData, type EncounterDesignCtx,
@@ -18,7 +18,12 @@ import {
 import {
   loadScoredAdversaries, loadScoredPatterns, getNpcBaseSummaries,
   type ScoredAdversary, type ScoredPattern,
-} from './encounter-design.js';
+} from './encounter-design.js'
+import {
+  detectRequestedBase, loadBaseFile, loadContextAdversaries,
+  validateAdversaryOutput, repairAdversaryOutput,
+  type AdversaryDesignContext,
+} from './adversary-design.js';
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 
@@ -82,6 +87,13 @@ const PROFILES: Record<string, KarsacProfile> = {
     model: process.env.ENCOUNTER_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
     temperature: 0.4,
     topP: 0.85,
+    defaultMode: 'dm',
+  },
+  'adversary-design': {
+    name: 'adversary-design',
+    model: process.env.ADVERSARY_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
+    temperature: 0.55,  // more creative than encounter-design; less than prose
+    topP: 0.88,
     defaultMode: 'dm',
   },
 };
@@ -1465,6 +1477,45 @@ function loadEncounterDesignContext(question: string): EncounterDesignCtx {
   };
 }
 
+// ── Adversary design context loader ──────────────────────────────────────────
+
+function loadAdversaryDesignContext(question: string): AdversaryDesignContext & { loadedFiles: string[] } {
+  const loadedFiles: string[] = [];
+
+  const requestedBase = detectRequestedBase(question);
+  const baseFile = requestedBase
+    ? loadBaseFile(requestedBase, COLLECTIONS_ROOT)
+    : null;
+
+  if (baseFile) loadedFiles.push(baseFile.path);
+
+  const relatedAdversaries = loadContextAdversaries(ADVERSARY_CORPUS_ROOT, question);
+  for (const adv of relatedAdversaries) loadedFiles.push(adv.path);
+
+  // Minimal state
+  function readStateFile(relPath: string): Record<string, unknown> | null {
+    const p = resolve(STATE_ROOT, relPath);
+    if (!existsSync(p)) return null;
+    try { return JSON.parse(readFileSync(p, { encoding: 'utf-8' })) as Record<string, unknown>; }
+    catch { return null; }
+  }
+
+  const campaignState = readStateFile('campaign-state.json');
+  const worldThreads  = readStateFile('world-threads.json');
+  const npcsState     = readStateFile('npcs-state.json');
+  if (campaignState) loadedFiles.push('corpus/state/campaign-state.json');
+  if (worldThreads)  loadedFiles.push('corpus/state/world-threads.json');
+  if (npcsState)     loadedFiles.push('corpus/state/npcs-state.json');
+
+  return {
+    requestedBase,
+    baseFile,
+    relatedAdversaries,
+    stateData: { campaignState, worldThreads, npcsState },
+    loadedFiles,
+  };
+}
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -1675,6 +1726,64 @@ async function main(): Promise<void> {
 
     const edMessages = buildEncounterDesignMessages(edCtx, question);
     await callOllama(edMessages, { profile });
+    return;
+  }
+
+  // ── adversary-design: own path — no entity resolution ────────────────────────
+  if (profile.name === 'adversary-design') {
+    const ctx = loadAdversaryDesignContext(question);
+
+    process.stderr.write(`→ Model:  ${profile.model} @ ${OLLAMA_HOST}\n`);
+    process.stderr.write(`\nProfile:\n  ${profile.name}\n`);
+    process.stderr.write(`\nStrategy:\n  adversary-design-base-plus-corpus\n`);
+    process.stderr.write(`\nRequested base: ${ctx.requestedBase ?? '(none — model will choose)'}\n`);
+    if (ctx.baseFile) {
+      process.stderr.write(`Base file loaded: ${ctx.baseFile.id}  (${ctx.baseFile.path})\n`);
+    } else if (ctx.requestedBase) {
+      process.stderr.write(`⚠  Base file not found for "${ctx.requestedBase}" — model will select closest base.\n`);
+    }
+    if (ctx.relatedAdversaries.length > 0) {
+      process.stderr.write(`\nKarsac adversary context:\n`);
+      for (const adv of ctx.relatedAdversaries) process.stderr.write(`  - ${adv.id}  (score: ${adv.score})\n`);
+    }
+    process.stderr.write('\n');
+
+    const advMessages = buildAdversaryDesignMessages(ctx, question);
+
+    // Use silent mode so we can validate and auto-repair before outputting.
+    process.stderr.write('Generating adversary…\n');
+    const rawAdvResponse = await callOllama(advMessages, { profile, silent: true });
+
+    // Validate
+    const advValidation = validateAdversaryOutput(
+      rawAdvResponse,
+      ctx.requestedBase,
+      ctx.baseFile?.content ?? null,
+    );
+
+    let finalAdvOutput = rawAdvResponse;
+
+    if (!advValidation.valid) {
+      process.stderr.write(`\n⚠  Adversary validation — ${advValidation.violations.length} issue(s):\n`);
+      for (const v of advValidation.violations) process.stderr.write(`   · ${v}\n`);
+
+      // Auto-repair (currently handles unexplained darkvision)
+      const repaired = repairAdversaryOutput(rawAdvResponse, advValidation, ctx.baseFile?.content ?? null);
+      const revalidation = validateAdversaryOutput(repaired, ctx.requestedBase, ctx.baseFile?.content ?? null);
+
+      if (revalidation.violations.length < advValidation.violations.length) {
+        const fixed = advValidation.violations.length - revalidation.violations.length;
+        process.stderr.write(`   [auto-repaired: ${fixed} issue(s) fixed — e.g. removed unexplained darkvision]\n`);
+        finalAdvOutput = repaired;
+        if (!revalidation.valid) {
+          process.stderr.write(`   Remaining issues: ${revalidation.violations.map(v => v.slice(0, 60)).join('; ')}\n`);
+        }
+      } else {
+        process.stderr.write(`   (best-effort output — review issues above before using at the table)\n`);
+      }
+    }
+
+    process.stdout.write(finalAdvOutput + '\n');
     return;
   }
 
