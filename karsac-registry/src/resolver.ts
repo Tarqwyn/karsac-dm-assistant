@@ -1818,7 +1818,8 @@ High: [risk of detention, exposure, combat, or public confrontation]
 
 // ── Adversary design message builder ─────────────────────────────────────────
 
-import type { AdversaryDesignContext } from './adversary-design.js'
+import type { AdversaryDesignContext, AdversaryProposalConstraints } from './adversary-design.js'
+import { formatConstraintBlock } from './adversary-design.js'
 
 export type { AdversaryDesignContext }
 
@@ -1832,7 +1833,11 @@ export type { AdversaryDesignContext }
 export function buildAdversaryDesignMessages(
   ctx: AdversaryDesignContext,
   question: string,
+  constraints?: AdversaryProposalConstraints,
 ): Array<{ role: string; content: string }> {
+  // Build locked constraint block — injected at the top of the system message.
+  // When constraints are present, they override all model defaults.
+  const constraintBlock = constraints ? formatConstraintBlock(constraints) : ''
   const div = '─'.repeat(60)
 
   // ── Campaign state summary ──────────────────────────────────────────────────
@@ -1870,7 +1875,7 @@ export function buildAdversaryDesignMessages(
     : '(No matching Karsac adversary corpus context loaded.)'
 
   // ── System message ──────────────────────────────────────────────────────────
-  const system = `You are Karsac Adversary Designer.
+  const system = `${constraintBlock}You are Karsac Adversary Designer.
 
 You create and adapt D&D 5e 2014 adversaries from prose descriptions.
 Creativity is allowed in identity, prose, theme, tactics, and custom abilities.
@@ -1883,19 +1888,36 @@ CORE RULE:
 
 AVAILABLE BASES RULE (item 2):
 You may ONLY cite a base that was loaded in MECHANICAL BASE LOADED above.
-Do NOT cite: "Cult Fanatic (MM p. 223)" or any base not present in the loaded context.
-If no base is loaded, choose from these SRD NPC/monster names (explain your choice):
+Do NOT cite: "Cult Fanatic (MM p. 223)", "Rogue (Thief)", "Ranger", "Paladin", "Barbarian", or any character-class-based or Book-page reference.
+These are NOT SRD NPC stat blocks. The valid SRD NPC/monster names are:
 spy | noble | guard | bandit | bandit captain | thug | scout | veteran | mage | priest | acolyte | assassin | archmage | commoner
+If no base is loaded, choose the closest available SRD NPC base and explain why.
 The Mechanical Base section MUST cite the loaded path: e.g. "Base: monsters/srd-2014/spy".
+
+FACTION PRESERVATION RULE:
+If the user prompt says "part of the Shadow Walkers faction" or names any specific faction:
+- That exact faction MUST appear in ## DM-Only Notes as the adversary's faction affiliation.
+- That exact faction slug MUST appear in related.factions in the Corpus Frontmatter.
+- Do NOT substitute Mathr, Yngondi, Vishara or another faction — even if related. Shadow Walkers ≠ Mathr.
+- Comparing to a faction ("not as dangerous as Shadow Walkers") is NOT sufficient. The adversary must BELONG to that faction.
+- WRONG: "acting as eyes and ears for Mathr" when prompt said Shadow Walkers.
+- RIGHT: "Veilwards are Shadow Walker faction operatives, adapted for urban infiltration."
+  DM-Only Notes: "This adversary is a Shadow Walker variant. Related factions: shadow-walkers."
+
+KARSAC COMMUNICATION PROPS RULE:
+Do NOT use: encrypted device, communications device, device (for information-passing), tracker, scanner.
+Use instead: coded tally, waxed cipher strip, knotted cord, marked bone sliver, folded harbour chit, salt-marked message, whispered order, runner, hand signal, copied manifest.
 
 ADAPTATION CONSISTENCY RULE:
 Your ## Adaptation Summary MUST match your ## Stat Block exactly.
-- If you say "Kept from base: Cunning Action, Sneak Attack" → those traits MUST appear in Traits or Actions.
-- If you removed a base trait/action, you MUST list it under "Removed:".
+- "Kept from base:" must only list things that LITERALLY APPEAR in the base stat block loaded above AND in your generated stat block.
+- DO NOT list tool proficiencies (Disguise Kit, Thieves' Tools, Poisoner's Kit) as "Kept" unless they are explicitly in the base stat block. They are typically not listed in SRD NPCs.
+- DO NOT list "Expertise" as "Kept" unless the base stat block has an Expertise trait. The Spy base has Sneak Attack, not Expertise.
+- Skill proficiencies listed in the Skills line (e.g. "Stealth +4") count as "Kept" — write them as "Stealth proficiency" not "Stealth +4".
+- If you removed a base trait/action, you MUST list it under "Removed:". If you kept Sneak Attack, it must appear in Traits.
+- For SOCIAL-LED adversaries: prefer removing Multiattack and Sneak Attack, listing both under "Removed:".
 - Contradictions between "Kept" and the stat block are a validation failure.
-- Do not say "Kept: Multiattack" then produce a stat block without a Multiattack action.
-- For SOCIAL-LED adversaries: prefer removing Multiattack (list it under "Removed:") rather than keeping it.
-  Social-led adversaries typically make one attack only, or none.
+- "Kept: Spy-like social/stealth role" is a label, not a trait — acceptable shorthand for the role description, but do not list specific abilities this way.
 
 BALANCE RULES:
 - Do not inflate AC, HP, attack bonus AND damage all at once. Adjust one or two, not all.
@@ -2071,10 +2093,39 @@ ${baseBlock}
 
 ${advBlock}`
 
+  // ── Variant / modular detection ───────────────────────────────────────────
+  // If the prompt asks for modular options (choose X out of Y, never identical,
+  // DM can choose, variants), add a ## Variant Options section to the template.
+  const isVariantAdversary =
+    /\bvariant\b|\bmodular\b|\bdm\s+can\s+choo?s\b|\bx\s+out\s+of\s+y\b|\bnever\s+identical\b|\bchoose\s+\d+\b|\boptional\s+(?:traits?|actions?|reactions?)\b/i
+      .test(question)
+
+  const variantOptionsSection = isVariantAdversary ? `
+## Variant Options
+This adversary has modular components so no two instances are identical. The DM selects from the lists below.
+
+**Choose 2 traits from:**
+[List 4–6 optional traits. Each must be a complete mechanic, not just a name.
+Example: **Local Knowledge.** The adversary has advantage on Intelligence checks related to local customs, trade routes, civic offices, and known public figures in the settlement.]
+
+**Choose 1 signature action from:**
+[List 3–4 optional signature actions with attack bonus, range, damage, and any rider effect or save DC.
+Example: **False Lead.** One creature the adversary can speak to within 30 feet must succeed on a DC 13 Wisdom (Insight) check or pursue a planted false lead until the end of its next turn.]
+
+**Choose 1 reaction from:**
+[List 2–3 optional reactions. Each should change how the adversary survives or responds to being exposed.
+Example: **Evasive Manoeuvre.** When a creature misses the adversary with an attack, the adversary can move up to half its speed without provoking opportunity attacks.]
+
+Note: The Stat Block above shows BASE traits/actions only. Variant options are listed here and applied at the DM's discretion. Not all instances carry the same options.
+` : ''
+
   // ── User message — pre-filled section template ─────────────────────────────
+  // When constraints specify a preferred base, lock it in the user message template.
   const baseLine = ctx.baseFile
     ? `Base: ${ctx.baseFile.id} — ${ctx.baseFile.name}`
-    : `Base: [choose the closest SRD NPC or monster base and state why]`
+    : constraints?.preferredBase
+      ? `Base: npc-bases/srd-2014/${constraints.preferredBase} — REQUIRED by prompt constraints`
+      : `Base: [choose the closest SRD NPC or monster base and state why]`
 
   const user = `Design this adversary:
 "${question}"
@@ -2115,7 +2166,7 @@ Reason: [why this base fits the concept]
 **Damage Resistances** [if any]
 **Condition Immunities** [if any]
 **Senses** [passive Perception N, other senses]
-**Languages** [languages]
+**Languages** [languages. Avoid forbidden-faction tongues unless corpus-backed. Prefer Common, faction signs, one local trade tongue.]
 **Challenge** [CR] ([XP]) · Proficiency Bonus +[N]
 
 ### Traits
@@ -2129,14 +2180,18 @@ Reason: [why this base fits the concept]
 
 ### Reactions
 [If any]
-
+${variantOptionsSection}
 ## Tactics
 [Opening move, target priority, preferred range, terrain use, escape behaviour, morale, response when exposed.
 If social-led: escape/deny/create scene instinct before any fighting. Do not say "fights to the death" for social-led adversaries.]
 
+## Doctrine Under Pressure
+[What the adversary does on round one if attacked, how it avoids being pinned down, what it prioritises preserving, when it retreats, what it does if escape is impossible, and what it will not do even under pressure.
+The mechanics in the stat block must make this behaviour plausible against a combat-optimised party.]
+
 ## Social / Investigation Use
 [Deception pattern, what they ask, what they notice, what checks expose them, what they reveal accidentally.
-Use Karsac-appropriate props: ledgers, cargo lists, sealed manifests, harbour records — not databases or files.]
+Use Karsac-appropriate props: ledgers, cargo lists, sealed manifests, harbour records, waxed cipher strips, knotted cords, marked bone tallies, dead-drop marks, folded harbour chits — not databases, encrypted pendants, or modern devices.]
 
 ## Player-Safe Description
 [What players observe. No hidden truth. 2–4 sentences, suitable for read-aloud or paraphrase.]
@@ -2592,4 +2647,365 @@ export function resolveQuestion(
   }
 
   return { resolved, unresolved };
+}
+
+// ── Chapter Outline message builder ──────────────────────────────────────────
+
+export interface ChapterOutlineCtx {
+  stateData: {
+    campaignState: Record<string, unknown> | null
+    partyState: Record<string, unknown> | null
+    worldThreads: Record<string, unknown> | null
+    playerKnowledge: Record<string, unknown> | null
+    npcsState: Record<string, unknown> | null
+    sessionFacts: Record<string, unknown> | null
+  }
+}
+
+// ── Place proposal message builder ───────────────────────────────────────────
+
+export interface PlaceCtx {
+  stateData: {
+    campaignState: Record<string, unknown> | null
+    worldThreads:  Record<string, unknown> | null
+    npcsState:     Record<string, unknown> | null
+  }
+}
+
+/**
+ * Build messages for a place design proposal.
+ * Generates a grounded setting document (districts, landmarks, factions, NPCs, rumours).
+ * NOT a chapter outline — use this when the user describes a location, not a timeline.
+ */
+export function buildPlaceMessages(
+  ctx: PlaceCtx,
+  question: string,
+): Array<{ role: string; content: string }> {
+  const div = '─'.repeat(60)
+
+  // Campaign state context
+  const cs = (ctx.stateData.campaignState as any) ?? {}
+  const wt = (ctx.stateData.worldThreads  as any) ?? {}
+  const ns = (ctx.stateData.npcsState     as any) ?? {}
+  const hotThreads: any[] = (wt.threads ?? []).filter((t: any) => t.currentStatus === 'hot')
+  const stateLines: string[] = []
+  if (cs.currentSession) stateLines.push(`Session ${cs.currentSession} / Chapter ${cs.currentChapter ?? '?'}`)
+  if (hotThreads.length > 0) stateLines.push(`Hot threads: ${hotThreads.map((t: any) => t.name).join(', ')}`)
+  const stateSummary = stateLines.length > 0 ? stateLines.join('\n') : '(no campaign state loaded)'
+
+  const system = `You are Karsac Place Designer.
+
+You create provisional place documents: grounded, Karsac-consistent locations with districts, landmarks, factions, key NPCs, rumours, and campaign use notes.
+
+PLACE DESIGN RULES:
+- This is a SETTING DOCUMENT, not a chapter outline or encounter. Do not generate scene spines, pressure timelines, or chapter structures.
+- All content is provisional — mark anything invented as "Provisional:" if it goes beyond the campaign corpus.
+- Ground the place in Karsac's tone: old, weather-shaped, factionally complex, practically dangerous.
+- Do not invent named gods, cosmic forces, or artefacts unless the user asks for them.
+- If the place has a named faction already in corpus (e.g. Mathr, Beorn, Vishara-influence), reference it rather than inventing a new one.
+- Keep population, distances, and geography internally consistent with the prompt.
+- Each key NPC entry must include: name (or placeholder), role, what they want, what they know.
+- Rumours should be a mix of true (DM-confirmed), partially true, and false — label each as [TRUE], [PARTIAL], or [FALSE].
+- GROUNDING RULE: Separate what the USER specified (established facts) from what the assistant invented (provisional additions). Never present invented faction connections as confirmed unless the user requested them or the corpus supports them.
+- Use "Provisional:" prefix for any invented detail not grounded in the user's prompt or the campaign corpus.
+
+CAMPAIGN STATE:
+${div}
+${stateSummary}
+${div}`
+
+  const user = `Generate a place proposal for:
+"${question}"
+
+Use EXACTLY these headings IN THIS ORDER. Do not rename, skip, or reorder them.
+
+# Place: [place name]
+
+## Overview
+[Location, size, population, geographic setting — 2-3 sentences. Ground it in what the prompt specified.]
+
+## Geography and Layout
+[Physical description: terrain, approach routes, natural features, weather character. How does it feel to arrive here?]
+
+## Key Districts
+[2-5 districts or neighbourhoods. For each: name, character, what happens there, who controls it.]
+
+## Notable Landmarks
+[3-6 specific landmarks: docks, markets, gates, inns, archive, guild-house, etc. Each with a brief DM note.]
+
+## Factions and Power Structures
+[Who holds power? Who contests it? For each faction: name, goal, what they will do if ignored, any Karsac faction links.]
+
+## Key NPCs
+[4-8 NPCs. For each: name (or provisional placeholder), role, what they want, what they know, what they hide.]
+
+## Rumours
+[6-10 rumours. Label each: [TRUE], [PARTIAL], or [FALSE]. Mix mundane, factional, and cosmological.]
+
+## Atmosphere and Tone
+[Sensory: what does it smell like, sound like, feel like? What's the social texture? What's the mood?]
+
+## Chapter 3 Uses
+[How might this place be used in Chapter 3 or upcoming sessions? Be specific: investigation hooks, faction pressure, transit points, safe houses, archive access, etc.]
+
+## DM Notes
+[Anything the DM should know that players should not. Hidden agendas, who is Vishara-influenced, what is not as it seems.]
+
+## Established Proposal Facts
+[Restate ONLY facts the user provided in their prompt: name, size, location, population, distance from known places, any specific details they named.
+Do NOT add invented facts here. This section is the ground truth the user gave you.]
+
+## Provisional Additions
+[Clearly label everything the assistant invented that was NOT in the user's prompt.
+Use "Provisional:" prefix for each item. Examples:
+- Provisional: The Fishmongers' Guild controls the docks.
+- Provisional: A river cuts through the lower district.
+These can be changed, challenged, or removed by the DM.]
+
+## Optional Chapter Hooks
+[Suggested faction links, Mathr/Vishara involvement, hidden locations, conspiracies, or campaign threads.
+These are optional DM hooks — do NOT present them as firm truth unless the user requested them or the corpus explicitly supports them.
+Label each as: "Optional hook (unconfirmed):" or "Optional hook (corpus-supported):" as appropriate.]`
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user',   content: user },
+  ]
+}
+
+export interface NpcDesignCtx {
+  stateData: {
+    campaignState: Record<string, unknown> | null
+    worldThreads: Record<string, unknown> | null
+    npcsState: Record<string, unknown> | null
+  }
+}
+
+export function buildNpcDesignMessages(
+  ctx: NpcDesignCtx,
+  question: string,
+): Array<{ role: string; content: string }> {
+  const div = '─'.repeat(60)
+  const cs = (ctx.stateData.campaignState as any) ?? {}
+  const wt = (ctx.stateData.worldThreads as any) ?? {}
+  const ns = (ctx.stateData.npcsState as any) ?? {}
+  const stateLines: string[] = []
+  if (cs.currentSession) stateLines.push(`Session ${cs.currentSession} / Chapter ${cs.currentChapter ?? '?'}`)
+  const hotThreads: any[] = (wt.threads ?? []).filter((t: any) => t.currentStatus === 'hot')
+  if (hotThreads.length > 0) stateLines.push(`Hot threads: ${hotThreads.map((t: any) => t.name).join(', ')}`)
+  const activeNpcs: any[] = (ns.npcs ?? []).slice(0, 6)
+  if (activeNpcs.length > 0) stateLines.push(`Active NPCs: ${activeNpcs.map((npc: any) => npc.name).join(', ')}`)
+  const stateSummary = stateLines.length > 0 ? stateLines.join('\n') : '(no campaign state loaded)'
+
+  const system = `You are Karsac NPC Designer.
+
+You create provisional NPC proposal documents for Karsac. They should be specific, usable at the table, and separated cleanly into player-safe and DM-only information.
+
+NPC DESIGN RULES:
+- If the user asks for a new NPC, the output must stay an NPC proposal. Do not switch to a place, encounter, or chapter outline because of context words like road, harbour, fjord, town, or coast.
+- Place, road, region, faction, and chapter references are context for the NPC, not evidence to change proposal type.
+- Keep all material provisional unless grounded in provided campaign context.
+- can_know means facts this NPC can genuinely know.
+- must_not_know means hidden truths or upper-layer facts this NPC should not know.
+- Lines to Inhabit must be short, speakable lines the DM can use at the table.
+- Dramatic Utility must explain what pressure, help, or complication this NPC adds in play.
+- player_safe must contain only what players can observe or plausibly infer.
+- dm_only must contain the hidden truth, pressure, loyalties, or constraints.
+- Return Markdown using the exact headings below and in the same order.
+
+CAMPAIGN STATE:
+${div}
+${stateSummary}
+${div}`
+
+  const user = `Generate an NPC proposal for:
+"${question}"
+
+Use EXACTLY these headings IN THIS ORDER. Do not rename, skip, or reorder them.
+
+# NPC: [NPC name]
+
+## Role
+[Who this NPC is and what function they serve.]
+
+## Physical Bearing
+[What they look like in motion and what stands out at a glance.]
+
+## What They Want
+[What they want right now, what they want if the situation escalates, and what they are trying to protect.]
+
+## What They Hide
+[Secret loyalties, fears, compromises, leverage, contradictions, or concealed intent.]
+
+## can_know
+- [Fact this NPC can know]
+- [Fact this NPC can know]
+
+## must_not_know
+- [Fact this NPC must not know]
+- [Fact this NPC must not know]
+
+## Lines to Inhabit
+- "[Short line the DM can speak.]"
+- "[Another short line.]"
+- "[A third short line.]"
+
+## Dramatic Utility
+[How this NPC functions in scenes, what sort of pressure or help they create, and what they complicate.]
+
+## player_safe
+[What players can observe or reliably infer without exposing hidden truth.]
+
+## dm_only
+[The hidden truth, limits, faction ties, and what this NPC does under pressure.]
+
+## Corpus Frontmatter
+\`\`\`yaml
+---
+id: npcs/<slug>
+type: npc
+visibility: dm-only
+canonical: provisional
+tags: [npc, provisional]
+can_know:
+  - <fact>
+must_not_know:
+  - <fact>
+dm_only:
+  - <hidden truth>
+related:
+  factions: []
+  places: []
+summary: "<One sentence: who this NPC is and why they matter>"
+---
+\`\`\``
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ]
+}
+
+export function buildChapterOutlineMessages(
+  ctx: ChapterOutlineCtx,
+  question: string,
+): Array<{ role: string; content: string }> {
+  const cs = (ctx.stateData.campaignState  as any) ?? {}
+  const ps = (ctx.stateData.partyState     as any) ?? {}
+  const wt = (ctx.stateData.worldThreads   as any) ?? {}
+  const pk = (ctx.stateData.playerKnowledge as any) ?? {}
+  const ns = (ctx.stateData.npcsState      as any) ?? {}
+  const sf = (ctx.stateData.sessionFacts   as any) ?? {}
+
+  const div = '─'.repeat(60)
+
+  // Campaign summary
+  const threads: any[] = wt.threads ?? []
+  const hotThreads = threads.filter((t: any) => t.currentStatus === 'hot')
+  const simmeringThreads = threads.filter((t: any) => t.currentStatus === 'simmering')
+  const knownFacts: string[] = pk.knownFacts ?? []
+  const npcs: any[] = ns.npcs ?? []
+
+  const campaignHeader = [
+    `Session ${cs.currentSession ?? '?'} / Chapter ${cs.currentChapter ?? '?'}`,
+    cs.clock ? `Clock: ${cs.clock.value}/${cs.clock.max}` : '',
+    ps.partyLevel != null ? `Party level: ${ps.partyLevel}` : '',
+    ps.partySize  != null ? `Party size: ${ps.partySize}` : '',
+  ].filter(Boolean).join('  |  ')
+
+  const hotBlock = hotThreads.length > 0
+    ? hotThreads.map((t: any) => `  [HOT] ${t.name}: ${t.summary ?? ''}`).join('\n')
+    : '  (none)'
+
+  const simmeringBlock = simmeringThreads.length > 0
+    ? simmeringThreads.map((t: any) => `  [~] ${t.name}: ${t.summary ?? ''}`).join('\n')
+    : '  (none)'
+
+  const knownBlock = knownFacts.length > 0
+    ? knownFacts.map(f => `  - ${f}`).join('\n')
+    : `  (knownFacts is 0 — players know nothing confirmed yet)`
+
+  const npcBlock = npcs.length > 0
+    ? npcs.slice(0, 8).map((n: any) => `  ${n.name} [${n.status ?? 'unknown'}] — ${n.location ?? '?'}`).join('\n')
+    : '  (none)'
+
+  const stateBlock = `CAMPAIGN STATE
+${div}
+${campaignHeader}
+
+Hot threads:
+${hotBlock}
+
+Simmering threads:
+${simmeringBlock}
+
+Player knowledge (confirmed):
+${knownBlock}
+
+Active NPCs:
+${npcBlock}
+${div}`
+
+  const system = `You are Karsac Chapter Planner. You create grounded chapter outlines from campaign state, using the current table state as your foundation.
+
+Rules:
+- Chapter outlines are proposals only. They do NOT describe what has happened — only what may happen.
+- Do not write as if events have already occurred. Use language like: 'If the party...', 'The chapter opens with...', 'One possible path...'
+- Do not update campaign-state.json or player-knowledge.json.
+- State updates are suggestions only — to be applied after actual play.
+- Draw on the CAMPAIGN STATE below for player knowledge, hot threads, active NPCs, and session progress.
+
+${stateBlock}`
+
+  const userMessage = `Generate a chapter outline for:
+"${question}"
+
+Use EXACTLY these headings IN THIS ORDER:
+
+# Chapter Outline: [title]
+
+## Chapter Purpose
+[What this chapter does in the campaign. 2-3 sentences.]
+
+## Starting State
+[What is confirmed true at the start of this chapter. Draw from campaign state. Do NOT invent new facts.]
+
+## Player Knowledge
+[What players currently know based on corpus/state/player-knowledge.json. If knownFacts is 0, say so.]
+
+## DM Truth
+[What is happening behind the screen that players do not know yet.]
+
+## Core Pressure
+[The force driving the chapter forward.]
+
+## Active Factions and NPCs
+[For each relevant NPC/faction: what they want, what they know, what they will do if ignored.]
+
+## Scene Spine
+[A suggested sequence of 3–6 scenes. For each: purpose, location, pressure, likely choices, clues, failure consequence.]
+
+## Optional Scenes
+[Scenes for party drift, delay, split, or bypass.]
+
+## Clues and Reveals
+[Separate player-safe clues from deeper implications and DM-only truth.]
+
+## Adversaries and Obstacles
+[Social, procedural, factional, investigative and combat obstacles. Reference existing adversary corpus where applicable.]
+
+## Fail-Forward Paths
+[What happens if the party fails, delays, misses clues, or refuses the hook.]
+
+## End Conditions
+[Possible states at the end of the chapter. At least 3: success, partial, failure.]
+
+## Suggested State Updates After Play
+IMPORTANT: These are suggestions only. Do not apply them until the chapter has actually been played at the table.
+[List suggested campaign state changes: thread status updates, revealed facts, NPC changes, etc.]`
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: userMessage },
+  ]
 }

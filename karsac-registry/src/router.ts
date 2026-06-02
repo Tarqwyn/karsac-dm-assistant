@@ -153,7 +153,10 @@ const STATE_TERMS = [
 // These indicate the user wants to CREATE an adversary (stat block, adaptation),
 // not design an encounter scene.
 const ADVERSARY_DESIGN_TERMS = [
-  // Explicit adversary creation
+  // Explicit adversary creation (propose/new patterns for proposal mode)
+  'propose a new adversary',
+  'propose an adversary',
+  'new adversary',
   'design me an adversary',
   'create an adversary',
   'make me an adversary',

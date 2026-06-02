@@ -11,7 +11,16 @@
     "karsac:index": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:index",
     "karsac:lookup": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:lookup --",
     "karsac:show": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:show --",
-    "karsac:ask": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:ask --"
+    "karsac:ask": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:ask --",
+    "karsac:gateway": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run gateway",
+    "karsac:propose": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:propose --",
+    "karsac:summarise-proposal": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:summarise-proposal --",
+    "karsac:propose:adversary": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:propose -- --type adversary",
+    "karsac:propose:encounter": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:propose -- --type encounter",
+    "karsac:propose:chapter": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:propose -- --type chapter-outline",
+    "karsac:validate-proposals": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:validate-proposals",
+    "karsac:list-proposals": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:list-proposals",
+    "karsac:promote-proposal": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:promote-proposal --"
   },
   "devDependencies": {
     "ajv": "^8.17.1",

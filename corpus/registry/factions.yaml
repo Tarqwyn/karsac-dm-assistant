@@ -1,0 +1,92 @@
+canonical_languages:
+  - Common
+  - Dwarvish
+  - Elvish
+  - Giant
+  - Gnomish
+  - Goblin
+  - Halfling
+  - Orc
+  - Draconic
+  - Primordial
+  - Celestial
+  - Sylvan
+  - Trade Tongue (local)
+  - local trade tongue
+  - one local trade tongue
+  - Shadow Walker Sign
+  - Shadow Walker signs
+
+factions:
+  - slug: shadow-walkers
+    display_name: Shadow Walkers
+    aliases:
+      - Shadow Walker
+      - Shadow Walkers
+    default_alignment: neutral
+    allowed_alignments:
+      - neutral
+    language_whitelist:
+      - Common
+      - Trade Tongue (local)
+      - local trade tongue
+      - one local trade tongue
+      - Shadow Walker Sign
+      - Shadow Walker signs
+    banned_languages:
+      - Undercommon
+      - Abyssal
+      - Infernal
+      - Deep Speech
+    spellcasting:
+      default: prohibited
+      allow_with_explicit_override: true
+    preferred_weapons:
+      - concealed blade
+      - work knife
+      - throwing spike
+      - tally blade
+    discouraged_weapons_for_cover_identity:
+      - shortbow
+      - longbow
+      - heavy crossbow
+      - greatsword
+      - halberd
+    ability_floors:
+      observer:
+        wis: 12
+      infiltrator:
+        dex: 12
+        cha: 12
+    doctrine_tags:
+      - secrecy
+      - restraint
+      - mission-first
+      - controlled-withdrawal
+      - information-preservation
+      - cover-identity
+      - unremarkable-presence
+      - urban-infiltration
+    preferred_concealable_weapons:
+      - name: Throwing Spike
+        type: ranged
+        range: 20/60 ft.
+        damage_die: 1d4
+        ability: dex
+        rider: If the target is a creature, it must succeed on a DC 13 Constitution saving throw or its speed is reduced by 10 feet until the end of its next turn.
+      - name: Concealed Blade
+        type: melee
+        reach: 5 ft.
+        damage_die: 1d4
+        ability: dex
+        rider: The blade is disguised as a work knife, tally blade, or ordinary tool until used.
+    required_doctrine_themes:
+      - secrecy
+      - restraint
+      - mission-first behaviour
+      - controlled withdrawal
+      - information preservation
+    style_notes:
+      - Shadow Walkers stay legible as ordinary settlement life until pressure closes.
+      - They preserve information and cover identity before pride.
+      - Urban tools should look mundane, concealable, and deniable.

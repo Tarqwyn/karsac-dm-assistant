@@ -1,0 +1,27 @@
+faction_mechanical_overrides:
+  - id: urban-cover-obvious-ranged-weapon
+    description: Urban cover-identity adversaries should not inherit obvious weapons from their mechanical base.
+    applies_when:
+      faction:
+        - shadow-walkers
+      doctrine_tags:
+        - cover-identity
+        - unremarkable-presence
+        - urban-infiltration
+      environment_context:
+        - urban
+        - town
+        - city
+        - settlement
+    conflicts:
+      weapons:
+        - shortbow
+        - longbow
+        - heavy crossbow
+        - halberd
+        - greatsword
+    severity: repair
+    replacement_strategy: faction_preferred_concealable_weapon
+    override:
+      allowed: true
+      requires_reason: true

@@ -49,7 +49,13 @@ cp .env.example .env
 OLLAMA_HOST=http://172.18.64.1:11434
 ```
 
-3. Install dependencies:
+3. Pull the creative treatment model:
+
+```bash
+ollama pull qwen3:14b
+```
+
+4. Install dependencies:
 
 ```bash
 npm install
@@ -62,5 +68,39 @@ npm run install:registry
 npm run karsac:ask -- "Tell me about Brynja"
 npm run karsac:lookup -- "brynja"
 npm run karsac:show -- "npcs/brynja-thorgrimsdotter"
+npm run karsac:gateway
 npm test
 ```
+
+Proposal generation now uses a two-pass flow:
+
+- draft generation with the configured draft model
+- creative treatment with `qwen3:14b` by default for doctrine, cultural identity, story beat, thematic movement, and rich preview polish
+- deterministic validation and write-back
+
+## Open WebUI Integration
+
+Open WebUI should connect to Karsac through the local gateway, not by bypassing the registry runtime.
+
+1. Start Ollama.
+2. Start the gateway:
+
+```bash
+npm run karsac:gateway
+```
+
+3. In Open WebUI, add an OpenAI-compatible connection:
+
+```text
+Base URL: http://host.docker.internal:3210/v1
+API Key: local-karsac-dev-key
+```
+
+If `host.docker.internal` is not reachable from Docker on your setup, use the host IP that the container can reach instead.
+
+The gateway exposes:
+
+- `GET /v1/models`
+- `POST /v1/chat/completions`
+
+The first model id is `karsac-dm-assistant`. Open WebUI handles chat history and model selection; Karsac remains responsible for routing, corpus retrieval, proposals, validation, and write-back.

@@ -24,8 +24,16 @@ import {
   validateAdversaryOutput, repairAdversaryOutput,
   type AdversaryDesignContext,
 } from './adversary-design.js';
+import {
+  getDraftGenerationSettings,
+  getDraftModel,
+  getRulesGenerationSettings,
+  getRulesModel,
+} from './modelSettings.js';
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
+const DRAFT_SETTINGS = getDraftGenerationSettings();
+const RULES_SETTINGS = getRulesGenerationSettings();
 
 // ── Profiles ──────────────────────────────────────────────────────────────────
 
@@ -42,9 +50,9 @@ interface KarsacProfile {
 const PROFILES: Record<string, KarsacProfile> = {
   canon: {
     name: 'canon',
-    model: process.env.OLLAMA_MODEL ?? 'gemma3:12b',
-    temperature: 0.1,
-    topP: 0.7,
+    model: process.env.CANON_MODEL ?? getRulesModel(),
+    temperature: RULES_SETTINGS.temperature,
+    topP: RULES_SETTINGS.topP,
     defaultMode: 'dm',
   },
   prose: {
@@ -63,37 +71,37 @@ const PROFILES: Record<string, KarsacProfile> = {
   },
   rules: {
     name: 'rules',
-    model: process.env.RULES_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
-    temperature: 0.1,
-    topP: 0.7,
+    model: process.env.RULES_MODEL ?? getRulesModel(),
+    temperature: RULES_SETTINGS.temperature,
+    topP: RULES_SETTINGS.topP,
     defaultMode: 'dm',
   },
   design: {
     name: 'design',
-    model: process.env.DESIGN_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
-    temperature: 0.5,
-    topP: 0.85,
+    model: process.env.DESIGN_MODEL ?? getDraftModel(),
+    temperature: DRAFT_SETTINGS.temperature,
+    topP: DRAFT_SETTINGS.topP,
     defaultMode: 'dm',
   },
   state: {
     name: 'state',
-    model: process.env.STATE_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
-    temperature: 0.15,
-    topP: 0.7,
+    model: process.env.STATE_MODEL ?? getRulesModel(),
+    temperature: RULES_SETTINGS.temperature,
+    topP: RULES_SETTINGS.topP,
     defaultMode: 'dm',
   },
   'encounter-design': {
     name: 'encounter-design',
-    model: process.env.ENCOUNTER_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
-    temperature: 0.4,
-    topP: 0.85,
+    model: process.env.ENCOUNTER_MODEL ?? getDraftModel(),
+    temperature: DRAFT_SETTINGS.temperature,
+    topP: DRAFT_SETTINGS.topP,
     defaultMode: 'dm',
   },
   'adversary-design': {
     name: 'adversary-design',
-    model: process.env.ADVERSARY_MODEL ?? process.env.OLLAMA_MODEL ?? 'gemma3:12b',
-    temperature: 0.55,  // more creative than encounter-design; less than prose
-    topP: 0.88,
+    model: process.env.ADVERSARY_MODEL ?? getDraftModel(),
+    temperature: DRAFT_SETTINGS.temperature,
+    topP: DRAFT_SETTINGS.topP,
     defaultMode: 'dm',
   },
 };
@@ -1759,6 +1767,7 @@ async function main(): Promise<void> {
       rawAdvResponse,
       ctx.requestedBase,
       ctx.baseFile?.content ?? null,
+      question,
     );
 
     let finalAdvOutput = rawAdvResponse;
@@ -1769,7 +1778,7 @@ async function main(): Promise<void> {
 
       // Auto-repair (currently handles unexplained darkvision)
       const repaired = repairAdversaryOutput(rawAdvResponse, advValidation, ctx.baseFile?.content ?? null);
-      const revalidation = validateAdversaryOutput(repaired, ctx.requestedBase, ctx.baseFile?.content ?? null);
+      const revalidation = validateAdversaryOutput(repaired, ctx.requestedBase, ctx.baseFile?.content ?? null, question);
 
       if (revalidation.violations.length < advValidation.violations.length) {
         const fixed = advValidation.violations.length - revalidation.violations.length;

@@ -8,6 +8,12 @@
     "karsac:lookup": "tsx src/lookup.ts",
     "karsac:show": "tsx src/show.ts",
     "karsac:ask": "tsx src/ask.ts",
+    "gateway": "node --import tsx src/gateway/server.ts",
+    "karsac:propose": "node --import tsx src/commands/propose.ts",
+    "karsac:summarise-proposal": "node --import tsx src/commands/summariseProposal.ts",
+    "karsac:validate-proposals": "tsx src/commands/validateProposals.ts",
+    "karsac:list-proposals": "tsx src/commands/listProposals.ts",
+    "karsac:promote-proposal": "tsx src/commands/promoteProposal.ts",
     "test": "vitest run"
   },
   "dependencies": {
