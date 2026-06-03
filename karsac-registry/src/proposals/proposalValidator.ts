@@ -2,6 +2,9 @@ import { readFileSync } from 'fs'
 import { basename } from 'path'
 import matter from 'gray-matter'
 import type { ProposalType } from './proposalTypes.js'
+import { validateProposalGovernance } from './proposalGovernance.js'
+import { getProposalEntityPolicy } from './proposalEntityPolicies.js'
+import { normalizeEntityName } from './proposalEntityRegistry.js'
 
 export interface ProposalValidationResult {
   valid: boolean
@@ -48,6 +51,24 @@ const NPC_REQUIRED_SECTIONS = [
   '## dm_only',
 ]
 
+export function policyFilteredSections(sectionHeaders: string[], policy: ReturnType<typeof getProposalEntityPolicy>): string[] {
+  if (!policy) return sectionHeaders
+  const forbidden = new Set(policy.forbiddenSections.map((section) => normalizeEntityName(section)))
+  const allowed = new Set(policy.allowedSections.map((section) => normalizeEntityName(section)))
+  return sectionHeaders.filter((header) => {
+    const heading = header.replace(/^##\s+/, '')
+    const normalized = normalizeEntityName(heading)
+    if (forbidden.has(normalized)) return false
+    // Prefix match: if a forbidden section starts with this heading, suppress it.
+    // Handles e.g. "Factions" matching "Factions and Power Structures".
+    if ([...forbidden].some((f) => f.startsWith(normalized + ' '))) return false
+    if (policy.coverageLevel === 'stub' && allowed.size > 0) {
+      return allowed.has(normalized)
+    }
+    return true
+  })
+}
+
 export function validateProposalContent(
   frontmatter: Record<string, unknown>,
   body: string,
@@ -56,6 +77,7 @@ export function validateProposalContent(
   const issues: string[] = []
   let hasFail = false
   let hasWarn = false
+  const entityPolicy = getProposalEntityPolicy(String(frontmatter.corpus_policy_id ?? frontmatter.corpus_anchor_entity ?? '').trim())
 
   function fail(msg: string): void { issues.push(`FAIL: ${msg}`); hasFail = true }
   function warn(msg: string): void { issues.push(`WARN: ${msg}`); hasWarn = true }
@@ -167,7 +189,7 @@ export function validateProposalContent(
       fail('place proposal body must begin with a "# Place: <name>" heading')
     }
 
-    const PLACE_REQUIRED_SECTIONS = ['## Overview', '## Geography', '## Key Districts', '## Factions']
+    const PLACE_REQUIRED_SECTIONS = policyFilteredSections(['## Overview', '## Geography', '## Key Districts', '## Factions'], entityPolicy)
     for (const section of PLACE_REQUIRED_SECTIONS) {
       if (!body.includes(section)) {
         warn(`place body missing suggested section: ${section}`)
@@ -191,7 +213,7 @@ export function validateProposalContent(
     if (!body.match(/^#\s+NPC:\s+\S/m)) {
       fail('npc proposal body must begin with a "# NPC: <name>" heading')
     }
-    for (const section of NPC_REQUIRED_SECTIONS) {
+    for (const section of policyFilteredSections(NPC_REQUIRED_SECTIONS, entityPolicy)) {
       if (!body.includes(section)) {
         fail(`npc body missing required section: ${section}`)
       }
@@ -206,6 +228,13 @@ export function validateProposalContent(
     if (body.includes('"patches"') === false && body.toLowerCase().includes('direct json edit')) {
       warn('state-update body should describe patches, not direct JSON edits')
     }
+  }
+
+  const governance = validateProposalGovernance(frontmatter, body, proposalType)
+  for (const issue of governance.issues) {
+    issues.push(issue)
+    if (issue.startsWith('FAIL:')) hasFail = true
+    if (issue.startsWith('WARN:')) hasWarn = true
   }
 
   const status: 'pass' | 'warning' | 'fail' = hasFail ? 'fail' : hasWarn ? 'warning' : 'pass'

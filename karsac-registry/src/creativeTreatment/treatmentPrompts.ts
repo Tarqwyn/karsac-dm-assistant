@@ -1,4 +1,5 @@
 import type { ProposalType } from '../proposals/proposalTypes.js'
+import type { ProposalEntityPolicy } from '../proposals/proposalEntityPolicies.js'
 import { getCreativeTreatmentContract } from './treatmentContracts.js'
 
 export interface LockedConstraints {
@@ -18,11 +19,37 @@ export interface BuildCreativeTreatmentPromptInput {
   draftMarkdown: string
   sourcePrompt: string
   lockedConstraints: LockedConstraints
+  entityPolicy?: ProposalEntityPolicy | null
   corpusContext?: string
 }
 
 function extractExistingHeadings(markdown: string): string[] {
   return [...markdown.matchAll(/^(##\s+[^\n]+)$/gm)].map((match) => match[1].trim())
+}
+
+// Extract text for a specific section heading from a markdown document (corpus anchor text)
+function extractCorpusSection(corpus: string, headingName: string): string {
+  const escaped = headingName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = corpus.match(new RegExp(`(?:^|\\n)##\\s+${escaped}\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`, 'i'))
+  return match?.[1]?.trim() ?? ''
+}
+
+// Build per-section corpus anchor constraints for canonical_reference_only entities
+function buildCanonicalReferenceConstraint(
+  editableSections: string[],
+  corpusContext: string,
+): string {
+  const sectionLines = editableSections.map((heading) => {
+    const name = heading.replace(/^##\s+/, '')
+    const text = extractCorpusSection(corpusContext, name)
+    if (text) return `${heading}: use only — ${text.slice(0, 400)}`
+    return `${heading}: corpus anchor text absent — omit this section entirely.`
+  })
+
+  return `This is a canonical reference-only entity. Derive content for each section ONLY from the corpus anchor text provided below. Do not add detail not present in the anchor text. If the corpus anchor text for a section is thin, write a thin section. If it is absent, omit the section entirely.
+
+Per-section anchor constraints:
+${sectionLines.join('\n\n')}`
 }
 
 function extractSectionBlock(markdown: string, heading: string): string {
@@ -148,6 +175,11 @@ Do not write or rewrite the Stat Block, Traits, Actions, Bonus Actions, Reaction
 Return ONLY the editable sections listed by the user, each with its ## heading.
 Do not return the title or untouched sections.`
 
+  const canonicalConstraint =
+    input.entityPolicy?.canonicalReferenceOnly && input.corpusContext
+      ? buildCanonicalReferenceConstraint(contract.editableSections, input.corpusContext)
+      : null
+
   const user = `Locked constraints:
 ${renderLockedConstraints(input.lockedConstraints)}
 
@@ -160,7 +192,7 @@ ${contract.editableSections.map((heading) => `- ${heading}`).join('\n')}
 Required creative treatment:
 ${contract.instruction}
 
-${contract.extraInstruction ? `${contract.extraInstruction}\n` : ''}${renderAdversaryMechanicsGuide(input) ? `${renderAdversaryMechanicsGuide(input)}\n\n` : ''}${input.corpusContext ? `Relevant corpus context:
+${contract.extraInstruction ? `${contract.extraInstruction}\n` : ''}${renderAdversaryMechanicsGuide(input) ? `${renderAdversaryMechanicsGuide(input)}\n\n` : ''}${canonicalConstraint ? `${canonicalConstraint}\n\n` : ''}${input.corpusContext ? `Relevant corpus context:
 ${input.corpusContext}
 
 ` : ''}Read-only reference sections from the draft:

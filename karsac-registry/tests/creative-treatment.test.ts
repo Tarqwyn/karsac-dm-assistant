@@ -7,7 +7,9 @@ import {
 import * as creativeModel from '../src/creativeTreatment/creativeModel.js'
 import { getCreativeTreatmentContract } from '../src/creativeTreatment/treatmentContracts.js'
 import { buildCreativeTreatmentMessages } from '../src/creativeTreatment/treatmentPrompts.js'
-import { creativeTreatmentQualityCheck, validateCreativeTreatment } from '../src/creativeTreatment/treatmentValidator.js'
+import { creativeTreatmentQualityCheck, validateCreativeTreatment, validateAnchorBoundedContent } from '../src/creativeTreatment/treatmentValidator.js'
+import { getProposalEntityPolicy } from '../src/proposals/proposalEntityPolicies.js'
+import { policyFilteredSections } from '../src/proposals/proposalValidator.js'
 import {
   creativeTreatmentEnabled,
   getCreativeGenerationSettings,
@@ -223,6 +225,200 @@ Quiet extraction pressure.`
     expect(result.valid).toBe(false)
     expect(result.issues.some((issue) => issue.includes('corrupted code-like fragment'))).toBe(true)
     expect(result.issues.some((issue) => issue.includes('unexpected non-Latin script'))).toBe(true)
+  })
+})
+
+// ── Pass 6 regression tests ───────────────────────────────────────────────────
+
+describe('Pass 6: policy-aware creative treatment validation', () => {
+  it('effective_required subtracts forbidden_expansion_fields for stub entity (Maret)', () => {
+    const policy = getProposalEntityPolicy('npcs/maret')
+    expect(policy).not.toBeNull()
+    // NPC contract requires Public Face, Private Want, Fear — all forbidden for Maret
+    const markdown = `# NPC: Maret
+
+## Role
+A minor figure in Lösweg.
+
+## player_safe
+Little is known.
+
+## dm_only
+Unresolved.
+
+## Ambiguities
+- No further characterisation available.
+`
+    const result = validateCreativeTreatment('npc', markdown, policy)
+    // Public Face, Private Want, Fear are forbidden by policy — must NOT fail for their absence
+    expect(result.valid).toBe(true)
+    expect(result.missingSections).toHaveLength(0)
+  })
+
+  it('effective_required subtracts forbidden sections for anchored entity (Beorn)', () => {
+    const policy = getProposalEntityPolicy('npcs/jarl-beorn')
+    expect(policy).not.toBeNull()
+    const markdown = `# NPC: Jarl Beorn
+
+## Role
+Council leader.
+
+## can_know
+- Dugweb's visit.
+
+## must_not_know
+- Mathr's deception.
+
+## Lines to Inhabit
+- "Say it plainly."
+
+## Dramatic Utility
+Political pressure.
+
+## player_safe
+A tired ruler.
+
+## dm_only
+Misled for decades.
+`
+    const result = validateCreativeTreatment('npc', markdown, policy)
+    expect(result.valid).toBe(true)
+    expect(result.missingSections).toHaveLength(0)
+  })
+
+  it('per-section corpus anchor text injected into prompt for canonical_reference_only entity', () => {
+    const policy = getProposalEntityPolicy('npcs/jarl-beorn')
+    expect(policy?.canonicalReferenceOnly).toBe(true)
+
+    const messages = buildCreativeTreatmentMessages({
+      proposalType: 'npc',
+      draftMarkdown: `# NPC: Jarl Beorn\n\n## Public Face\nDraft.\n\n## Private Want\nDraft.\n\n## Fear\nDraft.`,
+      sourcePrompt: 'Propose NPC Jarl Beorn.',
+      lockedConstraints: { proposalType: 'npc', title: 'Jarl Beorn' },
+      entityPolicy: policy,
+      corpusContext: `## Role\nCouncil leader at Valweg.\n\n## Public Face\nHe appears decisive.`,
+    })
+
+    const userContent = messages.find((m) => m.role === 'user')?.content ?? ''
+    expect(userContent).toContain('canonical reference-only entity')
+    expect(userContent).toContain('corpus anchor text')
+  })
+
+  it('validateAnchorBoundedContent flags proper-noun phrases absent from corpus anchor', () => {
+    const corpusAnchor = `## Cultural Identity\nA coastal town. Salt trade dominates. The harbour watch controls access.`
+    const generatedMarkdown = `## Cultural Identity\nThe Stone Gate watches over Mariner's Rest. Grey Wolves patrol Shadowfen.`
+
+    const result = validateAnchorBoundedContent('place', generatedMarkdown, corpusAnchor)
+    // WARNs are produced but valid stays true (no FAIL-level issues for non-org proper nouns)
+    expect(result.issues.length).toBeGreaterThan(0)
+    // Invented named things should be flagged
+    const flagged = result.issues.map((i) => i)
+    expect(flagged.some((i) => i.includes('Stone Gate') || i.includes('Mariner') || i.includes('Grey Wolves'))).toBe(true)
+  })
+
+  it('validateAnchorBoundedContent FAIL on unsupported organisation name', () => {
+    const corpusAnchor = `Valweg is a city of dark timber and fire-lit mead halls. The inner council governs.`
+    const generatedMarkdown = `## DM Notes\nMariner's Guild has its own ambitions and acts independently of the council.`
+
+    const result = validateAnchorBoundedContent('place', generatedMarkdown, corpusAnchor)
+    expect(result.valid).toBe(false)
+    expect(result.issues.some((i) => i.startsWith('FAIL:') && i.includes("Mariner"))).toBe(true)
+  })
+
+  it('validateAnchorBoundedContent allows Provisional-marked org name as WARN not FAIL', () => {
+    const corpusAnchor = `Valweg is a city of dark timber and fire-lit mead halls.`
+    const generatedMarkdown = `## DM Notes\nProvisional: Mariner's Guild may be active here — define only if needed.`
+
+    const result = validateAnchorBoundedContent('place', generatedMarkdown, corpusAnchor)
+    // Provisional-marked org name should not produce a FAIL
+    expect(result.issues.every((i) => !i.startsWith('FAIL:'))).toBe(true)
+  })
+
+  it('validateAnchorBoundedContent passes when all named phrases are in corpus anchor', () => {
+    const corpusAnchor = `## Cultural Identity\nThe Harbour Watch controls the Salt Gate. The Council meets at Valweg Hall.`
+    const generatedMarkdown = `## Cultural Identity\nThe Harbour Watch guards the Salt Gate approach. The Council at Valweg Hall holds authority.`
+
+    const result = validateAnchorBoundedContent('place', generatedMarkdown, corpusAnchor)
+    expect(result.valid).toBe(true)
+    expect(result.issues).toHaveLength(0)
+  })
+
+  it('policyFilteredSections suppresses Factions warning when Factions and Power Structures is forbidden', () => {
+    // If policy forbids "Factions and Power Structures" (which gets pruned),
+    // the structural validator must not warn that "Factions" is missing.
+    const mockPolicy = {
+      entityId: 'places/valweg',
+      coverageLevel: 'bounded' as const,
+      proposalScope: 'bounded' as const,
+      canonicalReferenceOnly: true,
+      unresolvedFieldsPreferred: false,
+      allowedSections: [],
+      forbiddenSections: ['Factions and Power Structures', 'Key Districts', 'Notable Landmarks'],
+      promptConstraints: [],
+      ambiguityFlags: [],
+      requireAmbiguitySection: false,
+      forbiddenPatterns: [],
+    }
+    const required = ['## Overview', '## Geography', '## Key Districts', '## Factions']
+    const filtered = policyFilteredSections(required, mockPolicy)
+    // "## Factions" should be suppressed because "Factions and Power Structures" is forbidden
+    expect(filtered).not.toContain('## Factions')
+    // "## Key Districts" should be suppressed (directly forbidden)
+    expect(filtered).not.toContain('## Key Districts')
+    // "## Overview" and "## Geography" should remain
+    expect(filtered).toContain('## Overview')
+    expect(filtered).toContain('## Geography')
+  })
+
+  it('Beorn still passes creative treatment validation with entity policy', () => {
+    const policy = getProposalEntityPolicy('npcs/jarl-beorn')
+    const markdown = `# NPC: Jarl Beorn\n\n## Role\nCouncil leader.\n\n## can_know\n- Dugweb's visit.\n\n## must_not_know\n- Mathr's deception.\n\n## Lines to Inhabit\n- "Show me the evidence."\n\n## Dramatic Utility\nPolitical pressure.\n\n## player_safe\nA trusted figure.\n\n## dm_only\nMisled for sixty years.`
+    const result = validateCreativeTreatment('npc', markdown, policy)
+    expect(result.valid).toBe(true)
+    expect(result.missingSections).toHaveLength(0)
+  })
+
+  it('Maret still passes creative treatment validation with entity policy', () => {
+    const policy = getProposalEntityPolicy('npcs/maret')
+    const markdown = `# NPC: Maret\n\n## Role\nArchivist in Valweg.\n\n## player_safe\nDirects players to the archive.\n\n## dm_only\nNo further characterisation.`
+    const result = validateCreativeTreatment('npc', markdown, policy)
+    expect(result.valid).toBe(true)
+    expect(result.missingSections).toHaveLength(0)
+  })
+
+  it('Dugweb still passes creative treatment validation with entity policy', () => {
+    const policy = getProposalEntityPolicy('npcs/king-dugweb')
+    const markdown = `# NPC: King Dugweb\n\n## Role\nHereditary head of Zörsdkog.\n\n## Dramatic Utility\nAncient authority.\n\n## player_safe\nElderly, carries Kurogane.\n\n## dm_only\nMathr manages every visit.\n\n## Ambiguities\n- Kurogane unexplained.`
+    const result = validateCreativeTreatment('npc', markdown, policy)
+    expect(result.valid).toBe(true)
+    expect(result.missingSections).toHaveLength(0)
+  })
+})
+
+// ── Pass 7 regression tests ───────────────────────────────────────────────────
+
+describe('Pass 7: sentence strip, Provisional suppression, title-prefixed allowlist', () => {
+  it('validateAnchorBoundedContent skips self-labelled Provisional sections entirely', () => {
+    const corpusAnchor = `Valweg is a city of dark timber and fire-lit mead halls.`
+    const markdown = `## Provisional Additions\nMariner's Guild has its own ambitions. The Lower Ward is a hub.`
+    const result = validateAnchorBoundedContent('place', markdown, corpusAnchor)
+    expect(result.issues).toHaveLength(0)
+    expect(result.valid).toBe(true)
+  })
+
+  it('validateAnchorBoundedContent skips sections whose content opens with Provisional:', () => {
+    const corpusAnchor = `Valweg is a city of dark timber.`
+    const markdown = `## Optional Chapter Hooks\nProvisional: Fishmongers' Guild may be present here.`
+    const result = validateAnchorBoundedContent('place', markdown, corpusAnchor)
+    expect(result.issues).toHaveLength(0)
+  })
+
+  it('validateAnchorBoundedContent still flags non-Provisional invented org names', () => {
+    const corpusAnchor = `Valweg is a city of dark timber.`
+    const markdown = `## DM Notes\nThe Merchants' Guild controls the harbour.`
+    const result = validateAnchorBoundedContent('place', markdown, corpusAnchor)
+    expect(result.valid).toBe(false)
+    expect(result.issues.some((i) => i.startsWith('FAIL:'))).toBe(true)
   })
 })
 

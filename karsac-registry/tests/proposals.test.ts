@@ -7,6 +7,7 @@ import { summariseProposal } from '../src/proposals/proposalSummary.js'
 import { writeProposal } from '../src/proposals/proposalWriter.js'
 import { validateProposalContent } from '../src/proposals/proposalValidator.js'
 import { repairAdversaryOutput, validateAdversaryOutput } from '../src/adversary-design.js'
+import { pruneProposalOutput } from '../src/proposals/proposalPruner.js'
 import { buildChapterOutlineMessages } from '../src/resolver.js'
 import type { ProposalFrontmatter, ProposalType } from '../src/proposals/proposalTypes.js'
 import * as creativeModel from '../src/creativeTreatment/creativeModel.js'
@@ -980,5 +981,69 @@ related:
     expect(summary.humanMarkdown).toContain('**Tool Proficiencies** disguise kit, forgery kit')
     expect(summary.humanMarkdown).toContain('## Doctrine-Expressive Mechanics')
     expect(summary.humanMarkdown).toContain('## Stat Block')
+  })
+})
+
+// ── Pass 7 regression tests ───────────────────────────────────────────────────
+
+describe('Pass 7: sentence-level strip of forbidden patterns', () => {
+  const dugwebPolicy = {
+    entityId: 'npcs/king-dugweb',
+    coverageLevel: 'anchored' as const,
+    proposalScope: 'bounded' as const,
+    canonicalReferenceOnly: true,
+    unresolvedFieldsPreferred: false,
+    allowedSections: ['Role', 'Dramatic Utility', 'player_safe', 'dm_only', 'Ambiguities'],
+    forbiddenSections: ['Physical Bearing', 'What They Want', 'What They Hide'],
+    promptConstraints: [],
+    ambiguityFlags: ['Kurogane is mentioned in current corpus but not explained.'],
+    requireAmbiguitySection: true,
+    forbiddenPatterns: [
+      {
+        pattern: 'knows more about the Shade of Qadim al-Sharr',
+        severity: 'fail' as const,
+        message: 'Shade of Qadim al-Sharr details must not be extended.',
+      },
+    ],
+  }
+
+  it('strips sentence matching a fail-severity forbidden pattern and logs to repair_log', () => {
+    const body = `# NPC: King Dugweb
+
+## dm_only
+He is ancient. He knows more about the Shade of Qadim al-Sharr than he lets on. His relationship with Mathr is managed.
+`
+    const result = pruneProposalOutput(body, 'npc', dugwebPolicy)
+    expect(result.body).not.toContain('knows more about the Shade of Qadim al-Sharr')
+    expect(result.body).toContain('He is ancient.')
+    expect(result.body).toContain('His relationship with Mathr is managed.')
+    const stripped = result.repairLog.auto_repairs.filter((r) => r.reason.startsWith('forbidden_sentence_stripped'))
+    expect(stripped).toHaveLength(1)
+    expect(stripped[0]!.field).toBe('dm_only')
+  })
+
+  it('does not strip sentences when canonicalReferenceOnly is false', () => {
+    const policy = { ...dugwebPolicy, canonicalReferenceOnly: false }
+    const body = `# NPC: King Dugweb
+
+## dm_only
+He knows more about the Shade of Qadim al-Sharr than he lets on.
+`
+    const result = pruneProposalOutput(body, 'npc', policy)
+    expect(result.body).toContain('knows more about the Shade of Qadim al-Sharr')
+    const strippedRepairs = result.repairLog.auto_repairs.filter((r) => r.reason.startsWith('forbidden_sentence_stripped'))
+    expect(strippedRepairs).toHaveLength(0)
+  })
+
+  it('strips only the offending sentence and leaves the rest of the section intact', () => {
+    const body = `# NPC: King Dugweb
+
+## dm_only
+First clean sentence. He knows more about the Shade of Qadim al-Sharr than he lets on. Third clean sentence.
+`
+    const result = pruneProposalOutput(body, 'npc', dugwebPolicy)
+    expect(result.body).toContain('First clean sentence.')
+    expect(result.body).toContain('Third clean sentence.')
+    expect(result.body).not.toContain('knows more about the Shade of Qadim al-Sharr')
   })
 })

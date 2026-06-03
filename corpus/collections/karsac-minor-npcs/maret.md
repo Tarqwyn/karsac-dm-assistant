@@ -1,3 +1,6 @@
+<!-- COVERAGE: stub-level. Intentionally minimal.
+     Proposals for this NPC will require significant
+     human editorial input. -->
 ---
 id: npcs/maret
 type: npc

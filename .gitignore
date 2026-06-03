@@ -8,3 +8,5 @@ tmp/
 .DS_Store
 karsac-registry/.karsac-index/
 corpus/adversary-corpus/.karsac-index/
+corpus.zip
+corpus/proposals/**/*.proposed.md

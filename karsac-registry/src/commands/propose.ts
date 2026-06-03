@@ -31,8 +31,11 @@ import { PROMOTE_TARGETS } from '../proposals/proposalTypes.js'
 import { slugify } from '../proposals/slugify.js'
 import { getGatewayBuildInfo } from '../buildInfo.js'
 import { applyCreativeTreatment } from '../creativeTreatment/applyCreativeTreatment.js'
-import { validateCreativeTreatment } from '../creativeTreatment/treatmentValidator.js'
+import { validateCreativeTreatment, validateAnchorBoundedContent } from '../creativeTreatment/treatmentValidator.js'
 import { creativeTreatmentEnabled, getDraftGenerationSettings, getDraftModel } from '../modelSettings.js'
+import { buildConstrainedProposalPrompt } from '../proposals/proposalConstraints.js'
+import { detectCorpusAnchorForProposal } from '../proposals/proposalEntityRegistry.js'
+import { pruneProposalOutput } from '../proposals/proposalPruner.js'
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434'
 const DEFAULT_MODEL = getDraftModel()
@@ -411,11 +414,13 @@ async function main(): Promise<void> {
   let model = DEFAULT_MODEL
   let temperature = DRAFT_SETTINGS.temperature
   let topP = DRAFT_SETTINGS.topP
+  const corpusAnchor = detectCorpusAnchorForProposal(proposalType, prompt)
   let adversaryCtx: {
     requestedBase: string | null
     baseFile: ReturnType<typeof loadBaseFile>
     relatedAdversaries: ReturnType<typeof loadContextAdversaries>
   } | null = null
+  let generationPrompt = prompt
 
   if (proposalType === 'adversary') {
     // Extract pre-generation constraints BEFORE building the prompt
@@ -457,7 +462,16 @@ async function main(): Promise<void> {
       baseFile: ctx.baseFile,
       relatedAdversaries: ctx.relatedAdversaries,
     }
-    messages = buildAdversaryDesignMessages(ctx, prompt, constraints)
+    generationPrompt = buildConstrainedProposalPrompt({
+      proposalType,
+      prompt,
+      stateData: ctx.stateData,
+      lockedFaction: constraints.lockedFaction,
+      forbiddenFactions: constraints.forbiddenFactions,
+      preferredMechanicalBase: constraints.preferredBase,
+      corpusAnchor,
+    })
+    messages = buildAdversaryDesignMessages(ctx, generationPrompt, constraints)
     model = process.env.ADVERSARY_MODEL ?? DEFAULT_MODEL
     temperature = DRAFT_SETTINGS.temperature
     topP = DRAFT_SETTINGS.topP
@@ -477,7 +491,13 @@ async function main(): Promise<void> {
         playerKnowledge: readStateFile('player-knowledge.json'),
       },
     }
-    messages = buildEncounterDesignMessages(ctx, prompt)
+    generationPrompt = buildConstrainedProposalPrompt({
+      proposalType,
+      prompt,
+      stateData: ctx.stateData,
+      corpusAnchor,
+    })
+    messages = buildEncounterDesignMessages(ctx, generationPrompt)
     model = process.env.ENCOUNTER_MODEL ?? DEFAULT_MODEL
     temperature = DRAFT_SETTINGS.temperature
     topP = DRAFT_SETTINGS.topP
@@ -485,7 +505,13 @@ async function main(): Promise<void> {
     const campaignState   = readStateFile('campaign-state.json')
     const worldThreads    = readStateFile('world-threads.json')
     const npcsState       = readStateFile('npcs-state.json')
-    messages = buildPlaceMessages({ stateData: { campaignState, worldThreads, npcsState } }, prompt)
+    generationPrompt = buildConstrainedProposalPrompt({
+      proposalType,
+      prompt,
+      stateData: { campaignState, worldThreads, npcsState },
+      corpusAnchor,
+    })
+    messages = buildPlaceMessages({ stateData: { campaignState, worldThreads, npcsState } }, generationPrompt)
     model = process.env.PLACE_MODEL ?? DEFAULT_MODEL
     temperature = DRAFT_SETTINGS.temperature
     topP = DRAFT_SETTINGS.topP
@@ -493,14 +519,26 @@ async function main(): Promise<void> {
     const campaignState = readStateFile('campaign-state.json')
     const worldThreads = readStateFile('world-threads.json')
     const npcsState = readStateFile('npcs-state.json')
-    messages = buildNpcDesignMessages({ stateData: { campaignState, worldThreads, npcsState } }, prompt)
+    generationPrompt = buildConstrainedProposalPrompt({
+      proposalType,
+      prompt,
+      stateData: { campaignState, worldThreads, npcsState },
+      corpusAnchor,
+    })
+    messages = buildNpcDesignMessages({ stateData: { campaignState, worldThreads, npcsState } }, generationPrompt)
     model = process.env.NPC_MODEL ?? DEFAULT_MODEL
     temperature = DRAFT_SETTINGS.temperature
     topP = DRAFT_SETTINGS.topP
   } else {
     // chapter-outline and everything else default
     const stateData = loadChapterOutlineContext()
-    messages = buildChapterOutlineMessages({ stateData }, prompt)
+    generationPrompt = buildConstrainedProposalPrompt({
+      proposalType,
+      prompt,
+      stateData,
+      corpusAnchor,
+    })
+    messages = buildChapterOutlineMessages({ stateData }, generationPrompt)
     model = process.env.CHAPTER_MODEL ?? DEFAULT_MODEL
     temperature = DRAFT_SETTINGS.temperature
     topP = DRAFT_SETTINGS.topP
@@ -571,6 +609,7 @@ async function main(): Promise<void> {
       sourcePrompt: prompt,
       model: creativeModel,
       force: creativeTreatmentForcedForProposal(proposalType, doctrineReviewFlag),
+      entityPolicy: corpusAnchor.policy,
       corpusContext: proposalType === 'adversary'
         ? buildAdversaryCreativeContext({
           prompt,
@@ -579,7 +618,9 @@ async function main(): Promise<void> {
           relatedAdversaries: adversaryCtx?.relatedAdversaries ?? [],
           firstPassIssues: proposalStructuralIssues,
         })
-        : undefined,
+        : (corpusAnchor.corpusNamed && corpusAnchor.exactSnippets.length > 0)
+          ? corpusAnchor.exactSnippets.join('\n')
+          : undefined,
       lockedConstraints: treatmentLockedConstraints,
     })
 
@@ -625,6 +666,8 @@ async function main(): Promise<void> {
     proposalType === 'adversary' && treatmentLockedConstraints.lockedFaction
       ? [treatmentLockedConstraints.lockedFaction]
       : []
+  const pruneResult = pruneProposalOutput(finalOutput, proposalType, corpusAnchor.policy)
+  finalOutput = pruneResult.body
   const frontmatter: ProposalFrontmatter = {
     id: `proposals/${slug}`,
     proposal_type: proposalType,
@@ -634,9 +677,15 @@ async function main(): Promise<void> {
     visibility: 'dm-only',
     created_at: now,
     gateway_build: buildInfo.buildId,
+    corpus_named: corpusAnchor.corpusNamed || undefined,
+    corpus_anchor_entity: corpusAnchor.entity?.id,
+    corpus_stub_level: corpusAnchor.stubLevel || undefined,
+    corpus_coverage_level: corpusAnchor.coverageLevel !== 'full' ? corpusAnchor.coverageLevel : undefined,
+    corpus_policy_id: corpusAnchor.policy?.entityId,
     source_prompt: prompt,
     route_profile: frontmatterRouteProfile,
     validation: { status: 'pass', issues: [] },
+    repair_log: pruneResult.repairLog,
     related: { chapters: [], sessions: [], factions: relatedFactions, places: [], npcs: [], items: [] },
     promote_target: promoteTarget ?? '',
     summary: title,
@@ -650,10 +699,15 @@ async function main(): Promise<void> {
     proposalType,
   )
   const creativeValidation = treatmentApplied
-    ? validateCreativeTreatment(proposalType, finalOutput)
+    ? validateCreativeTreatment(proposalType, finalOutput, corpusAnchor.policy)
     : { issues: [] as string[] }
+  // Run anchor content check post-pruning so only surviving sections are scanned
+  const anchorValidation =
+    corpusAnchor.corpusNamed && corpusAnchor.exactSnippets.length > 0
+      ? validateAnchorBoundedContent(proposalType, finalOutput, corpusAnchor.exactSnippets.join('\n'))
+      : { issues: [] as string[] }
   const { allIssues, status: mergedStatus } = mergeValidationIssues(
-    [...proposalStructuralIssues, ...treatmentIssues, ...creativeValidation.issues],
+    [...proposalStructuralIssues, ...treatmentIssues, ...creativeValidation.issues, ...anchorValidation.issues],
     contentValidation.issues,
   )
 

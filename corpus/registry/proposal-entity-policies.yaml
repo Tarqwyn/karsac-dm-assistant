@@ -1,0 +1,123 @@
+entity_policies:
+  - entity_id: npcs/jarl-beorn
+    coverage_level: anchored
+    proposal_scope: bounded
+    canonical_reference_only: true
+    allowed_sections:
+      - Role
+      - can_know
+      - must_not_know
+      - Lines to Inhabit
+      - Dramatic Utility
+      - player_safe
+      - dm_only
+    forbidden_sections:
+      - Physical Bearing
+      - What They Want
+      - What They Hide
+      - Public Face
+      - Private Want
+      - Fear
+      - Contradiction
+      - Pressure Point
+      - What They Reveal Under Stress
+    prompt_constraints:
+      - Keep Beorn aligned to the canonical framing: deceived, not corrupted.
+      - He will act if shown evidence, and that route leads to Dugweb.
+      - Do not invent secret manipulators, rituals, or parallel conspiracies around him.
+
+  - entity_id: npcs/maret
+    coverage_level: stub
+    proposal_scope: minimal
+    canonical_reference_only: true
+    unresolved_fields_preferred: true
+    allowed_sections:
+      - Role
+      - player_safe
+      - dm_only
+      - Ambiguities
+    forbidden_sections:
+      - Physical Bearing
+      - What They Want
+      - What They Hide
+      - can_know
+      - must_not_know
+      - Lines to Inhabit
+      - Dramatic Utility
+      - Public Face
+      - Private Want
+      - Fear
+      - Contradiction
+      - Pressure Point
+      - What They Reveal Under Stress
+    prompt_constraints:
+      - Keep this proposal minimal.
+      - Most unsupported character fields should be absent or explicitly unresolved.
+    ambiguity_flags:
+      - No further characterisation is available in the current corpus.
+
+  - entity_id: npcs/king-dugweb
+    coverage_level: anchored
+    proposal_scope: bounded
+    canonical_reference_only: true
+    allowed_sections:
+      - Role
+      - Dramatic Utility
+      - player_safe
+      - dm_only
+      - Ambiguities
+    forbidden_sections:
+      - Physical Bearing
+      - What They Want
+      - What They Hide
+      - can_know
+      - must_not_know
+      - Lines to Inhabit
+      - Public Face
+      - Private Want
+      - Fear
+      - Contradiction
+      - Pressure Point
+      - What They Reveal Under Stress
+    require_ambiguity_section: true
+    ambiguity_flags:
+      - Kurogane is mentioned in current corpus but not explained.
+      - The Shade of Qadim al-Sharr is mentioned in current corpus but not described in detail.
+    prompt_constraints:
+      - Reference Kurogane and the Shade of Qadim al-Sharr only as unresolved corpus facts.
+      - Do not invent secret purposes, hidden explanations, or extended history for those elements.
+    forbidden_patterns:
+      - pattern: "nature of Kurogane|Kurogane['’]s purpose|purpose of Kurogane"
+        severity: fail
+        message: Kurogane details are unresolved in current corpus and must not be extended.
+      - pattern: "knows more about the Shade of Qadim al-Sharr|events that led to (?:its|the Shade of Qadim al-Sharr['’]s) defeat|price.*secure their peace"
+        severity: fail
+        message: Shade of Qadim al-Sharr details are unresolved in current corpus and must not be extended.
+
+  - entity_id: places/valweg
+    coverage_level: bounded
+    proposal_scope: bounded
+    canonical_reference_only: true
+    allowed_sections:
+      - Overview
+      - Geography and Layout
+      - Atmosphere and Tone
+      - Established Proposal Facts
+      - Player-Safe Arrival Description
+      - DM Notes
+      - Ambiguities
+    forbidden_sections:
+      - Key Districts
+      - Notable Landmarks
+      - Factions and Power Structures
+      - Key NPCs
+      - Rumours
+      - Cultural Identity
+      - Daily Life
+      - Power Structures
+      - Local Contradiction
+      - What Outsiders Misunderstand
+      - What This Place Hides
+    prompt_constraints:
+      - Keep Valweg at atmosphere-and-canonical-relationship scope.
+      - Do not invent districts, landmarks, factions, or named NPCs.

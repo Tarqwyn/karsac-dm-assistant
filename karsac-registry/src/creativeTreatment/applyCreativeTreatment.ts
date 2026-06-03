@@ -1,4 +1,5 @@
 import type { ProposalType } from '../proposals/proposalTypes.js'
+import type { ProposalEntityPolicy } from '../proposals/proposalEntityPolicies.js'
 import {
   creativeTreatmentEnabled,
   getCreativeModel,
@@ -8,13 +9,14 @@ import {
 import { callCreativeTreatmentModel } from './creativeModel.js'
 import { getCreativeTreatmentContract } from './treatmentContracts.js'
 import { buildCreativeTreatmentMessages, type LockedConstraints } from './treatmentPrompts.js'
-import { creativeTreatmentQualityCheck, validateCreativeTreatment } from './treatmentValidator.js'
+import { creativeTreatmentQualityCheck, validateCreativeTreatment, validateAnchorBoundedContent } from './treatmentValidator.js'
 
 export interface ApplyCreativeTreatmentInput {
   proposalType: ProposalType
   draftMarkdown: string
   sourcePrompt: string
   lockedConstraints: LockedConstraints
+  entityPolicy?: ProposalEntityPolicy | null
   corpusContext?: string
   model?: string
   force?: boolean
@@ -162,6 +164,7 @@ export async function applyCreativeTreatment(
     draftMarkdown: input.draftMarkdown,
     sourcePrompt: input.sourcePrompt,
     lockedConstraints: input.lockedConstraints,
+    entityPolicy: input.entityPolicy,
     corpusContext: input.corpusContext,
   })
   const attemptSettings = [
@@ -215,7 +218,7 @@ export async function applyCreativeTreatment(
       }
     }
 
-    const treatmentValidation = validateCreativeTreatment(input.proposalType, treatedMarkdown)
+    const treatmentValidation = validateCreativeTreatment(input.proposalType, treatedMarkdown, input.entityPolicy)
     const qualityValidation = creativeTreatmentQualityCheck(input.proposalType, treatedMarkdown)
     notes.push(...treatmentValidation.issues, ...qualityValidation.issues)
 

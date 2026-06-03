@@ -1,3 +1,7 @@
+# canonical_languages: whitelist-enforced. Anything not on this list warns in validation.
+# Design decisions encoded here are intentional — e.g. Lösweg Sign added 2026-06-02
+# because it is a reasonable Lösweg-specific language fitting the setting's sign
+# language convention (Shadow Walker Sign already exists as a precedent).
 canonical_languages:
   - Common
   - Dwarvish
@@ -16,6 +20,8 @@ canonical_languages:
   - one local trade tongue
   - Shadow Walker Sign
   - Shadow Walker signs
+  - Lösweg Sign
+  - Losweg Sign
 
 factions:
   - slug: shadow-walkers

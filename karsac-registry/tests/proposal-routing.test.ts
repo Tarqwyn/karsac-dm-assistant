@@ -1,8 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { mkdirSync, readFileSync, rmSync } from 'fs'
 import { resolve } from 'path'
 import matter from 'gray-matter'
 import { detectProposalExecutionPlan } from '../src/proposals/proposalRouting.js'
+import {
+  detectCorpusAnchorForProposal,
+} from '../src/proposals/proposalEntityRegistry.js'
+import { buildConstrainedProposalPrompt } from '../src/proposals/proposalConstraints.js'
 import { writeProposal } from '../src/proposals/proposalWriter.js'
 import { summariseProposal } from '../src/proposals/proposalSummary.js'
 import { validateProposalContent } from '../src/proposals/proposalValidator.js'
@@ -77,7 +81,7 @@ The warden is compromise-prone rather than corrupt: they will bend procedure to 
 \`\`\`yaml
 related:
   factions: []
-  places: [losweg, bay-of-whales-coast]
+  places: [losweg]
 summary: "A local road warden who controls passage, notices lies, and can either obstruct or quietly help the party."
 \`\`\`
 `
@@ -98,6 +102,32 @@ describe('proposal routing precedence', () => {
     expect(detectProposalExecutionPlan('Propose a new adversary: a Shadow Walker urban variant in a city.').proposalType).toBe('adversary')
     expect(detectProposalExecutionPlan('Propose a new place: Fiska, a market town with suspicious officials.').proposalType).toBe('place')
     expect(detectProposalExecutionPlan('Propose a new encounter on the fjord road near Valweg.').proposalType).toBe('encounter')
+  })
+
+  it('canonical named NPC proposals route through corpus-anchor injection', () => {
+    const anchor = detectCorpusAnchorForProposal('npc', 'Propose a new NPC: Jarl Beorn in the council chamber.')
+    expect(anchor.corpusNamed).toBe(true)
+    expect(anchor.entity?.id).toBe('npcs/jarl-beorn')
+    const prompt = buildConstrainedProposalPrompt({
+      proposalType: 'npc',
+      prompt: 'Propose a new NPC: Jarl Beorn in the council chamber.',
+      corpusAnchor: anchor,
+    })
+    expect(prompt).toContain('CORPUS-ANCHOR CONSTRAINT')
+    expect(prompt).toContain('This npc is named in existing corpus.')
+    expect(prompt).toContain('Brynja')
+  })
+
+  it('canonical stub-level place proposals route through stub constraint injection', () => {
+    const anchor = detectCorpusAnchorForProposal('place', 'Propose a new place: Sea of Karsac.')
+    expect(anchor.corpusNamed).toBe(true)
+    expect(anchor.stubLevel).toBe(true)
+    const prompt = buildConstrainedProposalPrompt({
+      proposalType: 'place',
+      prompt: 'Propose a new place: Sea of Karsac.',
+      corpusAnchor: anchor,
+    })
+    expect(prompt).toContain('Do not invent geography, rivers, districts, landmarks')
   })
 })
 
@@ -133,5 +163,86 @@ describe('npc proposal packet', () => {
     expect(summary.humanMarkdown).toContain('## dm_only')
     expect(summary.humanMarkdown).not.toContain('## Geography and Layout')
     expect(summary.humanMarkdown).not.toContain('# Place:')
+  })
+})
+
+// ── Pass 3 regression tests ───────────────────────────────────────────────────
+
+import { mkdirSync as mkdirSyncP3, writeFileSync as writeFileSyncP3, existsSync as existsSyncP3 } from 'fs'
+import { resolve as resolveP3 } from 'path'
+import {
+  loadProvisionalEntityRegister,
+  clearProposalEntityRegistryCachesForTests,
+} from '../src/proposals/proposalEntityRegistry.js'
+import { PROPOSALS_ROOT } from '../src/paths.js'
+
+describe('Pass 3: stub-level place receives explicit prohibition constraint', () => {
+  it('stub-level place anchor generates explicit prohibition lines', () => {
+    // Simulate a stub-level place anchor by creating a minimal constraint input
+    // buildConstrainedProposalPrompt is already imported at the top of this file
+    const prompt = buildConstrainedProposalPrompt({
+      proposalType: 'place',
+      prompt: 'Propose a new place: Valweg.',
+      corpusAnchor: {
+        corpusNamed: true,
+        proposalType: 'place',
+        subjectName: 'Valweg',
+        entity: { id: 'places/valweg', type: 'place', title: 'Valweg', path: '', summary: 'Council city in Lösweg.', aliases: [], tags: [], related: {}, doNotConfuseWith: [] },
+        stubLevel: true,
+        coverageLevel: 'stub',
+        policy: null,
+        exactSnippets: ['Valweg is the council city of Lösweg, deep in the fjords.'],
+      },
+    })
+    expect(prompt).toContain('Do not invent geography, rivers, districts, landmarks')
+    expect(prompt).toContain('A correct minimal proposal is preferable to a detailed invented one')
+    expect(prompt).not.toContain('Stub level only unless corpus contains sufficient detail')
+  })
+})
+
+describe('Pass 3: _rejected/ directory excluded from provisional entity register', () => {
+  const REJECTED_DIR = resolveP3(PROPOSALS_ROOT, '_rejected', 'adversaries')
+
+  afterEach(() => {
+    clearProposalEntityRegistryCachesForTests()
+    try {
+      const { rmSync } = require('fs')
+      rmSync(resolveP3(PROPOSALS_ROOT, '_rejected'), { recursive: true, force: true })
+    } catch {}
+  })
+
+  it('entities in _rejected/ do not appear in the provisional entity register', () => {
+    mkdirSyncP3(REJECTED_DIR, { recursive: true })
+    writeFileSyncP3(
+      resolveP3(REJECTED_DIR, 'silent-hand.proposed.md'),
+      `---
+id: proposals/adversaries/silent-hand
+proposal_type: adversary
+title: Silent Hand
+status: proposed
+canonical: provisional
+visibility: dm-only
+created_at: '2026-06-02T00:00:00.000Z'
+source_prompt: 'Propose a new adversary: Silent Hand.'
+route_profile: adversary-design
+validation:
+  status: fail
+  issues: []
+related:
+  factions: []
+promote_target: corpus/adversary-corpus/karsac-adversaries
+summary: Silent Hand — rejected proposal
+---
+
+# Adversary: Silent Hand
+
+## DM-Only Notes
+This is a rejected proposal with invented content.
+`,
+    )
+
+    const register = loadProvisionalEntityRegister()
+    const silentHandEntry = register.find((e) => e.normalizedName === 'silent hand')
+    expect(silentHandEntry).toBeUndefined()
   })
 })
