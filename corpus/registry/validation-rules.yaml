@@ -1,0 +1,145 @@
+# Validation rules — warning patterns, forbidden patterns, and rules data
+# Loaded at runtime by validationRulesLoader.ts
+
+# Generic warning/fail rules applied to all proposals in validateWarningPatterns().
+# Each rule fires when `pattern` matches the body.
+# Rules with `secondary_pattern` require BOTH patterns to match.
+warning_rules:
+  - id: flat_skill_bonus
+    pattern: "\\+\\d+\\s+to\\s+(?:persuasion|deception|insight|investigation|perception|stealth|history|religion|arcana|athletics|acrobatics)\\b"
+    flags: i
+    severity: warn
+    message: "Flat skill bonus detection: replace flat numeric bonuses with a scene-runnable mechanic."
+
+  - id: non_5e_mechanic
+    pattern: "(?:Charisma\\s*\\(Reputation\\)|Intelligence\\s*\\(Forgery\\)|Wisdom\\s*\\(Rumou?r\\)|temporarily hindered)"
+    flags: i
+    severity: fail
+    message: "Non-5e mechanic detection: proposal contains a non-standard ability check, save, or condition."
+
+  - id: cosmological_causality
+    pattern: "\\b(?:Vishara|Maharuq|Dhurvaq|Yantravaq)\\b"
+    secondary_pattern: "\\b(caused|guides|wants|steers|commands|sent|directed by|answering to)\\b"
+    flags: i
+    severity: warn
+    message: "Cosmological claim: proposal introduces a causal or directional relationship involving a force and should be DM-reviewed."
+
+  - id: canonical_tradition
+    pattern: "\\b(?:Skald tradition|housecarl honour|housecarl honor|L\\u00f6sweg oral culture|Losweg oral culture)\\b"
+    flags: i
+    severity: warn
+    message: "Canonical tradition claim: confirm this behavioural or cultural claim against the corpus before promotion."
+
+  - id: supernatural_atmosphere
+    pattern: "\\b(?:guided fog|ritual scent|ritual scents|unexplained glow|unexplained glows|watching fog|whispering lanterns)\\b"
+    flags: i
+    severity: warn
+    message: "Supernatural agency in atmosphere: confirm corpus support before promotion."
+
+# Complex action-economy pattern stored separately (too long for warning_rules array).
+# Fires when an action spends action economy for a check with no concrete benefit.
+action_economy_pattern: "(?:\\*\\*([^*]+)\\*\\*|([A-Z][A-Za-z'' -]+):)[^\\n]*\\b(?:action|bonus action)\\b[\\s\\S]{0,100}\\b(?:make|attempt)\\s+an?\\s+(?:Wisdom|Charisma|Intelligence|Dexterity|Strength|Constitution)\\s*\\([^)]+\\)\\s+check\\b(?![\\s\\S]{0,120}(?:advantage|disadvantage|until the end|speed reduced|damage|condition|save|dc\\s+\\d+|without provoking))"
+action_economy_message: "spends action economy to perform a check achievable without action cost — add concrete mechanical benefit or convert to trait."
+
+# Terms that trigger the canonical item state-change check
+state_change_terms:
+  - fragment
+  - copy
+  - replica
+  - lost version
+  - shard
+  - broken piece
+  - duplicate
+  - current holder
+  - new holder
+  - changed hands
+  - stolen from
+  - moved to
+
+# Canonical D&D 5e alignment values
+canonical_alignments:
+  - lawful good
+  - neutral good
+  - chaotic good
+  - lawful neutral
+  - neutral
+  - chaotic neutral
+  - lawful evil
+  - neutral evil
+  - chaotic evil
+  - unaligned
+
+# Modern technology language — never appropriate in Karsac proposals
+modern_tech_pattern: "\\bdevice\\b|\\bencrypted\\b|\\bcomms?\\b|\\bsurveillance\\b"
+
+# Forbidden monster patterns (NO_MONSTER_DATA mode — design-guardrails.ts)
+# Each entry: pattern (regex string) + label (human-readable name for error output)
+forbidden_monster_patterns:
+  - pattern: "\\bstone giant"
+    label: Stone Giant
+  - pattern: "\\bdire wolf"
+    label: Dire Wolf
+  - pattern: "\\broper\\b"
+    label: Roper
+  - pattern: "\\b(?:young|adult|ancient|wyrmling)\\s+\\w+\\s+dragon\\b"
+    label: named dragon
+  - pattern: "\\bdragon\\s+stats\\b"
+    label: dragon stats
+  - pattern: "\\buse\\s+\\w+\\s+stats\\b"
+    label: use X stats
+  - pattern: "\\breskin(?:ned|ning)?\\b"
+    label: reskin
+  - pattern: "\\bCR\\s+\\d"
+    label: CR rating
+  - pattern: "\\bAC\\s+\\d{1,2}\\b"
+    label: AC value
+  - pattern: "[+-]\\d+\\s*(?:to\\s+)?AC\\b"
+    label: AC modifier
+  - pattern: "(?:reduce|increase|modify|add)\\b[^.]*\\bHP\\b"
+    label: HP modification
+  - pattern: "\\bdamage\\s+resistance\\b"
+    label: damage resistance
+  - pattern: "\\bresistance\\s+to\\b"
+    label: resistance to
+  - pattern: "\\bspellcasting\\b"
+    label: spellcasting
+  - pattern: "\\bbreath\\s+weapon\\b"
+    label: breath weapon
+  - pattern: "\\bhit\\s+dice\\b"
+    label: hit dice
+  - pattern: "\\bboar\\s+stats\\b"
+    label: boar stats
+
+# Homebrew violation patterns (applied even with monster data loaded)
+homebrew_violation_patterns:
+  - pattern: "\\bbased on\\b"
+    label: based on (homebrew reskin)
+  - pattern: "(?:reduce|lower|decrease|increase|raise|modify|give|add)\\b[^.]{0,50}\\b(?:hp|hit points?)\\b"
+    label: HP modification
+  - pattern: "\\bextra\\s+hit\\s+points?\\b"
+    label: extra hit points
+  - pattern: "\\bHP\\s+to\\s+\\d"
+    label: HP assignment
+  - pattern: "(?:increase|reduce|boost|lower|raise)\\b[^.]{0,30}\\b(?:\\w+\\s+)?damage\\b"
+    label: damage modification
+  - pattern: "(?:reduce|lower|decrease|increase|raise|modify)\\b[^.]{0,40}\\b(?:ac\\b|armou?r class)\\b"
+    label: AC modification
+  - pattern: "[+-]\\d+\\s*(?:to\\s+)?AC\\b"
+    label: AC modifier
+  - pattern: "[+-]\\d+\\s+(?:strength|dexterity|constitution|intelligence|wisdom|charisma|str|dex|con|int|wis|cha)\\b"
+    label: ability score modifier
+  - pattern: "\\badvantage\\b[^.]{0,40}\\b(?:saving throws?|saves?)\\b"
+    label: invented saving throw advantage
+  - pattern: "\\bdisadvantage\\b[^.]{0,40}\\b(?:saving throws?|saves?)\\b"
+    label: invented saving throw disadvantage
+  - pattern: "\\bsaving\\s+throw\\s+(?:advantage|disadvantage)\\b"
+    label: invented saving throw modifier
+  - pattern: "\\bresistance\\s+to\\b"
+    label: resistance to (invented)
+  - pattern: "\\bdamage\\s+resistance\\b"
+    label: damage resistance (invented)
+  - pattern: "\\bnew\\s+(?:attack|special\\s+ability|action|feature)\\b"
+    label: new attack/ability (invented)
+
+# Attack action detection pattern (non-combatant check in design-guardrails.ts)
+attack_pattern: "\\battacks?\\b|\\bdive.bomb|\\bdeals?\\s+damage|\\bclaws?\\s+at\\b|\\bjoins?\\s+the\\s+fight|\\bswoops?\\s+(?:down|at)\\b|\\bstrikes?\\b"

@@ -12,6 +12,7 @@ import { loadScoredAdversaries } from './encounter-design.js'
 import type { ScoredAdversary } from './encounter-design.js'
 import { getCanonicalLanguages, getFactionProfile, type FactionProfileOverrideConfig } from './faction-profiles.js'
 import { getFactionMechanicalOverrides, type FactionMechanicalOverrideRule } from './faction-mechanical-overrides.js'
+import { getCanonicalAlignments, getModernTechPattern } from './proposals/validationRulesLoader.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -610,18 +611,7 @@ interface ParsedAbilityScores {
   cha: number
 }
 
-const CANONICAL_ALIGNMENTS = new Set([
-  'lawful good',
-  'neutral good',
-  'chaotic good',
-  'lawful neutral',
-  'neutral',
-  'chaotic neutral',
-  'lawful evil',
-  'neutral evil',
-  'chaotic evil',
-  'unaligned',
-])
+const CANONICAL_ALIGNMENTS = getCanonicalAlignments()
 
 function normalizeLanguageToken(value: string): string {
   return value
@@ -1563,7 +1553,8 @@ export function validateAdversaryOutput(
       violations.push('Variant options must not grant permanent stat/skill changes — use temporary or scene-scoped effects')
     }
     // Flag modern language in variant options
-    if (/\bdevice\b|\bencrypted\b|\bcomms?\b|\bsurveillance\b/i.test(variantSection)) {
+    const modernTechPattern = getModernTechPattern()
+    if (modernTechPattern && modernTechPattern.test(variantSection)) {
       violations.push('Variant options contain modern technology language — use Karsac-appropriate props')
     }
     for (const match of variantSection.matchAll(/\*\*([^*:]+?)(?:\.|:)\*\*\s+([^\n]+(?:\n(?!\*\*|###|##|- \*\*).+)*)/g)) {

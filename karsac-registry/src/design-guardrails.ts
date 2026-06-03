@@ -6,6 +6,11 @@
  */
 
 import { getDesignRequiredHeadings } from './proposals/proposalContractsLoader.js'
+import {
+  getForbiddenMonsterPatterns,
+  getHomebrewViolationPatterns,
+  getAttackPattern,
+} from './proposals/validationRulesLoader.js'
 
 // ── Required headings ─────────────────────────────────────────────────────────
 
@@ -17,27 +22,7 @@ export const DESIGN_REQUIRED_HEADINGS: readonly string[] = getDesignRequiredHead
  * Patterns forbidden when no monster corpus is loaded (NO_MONSTER_DATA mode).
  * Each entry: [pattern, label] for diagnostic output.
  */
-export const FORBIDDEN_MONSTER_PATTERNS: Array<[RegExp, string]> = [
-  // Named SRD monsters
-  [/\bstone giant/i, 'Stone Giant'],
-  [/\bdire wolf/i, 'Dire Wolf'],
-  [/\broper\b/i, 'Roper'],
-  [/\b(?:young|adult|ancient|wyrmling)\s+\w+\s+dragon\b/i, 'named dragon'],
-  [/\bdragon\s+stats\b/i, 'dragon stats'],
-  [/\buse\s+\w+\s+stats\b/i, 'use X stats'],
-  [/\breskin(?:ned|ning)?\b/i, 'reskin'],
-  // Mechanical stats
-  [/\bCR\s+\d/i, 'CR rating'],
-  [/\bAC\s+\d{1,2}\b/i, 'AC value'],
-  [/[+-]\d+\s*(?:to\s+)?AC\b/i, 'AC modifier'],
-  [/(?:reduce|increase|modify|add)\b[^.]*\bHP\b/i, 'HP modification'],
-  [/\bdamage\s+resistance\b/i, 'damage resistance'],
-  [/\bresistance\s+to\b/i, 'resistance to'],
-  [/\bspellcasting\b/i, 'spellcasting'],
-  [/\bbreath\s+weapon\b/i, 'breath weapon'],
-  [/\bhit\s+dice\b/i, 'hit dice'],
-  [/\bboar\s+stats\b/i, 'boar stats'],
-];
+export const FORBIDDEN_MONSTER_PATTERNS: Array<[RegExp, string]> = getForbiddenMonsterPatterns()
 
 export const NO_MONSTER_DISCLAIMER =
   'monster metadata is not yet loaded, so these are encounter roles';
@@ -49,29 +34,7 @@ export const NO_MONSTER_DISCLAIMER =
  * --allow-homebrew is active or the user explicitly requested homebrew.
  * Applied to the full response text even when monster data IS loaded.
  */
-export const HOMEBREW_VIOLATION_PATTERNS: Array<[RegExp, string]> = [
-  // Reskin indicators
-  [/\bbased on\b/i, 'based on (homebrew reskin)'],
-  // HP modifications
-  [/(?:reduce|lower|decrease|increase|raise|modify|give|add)\b[^.]{0,50}\b(?:hp|hit points?)\b/i, 'HP modification'],
-  [/\bextra\s+hit\s+points?\b/i, 'extra hit points'],
-  [/\bHP\s+to\s+\d/i, 'HP assignment'],
-  // Damage modifications
-  [/(?:increase|reduce|boost|lower|raise)\b[^.]{0,30}\b(?:\w+\s+)?damage\b/i, 'damage modification'],
-  // AC modifications
-  [/(?:reduce|lower|decrease|increase|raise|modify)\b[^.]{0,40}\b(?:ac\b|armou?r class)\b/i, 'AC modification'],
-  [/[+-]\d+\s*(?:to\s+)?AC\b/i, 'AC modifier'],
-  // Ability score changes
-  [/[+-]\d+\s+(?:strength|dexterity|constitution|intelligence|wisdom|charisma|str|dex|con|int|wis|cha)\b/i, 'ability score modifier'],
-  // Saving throw invented modifiers
-  [/\badvantage\b[^.]{0,40}\b(?:saving throws?|saves?)\b/i, 'invented saving throw advantage'],
-  [/\bdisadvantage\b[^.]{0,40}\b(?:saving throws?|saves?)\b/i, 'invented saving throw disadvantage'],
-  [/\bsaving\s+throw\s+(?:advantage|disadvantage)\b/i, 'invented saving throw modifier'],
-  // Resistance and invented special abilities
-  [/\bresistance\s+to\b/i, 'resistance to (invented)'],
-  [/\bdamage\s+resistance\b/i, 'damage resistance (invented)'],
-  [/\bnew\s+(?:attack|special\s+ability|action|feature)\b/i, 'new attack/ability (invented)'],
-];
+export const HOMEBREW_VIOLATION_PATTERNS: Array<[RegExp, string]> = getHomebrewViolationPatterns()
 
 // ── Checker functions ─────────────────────────────────────────────────────────
 
@@ -86,8 +49,7 @@ function extractCreaturesSectionLower(text: string): string {
 }
 
 /** Attack-action patterns that only a combatant should perform. */
-const ATTACK_PATTERNS =
-  /\battacks?\b|\bdive.bomb|\bdeals?\s+damage|\bclaws?\s+at\b|\bjoins?\s+the\s+fight|\bswoops?\s+(?:down|at)\b|\bstrikes?\b/i;
+const ATTACK_PATTERNS = getAttackPattern() ?? /\battacks?\b/i;
 
 /**
  * Check the response text against the composition plan. Detects:

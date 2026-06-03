@@ -11,6 +11,12 @@ import {
   clearStyleGuardsCacheForTests,
 } from '../src/proposals/styleGuardsLoader.js'
 import {
+  getWarningRules, getActionEconomyPattern, getStateChangePattern,
+  getCanonicalAlignments, getModernTechPattern,
+  getForbiddenMonsterPatterns, getHomebrewViolationPatterns, getAttackPattern,
+  clearValidationRulesCacheForTests,
+} from '../src/proposals/validationRulesLoader.js'
+import {
   clearProposalEntityRegistryCachesForTests,
   detectCorpusAnchorForProposal,
   loadProvisionalEntityRegister,
@@ -1104,5 +1110,92 @@ describe('styleGuardsLoader — YAML is the source of truth', () => {
     expect(re.test('King')).toBe(true)
     expect(re.test('Jarl')).toBe(true)
     expect(re.test('Smith')).toBe(false)
+  })
+})
+
+// ── Section 3: validation-rules.yaml loader tests ─────────────────────────────
+
+describe('validationRulesLoader — YAML is the source of truth', () => {
+  afterEach(() => { clearValidationRulesCacheForTests() })
+
+  it('loads warning rules and each fires on matching text', () => {
+    const rules = getWarningRules()
+    expect(rules.length).toBeGreaterThanOrEqual(5)
+    const flatBonus = rules.find((r) => r.id === 'flat_skill_bonus')
+    expect(flatBonus).toBeDefined()
+    expect(flatBonus!.regex.test('+2 to persuasion')).toBe(true)
+    expect(flatBonus!.severity).toBe('warn')
+  })
+
+  it('non_5e_mechanic rule has fail severity', () => {
+    const rules = getWarningRules()
+    const rule = rules.find((r) => r.id === 'non_5e_mechanic')
+    expect(rule).toBeDefined()
+    expect(rule!.severity).toBe('fail')
+    expect(rule!.regex.test('Charisma (Reputation)')).toBe(true)
+  })
+
+  it('cosmological_causality rule requires both patterns', () => {
+    const rules = getWarningRules()
+    const rule = rules.find((r) => r.id === 'cosmological_causality')
+    expect(rule).toBeDefined()
+    expect(rule!.secondaryRegex).toBeDefined()
+    expect(rule!.regex.test('Vishara')).toBe(true)
+    expect(rule!.secondaryRegex!.test('guides the hand')).toBe(true)
+    expect(rule!.secondaryRegex!.test('appeared in a vision')).toBe(false)
+  })
+
+  it('loads action economy pattern and message', () => {
+    const pattern = getActionEconomyPattern()
+    expect(pattern).not.toBeNull()
+    // Should be a valid regex
+    expect(pattern instanceof RegExp).toBe(true)
+  })
+
+  it('builds state change pattern from term list', () => {
+    const pattern = getStateChangePattern()
+    expect(pattern).not.toBeNull()
+    expect(pattern!.test('stolen from Jarl Mathr')).toBe(true)
+    expect(pattern!.test('current holder is unknown')).toBe(true)
+    expect(pattern!.test('the sword gleams')).toBe(false)
+  })
+
+  it('loads canonical alignments from YAML', () => {
+    const alignments = getCanonicalAlignments()
+    expect(alignments.has('lawful good')).toBe(true)
+    expect(alignments.has('unaligned')).toBe(true)
+    expect(alignments.has('chaotic evil')).toBe(true)
+    expect(alignments.size).toBe(10)
+  })
+
+  it('loads modern tech pattern from YAML', () => {
+    const pattern = getModernTechPattern()
+    expect(pattern).not.toBeNull()
+    expect(pattern!.test('an encrypted device')).toBe(true)
+    expect(pattern!.test('a bone tally')).toBe(false)
+  })
+
+  it('loads forbidden monster patterns and they match expected text', () => {
+    const patterns = getForbiddenMonsterPatterns()
+    expect(patterns.length).toBeGreaterThanOrEqual(10)
+    const labels = patterns.map(([, label]) => label)
+    expect(labels).toContain('Stone Giant')
+    expect(labels).toContain('spellcasting')
+    const stoneGiant = patterns.find(([, label]) => label === 'Stone Giant')
+    expect(stoneGiant![0].test('the stone giant emerges')).toBe(true)
+  })
+
+  it('loads homebrew violation patterns and they match expected text', () => {
+    const patterns = getHomebrewViolationPatterns()
+    expect(patterns.length).toBeGreaterThanOrEqual(10)
+    const based = patterns.find(([, label]) => label.includes('based on'))
+    expect(based![0].test('based on the spy')).toBe(true)
+  })
+
+  it('loads attack pattern from YAML', () => {
+    const pattern = getAttackPattern()
+    expect(pattern).not.toBeNull()
+    expect(pattern!.test('the wolf attacks the party')).toBe(true)
+    expect(pattern!.test('the wolf slinks away')).toBe(false)
   })
 })

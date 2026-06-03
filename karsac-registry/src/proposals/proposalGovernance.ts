@@ -19,6 +19,12 @@ import {
   getGenericSingleWordSkips,
   getTitleTokenAlternation,
 } from './styleGuardsLoader.js'
+import {
+  getWarningRules,
+  getActionEconomyPattern,
+  getActionEconomyMessage,
+  getStateChangePattern,
+} from './validationRulesLoader.js'
 
 interface GovernanceValidationResult {
   issues: string[]
@@ -325,8 +331,8 @@ function validateRegistryReferences(index: RegistryIndex, frontmatter: Record<st
 }
 
 function validateCanonicalItemStateChanges(index: RegistryIndex, body: string, issues: string[]): void {
-  const stateChangePattern = /\b(fragment|copy|replica|lost version|shard|broken piece|duplicate|current holder|new holder|changed hands|stolen from|moved to)\b/i
-  if (!stateChangePattern.test(body)) return
+  const stateChangePattern = getStateChangePattern()
+  if (!stateChangePattern || !stateChangePattern.test(body)) return
 
   const items = allEntitiesOfType(index, 'item')
   for (const item of items) {
@@ -353,24 +359,10 @@ function validateWarningPatterns(body: string, frontmatter: Record<string, unkno
     issues.push('WARN: visibility/content mismatch: dm-only proposal contains a player_safe section and should be reviewed before promotion.')
   }
 
-  if (/\+\d+\s+to\s+(?:persuasion|deception|insight|investigation|perception|stealth|history|religion|arcana|athletics|acrobatics)\b/i.test(body)) {
-    issues.push('WARN: Flat skill bonus detection: replace flat numeric bonuses with a scene-runnable mechanic.')
-  }
-
-  if (/(?:Charisma\s*\(Reputation\)|Intelligence\s*\(Forgery\)|Wisdom\s*\(Rumou?r\)|temporarily hindered)/i.test(body)) {
-    issues.push('FAIL: Non-5e mechanic detection: proposal contains a non-standard ability check, save, or condition.')
-  }
-
-  if (/\b(?:Vishara|Maharuq|Dhurvaq|Yantravaq)\b/i.test(body) && /\b(caused|guides|wants|steers|commands|sent|directed by|answering to)\b/i.test(body)) {
-    issues.push('WARN: Cosmological claim: proposal introduces a causal or directional relationship involving a force and should be DM-reviewed.')
-  }
-
-  if (/\b(?:Skald tradition|housecarl honour|housecarl honor|Lösweg oral culture|Losweg oral culture)\b/i.test(body)) {
-    issues.push('WARN: Canonical tradition claim: confirm this behavioural or cultural claim against the corpus before promotion.')
-  }
-
-  if (/\b(?:guided fog|ritual scent|ritual scents|unexplained glow|unexplained glows|watching fog|whispering lanterns)\b/i.test(body)) {
-    issues.push('WARN: Supernatural agency in atmosphere: confirm corpus support before promotion.')
+  for (const rule of getWarningRules()) {
+    if (!rule.regex.test(body)) continue
+    if (rule.secondaryRegex && !rule.secondaryRegex.test(body)) continue
+    issues.push(`${rule.severity === 'fail' ? 'FAIL' : 'WARN'}: ${rule.message}`)
   }
 
   const inventedCount = (body.match(/\bProvisional:/g) ?? []).length
@@ -428,11 +420,13 @@ function validateWarningPatterns(body: string, frontmatter: Record<string, unkno
     }
   }
 
-  const actionEconomyPattern = /(?:\*\*([^*]+)\*\*|([A-Z][A-Za-z'' -]+):)[^\n]*\b(?:action|bonus action)\b[\s\S]{0,100}\b(?:make|attempt)\s+an?\s+(?:Wisdom|Charisma|Intelligence|Dexterity|Strength|Constitution)\s*\([^)]+\)\s+check\b(?![\s\S]{0,120}(?:advantage|disadvantage|until the end|speed reduced|damage|condition|save|dc\s+\d+|without provoking))/i
-  const actionEconomyMatch = body.match(actionEconomyPattern)
-  if (actionEconomyMatch) {
-    const actionName = (actionEconomyMatch[1] ?? actionEconomyMatch[2] ?? 'Unnamed action').trim()
-    issues.push(`WARN: Action economy warning: ${actionName} spends action economy to perform a check achievable without action cost — add concrete mechanical benefit or convert to trait.`)
+  const actionEconomyPattern = getActionEconomyPattern()
+  if (actionEconomyPattern) {
+    const actionEconomyMatch = body.match(actionEconomyPattern)
+    if (actionEconomyMatch) {
+      const actionName = (actionEconomyMatch[1] ?? actionEconomyMatch[2] ?? 'Unnamed action').trim()
+      issues.push(`WARN: Action economy warning: ${actionName} ${getActionEconomyMessage()}`)
+    }
   }
 }
 
