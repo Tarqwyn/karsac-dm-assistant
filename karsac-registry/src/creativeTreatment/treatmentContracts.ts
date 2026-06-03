@@ -1,4 +1,5 @@
 import type { ProposalType } from '../proposals/proposalTypes.js'
+import { getCreativeTreatmentContractFromData } from '../proposals/proposalContractsLoader.js'
 
 export interface CreativeTreatmentContract {
   requiredSections: string[]
@@ -188,5 +189,5 @@ const CONTRACTS: Partial<Record<ProposalType, CreativeTreatmentContract>> = {
 }
 
 export function getCreativeTreatmentContract(proposalType: ProposalType): CreativeTreatmentContract | null {
-  return CONTRACTS[proposalType] ?? null
+  return getCreativeTreatmentContractFromData(proposalType) ?? CONTRACTS[proposalType] ?? null
 }

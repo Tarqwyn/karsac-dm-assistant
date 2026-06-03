@@ -1,4 +1,5 @@
 import { resolve } from 'path';
+import { getResponseContractHeadings } from './proposals/proposalContractsLoader.js';
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
 import { routeQuestion } from './router.js';
 import type { RouteResult } from './router.js';
@@ -623,12 +624,7 @@ async function callOllama(
 
 // ── Comparison output validation ──────────────────────────────────────────────
 
-const REQUIRED_HEADINGS = [
-  '## direct canon facts',
-  '## differences stated by canon',
-  '## dm interpretation',
-  '## not stated / uncertain',
-];
+const REQUIRED_HEADINGS = getResponseContractHeadings('comparison')
 
 function validateComparisonResponse(text: string): boolean {
   const lower = text.toLowerCase();
@@ -661,13 +657,7 @@ Start with \`## Direct canon facts\`.`,
 
 // ── Deep Lore output validation ───────────────────────────────────────────────
 
-const DEEP_LORE_REQUIRED_HEADINGS = [
-  '## direct canon facts',
-  '## hidden structure',
-  '## dm interpretation',
-  '## not stated / uncertain',
-  '## useful table guidance',
-];
+const DEEP_LORE_REQUIRED_HEADINGS = getResponseContractHeadings('deep_lore')
 
 function deepLoreHasRawContext(text: string): boolean {
   if (text.includes('--- FILE:')) return true;
@@ -738,14 +728,7 @@ Rules:
 
 // ── Rules output validation ───────────────────────────────────────────────────
 
-const RULES_REQUIRED_HEADINGS = [
-  '## ruling',
-  '## base 5e rule',
-  '## karsac table rule',
-  '## at the table',
-  '## edge cases',
-  '## dm call',
-];
+const RULES_REQUIRED_HEADINGS = getResponseContractHeadings('rules')
 
 function validateRulesResponse(text: string): boolean {
   const lower = text.toLowerCase();

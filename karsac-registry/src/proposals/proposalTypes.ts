@@ -3,33 +3,20 @@ export type ProposalType =
   | 'session-outline' | 'scene' | 'npc' | 'place'
   | 'item' | 'clue' | 'handout' | 'state-update'
 
-export const PROPOSAL_FOLDERS: Record<ProposalType, string> = {
-  adversary: 'adversaries',
-  encounter: 'encounters',
-  'chapter-outline': 'chapters',
-  'session-outline': 'sessions',
-  scene: 'scenes',
-  npc: 'npcs',
-  place: 'places',
-  item: 'items',
-  clue: 'clues',
-  handout: 'handouts',
-  'state-update': 'state-updates',
-}
+import { getProposalFolder, getPromoteTarget } from './proposalContractsLoader.js'
 
-export const PROMOTE_TARGETS: Record<ProposalType, string | null> = {
-  adversary: 'corpus/adversary-corpus/karsac-adversaries',
-  encounter: 'corpus/planning/scenes',
-  'chapter-outline': 'corpus/planning/chapters',
-  'session-outline': 'corpus/planning/sessions',
-  scene: 'corpus/planning/scenes',
-  npc: 'corpus/planning/npcs',
-  place: 'corpus/planning/places',
-  item: 'corpus/planning/items',
-  clue: 'corpus/planning/clues',
-  handout: 'corpus/planning/handouts',
-  'state-update': null,
-}
+const ALL_PROPOSAL_TYPES: ProposalType[] = [
+  'adversary', 'encounter', 'chapter-outline', 'session-outline',
+  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'state-update',
+]
+
+export const PROPOSAL_FOLDERS: Record<ProposalType, string> = Object.fromEntries(
+  ALL_PROPOSAL_TYPES.map((t) => [t, getProposalFolder(t)]),
+) as Record<ProposalType, string>
+
+export const PROMOTE_TARGETS: Record<ProposalType, string | null> = Object.fromEntries(
+  ALL_PROPOSAL_TYPES.map((t) => [t, getPromoteTarget(t)]),
+) as Record<ProposalType, string | null>
 
 export interface ProposalValidation {
   status: 'pass' | 'warning' | 'fail'

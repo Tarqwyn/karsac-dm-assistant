@@ -5,51 +5,17 @@ import type { ProposalType } from './proposalTypes.js'
 import { validateProposalGovernance } from './proposalGovernance.js'
 import { getProposalEntityPolicy } from './proposalEntityPolicies.js'
 import { normalizeEntityName } from './proposalEntityRegistry.js'
+import {
+  getProposalRequiredSections,
+  getProposalSuggestedSections,
+  getRequiredStatBlockFields,
+} from './proposalContractsLoader.js'
 
 export interface ProposalValidationResult {
   valid: boolean
   status: 'pass' | 'warning' | 'fail'
   issues: string[]
 }
-
-const CHAPTER_REQUIRED_SECTIONS = [
-  '## Chapter Purpose',
-  '## Starting State',
-  '## Player Knowledge',
-  '## Core Pressure',
-  '## Scene Spine',
-  '## End Conditions',
-  '## Suggested State Updates After Play',
-]
-
-const ENCOUNTER_REQUIRED_SECTIONS = [
-  '## Encounter Type',
-  '## Campaign Purpose',
-  '## Cast',
-  '## Pressure Ladder',
-  '## Checks and Mechanics',
-  '## Outcomes',
-]
-
-const ADVERSARY_REQUIRED_SECTIONS = [
-  '## Stat Block',
-  '## Mechanical Base',
-  '## Adaptation Summary',
-  '## Tactics',
-]
-
-const NPC_REQUIRED_SECTIONS = [
-  '## Role',
-  '## Physical Bearing',
-  '## What They Want',
-  '## What They Hide',
-  '## can_know',
-  '## must_not_know',
-  '## Lines to Inhabit',
-  '## Dramatic Utility',
-  '## player_safe',
-  '## dm_only',
-]
 
 export function policyFilteredSections(sectionHeaders: string[], policy: ReturnType<typeof getProposalEntityPolicy>): string[] {
   if (!policy) return sectionHeaders
@@ -134,7 +100,7 @@ export function validateProposalContent(
 
   // Type-specific validation
   if (proposalType === 'chapter-outline') {
-    for (const section of CHAPTER_REQUIRED_SECTIONS) {
+    for (const section of getProposalRequiredSections('chapter-outline')) {
       if (!body.includes(section)) {
         fail(`chapter-outline body missing required section: ${section}`)
       }
@@ -148,7 +114,7 @@ export function validateProposalContent(
   }
 
   if (proposalType === 'encounter') {
-    for (const section of ENCOUNTER_REQUIRED_SECTIONS) {
+    for (const section of getProposalRequiredSections('encounter')) {
       if (!body.includes(section)) {
         fail(`encounter body missing required section: ${section}`)
       }
@@ -156,20 +122,17 @@ export function validateProposalContent(
   }
 
   if (proposalType === 'adversary') {
-    for (const section of ADVERSARY_REQUIRED_SECTIONS) {
+    for (const section of getProposalRequiredSections('adversary')) {
       if (!body.includes(section)) {
         fail(`adversary body missing required section: ${section}`)
       }
     }
-    if (!body.includes('Armour Class') && !body.includes('Armor Class')) {
-      fail('adversary body missing "Armour Class" or "Armor Class"')
-    }
-    if (!body.includes('Hit Points')) {
-      fail('adversary body missing "Hit Points"')
-    }
-    if (!body.includes('Challenge')) {
-      fail('adversary body missing "Challenge"')
-    }
+    const statBlockFields = getRequiredStatBlockFields('adversary')
+    const hasAC = statBlockFields.filter(f => f.toLowerCase().includes('armour') || f.toLowerCase().includes('armor'))
+      .some(f => body.includes(f))
+    if (!hasAC) fail('adversary body missing "Armour Class" or "Armor Class"')
+    if (!body.includes('Hit Points')) fail('adversary body missing "Hit Points"')
+    if (!body.includes('Challenge')) fail('adversary body missing "Challenge"')
   }
 
   if (proposalType === 'place') {
@@ -189,8 +152,8 @@ export function validateProposalContent(
       fail('place proposal body must begin with a "# Place: <name>" heading')
     }
 
-    const PLACE_REQUIRED_SECTIONS = policyFilteredSections(['## Overview', '## Geography', '## Key Districts', '## Factions'], entityPolicy)
-    for (const section of PLACE_REQUIRED_SECTIONS) {
+    const suggestedSections = policyFilteredSections(getProposalSuggestedSections('place'), entityPolicy)
+    for (const section of suggestedSections) {
       if (!body.includes(section)) {
         warn(`place body missing suggested section: ${section}`)
       }
@@ -213,7 +176,7 @@ export function validateProposalContent(
     if (!body.match(/^#\s+NPC:\s+\S/m)) {
       fail('npc proposal body must begin with a "# NPC: <name>" heading')
     }
-    for (const section of policyFilteredSections(NPC_REQUIRED_SECTIONS, entityPolicy)) {
+    for (const section of policyFilteredSections(getProposalRequiredSections('npc'), entityPolicy)) {
       if (!body.includes(section)) {
         fail(`npc body missing required section: ${section}`)
       }

@@ -8,6 +8,13 @@ import { writeProposal } from '../src/proposals/proposalWriter.js'
 import { validateProposalContent } from '../src/proposals/proposalValidator.js'
 import { repairAdversaryOutput, validateAdversaryOutput } from '../src/adversary-design.js'
 import { pruneProposalOutput } from '../src/proposals/proposalPruner.js'
+import {
+  getProposalFolder, getPromoteTarget, getProposalRequiredSections,
+  getProposalSuggestedSections, getCreativeTreatmentContractFromData,
+  getDesignRequiredHeadings, getResponseContractHeadings,
+  clearProposalContractsCacheForTests,
+} from '../src/proposals/proposalContractsLoader.js'
+import { PROPOSAL_FOLDERS, PROMOTE_TARGETS } from '../src/proposals/proposalTypes.js'
 import { buildChapterOutlineMessages } from '../src/resolver.js'
 import type { ProposalFrontmatter, ProposalType } from '../src/proposals/proposalTypes.js'
 import * as creativeModel from '../src/creativeTreatment/creativeModel.js'
@@ -1045,5 +1052,109 @@ First clean sentence. He knows more about the Shade of Qadim al-Sharr than he le
     expect(result.body).toContain('First clean sentence.')
     expect(result.body).toContain('Third clean sentence.')
     expect(result.body).not.toContain('knows more about the Shade of Qadim al-Sharr')
+  })
+})
+
+// ── Section 1: proposal-contracts.yaml loader tests ───────────────────────────
+
+describe('proposalContractsLoader — YAML is the source of truth', () => {
+  afterEach(() => { clearProposalContractsCacheForTests() })
+
+  it('loads proposal folder mappings from YAML matching hardcoded constants', () => {
+    expect(getProposalFolder('adversary')).toBe('adversaries')
+    expect(getProposalFolder('npc')).toBe('npcs')
+    expect(getProposalFolder('place')).toBe('places')
+    expect(getProposalFolder('chapter-outline')).toBe('chapters')
+    expect(getProposalFolder('state-update')).toBe('state-updates')
+  })
+
+  it('PROPOSAL_FOLDERS in proposalTypes.ts is driven by YAML', () => {
+    expect(PROPOSAL_FOLDERS['adversary']).toBe(getProposalFolder('adversary'))
+    expect(PROPOSAL_FOLDERS['npc']).toBe(getProposalFolder('npc'))
+    expect(PROPOSAL_FOLDERS['state-update']).toBe(getProposalFolder('state-update'))
+  })
+
+  it('loads promote targets from YAML including null for state-update', () => {
+    expect(getPromoteTarget('adversary')).toBe('corpus/adversary-corpus/karsac-adversaries')
+    expect(getPromoteTarget('npc')).toBe('corpus/planning/npcs')
+    expect(getPromoteTarget('state-update')).toBeNull()
+  })
+
+  it('PROMOTE_TARGETS in proposalTypes.ts is driven by YAML', () => {
+    expect(PROMOTE_TARGETS['adversary']).toBe(getPromoteTarget('adversary'))
+    expect(PROMOTE_TARGETS['state-update']).toBeNull()
+  })
+
+  it('loads NPC required sections from YAML', () => {
+    const sections = getProposalRequiredSections('npc')
+    expect(sections).toContain('## Role')
+    expect(sections).toContain('## can_know')
+    expect(sections).toContain('## must_not_know')
+    expect(sections).toContain('## dm_only')
+    expect(sections.length).toBeGreaterThanOrEqual(8)
+  })
+
+  it('loads chapter-outline required sections from YAML', () => {
+    const sections = getProposalRequiredSections('chapter-outline')
+    expect(sections).toContain('## Chapter Purpose')
+    expect(sections).toContain('## Scene Spine')
+    expect(sections).toContain('## Suggested State Updates After Play')
+  })
+
+  it('loads place suggested sections from YAML', () => {
+    const sections = getProposalSuggestedSections('place')
+    expect(sections).toContain('## Overview')
+    expect(sections).toContain('## Factions')
+  })
+
+  it('loads creative treatment contract for adversary from YAML', () => {
+    const contract = getCreativeTreatmentContractFromData('adversary')
+    expect(contract).not.toBeNull()
+    expect(contract!.requiredSections).toContain('## Doctrine')
+    expect(contract!.requiredSections).toContain('## Tactical Notes')
+    expect(contract!.editableSections).toContain('## Player-Safe Description')
+    expect(contract!.instruction).toContain('Doctrine')
+    expect(contract!.extraInstruction).toBeTruthy()
+  })
+
+  it('loads creative treatment contract for npc from YAML', () => {
+    const contract = getCreativeTreatmentContractFromData('npc')
+    expect(contract).not.toBeNull()
+    expect(contract!.requiredSections).toContain('## Public Face')
+    expect(contract!.requiredSections).toContain('## Fear')
+    expect(contract!.requiredSections).toContain('## What They Reveal Under Stress')
+  })
+
+  it('returns null creative treatment contract for types with no contract', () => {
+    expect(getCreativeTreatmentContractFromData('state-update')).toBeNull()
+    expect(getCreativeTreatmentContractFromData('clue')).toBeNull()
+  })
+
+  it('loads design required headings from YAML', () => {
+    const headings = getDesignRequiredHeadings()
+    expect(headings).toContain('## provisional encounter concept')
+    expect(headings).toContain('## canon status')
+    expect(headings.length).toBe(10)
+  })
+
+  it('loads response contract headings for comparison profile from YAML', () => {
+    const headings = getResponseContractHeadings('comparison')
+    expect(headings).toContain('## direct canon facts')
+    expect(headings).toContain('## dm interpretation')
+    expect(headings).toContain('## not stated / uncertain')
+  })
+
+  it('loads response contract headings for deep_lore profile from YAML', () => {
+    const headings = getResponseContractHeadings('deep_lore')
+    expect(headings).toContain('## hidden structure')
+    expect(headings).toContain('## useful table guidance')
+    expect(headings.length).toBe(5)
+  })
+
+  it('loads response contract headings for rules profile from YAML', () => {
+    const headings = getResponseContractHeadings('rules')
+    expect(headings).toContain('## ruling')
+    expect(headings).toContain('## dm call')
+    expect(headings.length).toBe(6)
   })
 })

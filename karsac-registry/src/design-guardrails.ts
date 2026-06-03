@@ -5,20 +5,11 @@
  * triggering ask.ts's CLI main() side-effect.
  */
 
+import { getDesignRequiredHeadings } from './proposals/proposalContractsLoader.js'
+
 // ── Required headings ─────────────────────────────────────────────────────────
 
-export const DESIGN_REQUIRED_HEADINGS = [
-  '## provisional encounter concept',
-  '## why it fits karsac',
-  '## encounter setup',
-  '## creatures / opposition',
-  '## terrain and pressure',
-  '## what this reveals',
-  '## running it at the table',
-  '## scaling options',
-  '## player-safe description',
-  '## canon status',
-] as const;
+export const DESIGN_REQUIRED_HEADINGS: readonly string[] = getDesignRequiredHeadings()
 
 // ── No-monster-data patterns ──────────────────────────────────────────────────
 
