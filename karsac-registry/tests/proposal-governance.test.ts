@@ -5,6 +5,12 @@ import { buildConstrainedProposalPrompt } from '../src/proposals/proposalConstra
 import { validateProposalContent } from '../src/proposals/proposalValidator.js'
 import { PROPOSALS_ROOT } from '../src/paths.js'
 import {
+  getSentenceBoundaryPronouns, getCommonNounSkips, getTitleTokens,
+  getCosmologicalForceNames, getGenericSingleWordSkips,
+  getOrgTypeSuffixes, getOrgStopWords, getTitleTokenAlternation,
+  clearStyleGuardsCacheForTests,
+} from '../src/proposals/styleGuardsLoader.js'
+import {
   clearProposalEntityRegistryCachesForTests,
   detectCorpusAnchorForProposal,
   loadProvisionalEntityRegister,
@@ -1027,5 +1033,76 @@ Misled by Jarl Mathr.
     const result = validateProposalContent(frontmatter, body, 'npc')
     const mathrConflict = result.issues.filter((i) => /character conflict/i.test(i) && /Mathr/i.test(i))
     expect(mathrConflict).toHaveLength(0)
+  })
+})
+
+// ── Section 2: style-guards.yaml loader tests ─────────────────────────────────
+
+describe('styleGuardsLoader — YAML is the source of truth', () => {
+  afterEach(() => { clearStyleGuardsCacheForTests() })
+
+  it('loads sentence boundary pronouns from YAML', () => {
+    const pronouns = getSentenceBoundaryPronouns()
+    expect(pronouns.has('He')).toBe(true)
+    expect(pronouns.has('They')).toBe(true)
+    expect(pronouns.has('Himself')).toBe(true)
+    expect(pronouns.has('Which')).toBe(true)
+    expect(pronouns.size).toBeGreaterThanOrEqual(30)
+  })
+
+  it('loads common noun skips from YAML', () => {
+    const nouns = getCommonNounSkips()
+    expect(nouns.has('Fog')).toBe(true)
+    expect(nouns.has('Stone')).toBe(true)
+    expect(nouns.has('River')).toBe(true)
+    expect(nouns.has('Shadow')).toBe(true)
+  })
+
+  it('loads title tokens from YAML', () => {
+    const tokens = getTitleTokens()
+    expect(tokens.has('King')).toBe(true)
+    expect(tokens.has('Jarl')).toBe(true)
+    expect(tokens.has('Truthspeaker')).toBe(true)
+  })
+
+  it('loads cosmological force names from YAML', () => {
+    const forces = getCosmologicalForceNames()
+    expect(forces.has('Vishara')).toBe(true)
+    expect(forces.has('Maharuq')).toBe(true)
+    expect(forces.has('Yantravaq')).toBe(true)
+  })
+
+  it('loads generic single word skips from YAML', () => {
+    const skips = getGenericSingleWordSkips()
+    expect(skips.has('Gate')).toBe(true)
+    expect(skips.has('Harbour')).toBe(true)
+    expect(skips.has('Council')).toBe(true)
+  })
+
+  it('loads org type suffixes from YAML', () => {
+    const suffixes = getOrgTypeSuffixes()
+    expect(suffixes.has('Guild')).toBe(true)
+    expect(suffixes.has('Council')).toBe(true)
+    expect(suffixes.has('Fellowship')).toBe(true)
+    expect(suffixes.has('House')).toBe(false)
+  })
+
+  it('loads org stop words from YAML', () => {
+    const stops = getOrgStopWords()
+    expect(stops.has('the')).toBe(true)
+    expect(stops.has('of')).toBe(true)
+    expect(stops.has('their')).toBe(true)
+  })
+
+  it('builds title token alternation string from YAML', () => {
+    const alt = getTitleTokenAlternation()
+    expect(alt).toContain('King')
+    expect(alt).toContain('Jarl')
+    expect(alt).toContain('Truthspeaker')
+    // Should be usable in a regex
+    const re = new RegExp(`^(${alt})$`, 'i')
+    expect(re.test('King')).toBe(true)
+    expect(re.test('Jarl')).toBe(true)
+    expect(re.test('Smith')).toBe(false)
   })
 })

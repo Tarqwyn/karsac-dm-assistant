@@ -11,6 +11,14 @@ import {
   normalizeEntityName,
 } from './proposalEntityRegistry.js'
 import { getProposalEntityPolicy } from './proposalEntityPolicies.js'
+import {
+  getSentenceBoundaryPronouns,
+  getCommonNounSkips,
+  getTitleTokens,
+  getCosmologicalForceNames,
+  getGenericSingleWordSkips,
+  getTitleTokenAlternation,
+} from './styleGuardsLoader.js'
 
 interface GovernanceValidationResult {
   issues: string[]
@@ -104,40 +112,17 @@ function extractNpcCandidates(section: string): string[] {
   return [...new Set(names)].filter((name) => !/^provisional\b/i.test(name))
 }
 
-// Capitalised pronouns that can appear at sentence boundaries — never proper nouns
-const SENTENCE_BOUNDARY_PRONOUNS = new Set([
-  'He', 'His', 'Him', 'She', 'Her', 'Hers', 'They', 'Their', 'Them', 'Theirs',
-  'It', 'Its', 'We', 'Our', 'Ours', 'Us', 'You', 'Your', 'Yours', 'I', 'My', 'Mine',
-  'Myself', 'Himself', 'Herself', 'Themselves', 'Itself', 'Yourself',
-  'Who', 'Whom', 'Whose', 'Which', 'What', 'That',
-])
-
-// Common nouns that appear capitalised in D&D/fantasy prose but are never proper names
-const COMMON_NOUN_SKIPS = new Set([
-  'Fog', 'Mist', 'Shadow', 'Dark', 'Darkness', 'Light', 'Stone', 'River', 'Sea', 'Ocean',
-  'Mountain', 'Wind', 'Ice', 'Snow', 'Fire', 'Flame', 'Rain', 'Storm', 'Sun', 'Moon',
-  'Night', 'Dawn', 'Dusk', 'Tide', 'Salt', 'Ash', 'Dust', 'Blood', 'Bone',
-  'Forest', 'Shore', 'Cliff', 'Bay', 'Port', 'Wall', 'Tower', 'Bridge', 'Path',
-])
-
-const TITLE_TOKENS = new Set([
-  'King', 'Jarl', 'Lord', 'Lady', 'Captain', 'Archivist', 'Elder',
-  'Housecarl', 'Skald', 'Truthspeaker',
-])
-
-// Cosmological forces and metaphysical entities — never individual NPCs
-const COSMOLOGICAL_FORCE_NAMES = new Set([
-  'Vishara', 'Maharuq', 'Dhurvaq', 'Yantravaq',
-])
+// Word lists loaded from corpus/registry/style-guards.yaml
+const SENTENCE_BOUNDARY_PRONOUNS = getSentenceBoundaryPronouns()
+const COMMON_NOUN_SKIPS = getCommonNounSkips()
+const TITLE_TOKENS = getTitleTokens()
+const COSMOLOGICAL_FORCE_NAMES = getCosmologicalForceNames()
 
 function extractNamedIndividuals(section: string): string[] {
   const names = new Set<string>(extractNpcCandidates(section))
-  const genericSingleWordSkips = new Set([
-    'The', 'They', 'Which', 'What', 'Role', 'Physical', 'Players',
-    'Gate', 'Road', 'Harbour', 'Harbor', 'Market', 'Dock', 'Docks',
-    'Captain', 'Guard', 'Clerk', 'Courier', 'Merchant', 'Inn', 'Council',
-  ])
-  const titleCompoundPattern = /\b(King|Jarl|Lord|Lady|Captain|Archivist|Elder|Housecarl|Skald|Truthspeaker)\s+([A-Z][\p{L}''-]+(?:\s+[A-Z][\p{L}''-]+){0,2})\b/gu
+  const genericSingleWordSkips = getGenericSingleWordSkips()
+  const titleAlt = getTitleTokenAlternation()
+  const titleCompoundPattern = new RegExp(`\\b(${titleAlt})\\s+([A-Z][\\p{L}''-]+(?:\\s+[A-Z][\\p{L}''-]+){0,2})\\b`, 'gu')
   for (const match of section.matchAll(titleCompoundPattern)) {
     const candidate = `${match[1]} ${match[2]}`.trim()
     names.add(candidate)

@@ -2,6 +2,11 @@ import type { ProposalType } from '../proposals/proposalTypes.js'
 import type { ProposalEntityPolicy } from '../proposals/proposalEntityPolicies.js'
 import { getCreativeTreatmentContract } from './treatmentContracts.js'
 import { policyFilteredSections } from '../proposals/proposalValidator.js'
+import {
+  getOrgTypeSuffixes,
+  getOrgStopWords,
+  getTitleTokenAlternation,
+} from '../proposals/styleGuardsLoader.js'
 
 export interface CreativeTreatmentValidationResult {
   valid: boolean
@@ -61,21 +66,22 @@ function sentenceFragments(value: string): string[] {
 // Multi-word capitalised phrase pattern — named places, groups, and landmarks
 const PROPER_NOUN_PHRASE = /\b([A-Z][a-zA-Z'-]+(?:\s+[A-Z][a-zA-Z'-]+)+)\b/g
 
-// Organisation-type suffixes — a phrase ending in one of these is likely an invented faction/group
-// "House" excluded: too many false positives (Safe House, Guard House, etc.)
-// Named houses like "House Mathr" are caught via the NPC conflict checks.
-const ORG_TYPE_SUFFIXES = new Set([
-  'Guild', 'Council', 'Order', 'Company', 'Clan', 'Cell',
-  'Network', 'Watch', 'Circle', 'Fellowship', 'Syndicate',
-  'League', 'Brotherhood', 'Sisterhood',
-])
+// Loaded from corpus/registry/style-guards.yaml
+// "House" excluded from org suffixes: too many false positives (Safe House, Guard House, etc.)
+const ORG_TYPE_SUFFIXES = getOrgTypeSuffixes()
+
+// Built from title_tokens in style-guards.yaml
+const TITLE_ALT = getTitleTokenAlternation()
+const ARTICLE_TITLE_PATTERN = new RegExp(`^(the|a|an)$`, 'i')
+const TITLE_TOKEN_PATTERN = new RegExp(`^(${TITLE_ALT})$`, 'i')
+const TITLE_STRIP_PATTERN = new RegExp(`^(${TITLE_ALT})\\s+`, 'i')
 
 function endsWithOrgSuffix(phrase: string): boolean {
   const lastWord = phrase.split(/\s+/).pop() ?? ''
   return ORG_TYPE_SUFFIXES.has(lastWord)
 }
 
-const ORG_STOP_WORDS = new Set(['the', 'a', 'an', 'of', 'in', 'at', 'by', 'for', 'to', 'and', 'or', 'its', 'their'])
+const ORG_STOP_WORDS = getOrgStopWords()
 
 /**
  * For an org-suffix phrase, check whether any significant content word
@@ -144,10 +150,10 @@ export function validateAnchorBoundedContent(
       if (anchorLower.includes(phrase.toLowerCase())) continue
       // Skip generic article+title phrases: "The King", "A Jarl" — not invented names
       const phraseWords = phrase.split(/\s+/)
-      if (phraseWords.length === 2 && /^(the|a|an)$/i.test(phraseWords[0]!) &&
-          /^(King|Jarl|Lord|Lady|Captain|Archivist|Elder|Housecarl|Skald|Truthspeaker)$/i.test(phraseWords[1]!)) continue
+      if (phraseWords.length === 2 && ARTICLE_TITLE_PATTERN.test(phraseWords[0]!) &&
+          TITLE_TOKEN_PATTERN.test(phraseWords[1]!)) continue
       // Strip leading title token and re-check (e.g. "Jarl Mathr" → "Mathr" in anchor)
-      const titleStripped = phrase.replace(/^(King|Jarl|Lord|Lady|Captain|Archivist|Elder|Housecarl|Skald|Truthspeaker)\s+/i, '')
+      const titleStripped = phrase.replace(TITLE_STRIP_PATTERN, '')
       if (titleStripped !== phrase && anchorLower.includes(titleStripped.toLowerCase())) continue
       // Strip possessive and re-check (e.g. "Jarl Mathr's" → "Jarl Mathr")
       const depossessed = phrase.replace(/[''']s$/u, '')

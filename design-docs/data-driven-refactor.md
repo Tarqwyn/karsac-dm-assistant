@@ -75,7 +75,7 @@ Both now computed from `getProposalFolder()` / `getPromoteTarget()` at startup.
 
 ---
 
-## Section 2 — Style guards and language lists
+## Section 2 — Style guards and language lists ✅ Complete
 
 **Must complete before structured JSON generation.**
 
@@ -88,20 +88,23 @@ add new title tokens, or add cosmological forces without touching the pipeline.
 
 ### 2.1 Move word lists from proposalGovernance.ts
 
-- [ ] `SENTENCE_BOUNDARY_PRONOUNS` — `proposalGovernance.ts:108-113`
-- [ ] `COMMON_NOUN_SKIPS` — `proposalGovernance.ts:116-121`
-- [ ] `TITLE_TOKENS` — `proposalGovernance.ts:123-126`
-- [ ] `COSMOLOGICAL_FORCE_NAMES` — `proposalGovernance.ts:129-131`
-- [ ] `genericSingleWordSkips` (inline, per-call) — `proposalGovernance.ts:135-139`
+- [x] `SENTENCE_BOUNDARY_PRONOUNS` — `proposalGovernance.ts`
+- [x] `COMMON_NOUN_SKIPS` — `proposalGovernance.ts`
+- [x] `TITLE_TOKENS` — `proposalGovernance.ts`
+- [x] `COSMOLOGICAL_FORCE_NAMES` — `proposalGovernance.ts`
+- [x] `genericSingleWordSkips` (inline, per-call) — `proposalGovernance.ts`
 
 ### 2.2 Move word lists from treatmentValidator.ts
 
-- [ ] `ORG_TYPE_SUFFIXES` — `treatmentValidator.ts`
-- [ ] `ORG_STOP_WORDS` — `treatmentValidator.ts`
+- [x] `ORG_TYPE_SUFFIXES` — `treatmentValidator.ts`
+- [x] `ORG_STOP_WORDS` — `treatmentValidator.ts`
 
-After move: both files load from `style-guards.yaml` at startup via a shared
-loader. Tests: add a test that each list loads correctly; existing boundary and
-anchor content tests must still pass.
+Title-token regex patterns in `treatmentValidator.ts` also rebuilt dynamically
+via `getTitleTokenAlternation()` — no more duplicated inline alternation strings.
+
+**New file:** `corpus/registry/style-guards.yaml`
+**New file:** `karsac-registry/src/proposals/styleGuardsLoader.ts`
+**Tests added:** 8 new tests in `proposal-governance.test.ts` (647 total, all passing)
 
 ---
 

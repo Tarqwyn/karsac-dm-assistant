@@ -1,0 +1,164 @@
+# Style guard word lists — named-entity boundary checker and anchor content validator
+#
+# These lists define which words are never proper names, which are titles,
+# and which org-type suffixes signal invented factions.
+# Extend here without touching TypeScript.
+
+# Capitalised pronouns that appear at sentence boundaries — never proper nouns
+sentence_boundary_pronouns:
+  - He
+  - His
+  - Him
+  - She
+  - Her
+  - Hers
+  - They
+  - Their
+  - Them
+  - Theirs
+  - It
+  - Its
+  - We
+  - Our
+  - Ours
+  - Us
+  - You
+  - Your
+  - Yours
+  - I
+  - My
+  - Mine
+  - Myself
+  - Himself
+  - Herself
+  - Themselves
+  - Itself
+  - Yourself
+  - Who
+  - Whom
+  - Whose
+  - Which
+  - What
+  - That
+
+# Common nouns capitalised in D&D/fantasy prose — never proper names
+common_noun_skips:
+  - Fog
+  - Mist
+  - Shadow
+  - Dark
+  - Darkness
+  - Light
+  - Stone
+  - River
+  - Sea
+  - Ocean
+  - Mountain
+  - Wind
+  - Ice
+  - Snow
+  - Fire
+  - Flame
+  - Rain
+  - Storm
+  - Sun
+  - Moon
+  - Night
+  - Dawn
+  - Dusk
+  - Tide
+  - Salt
+  - Ash
+  - Dust
+  - Blood
+  - Bone
+  - Forest
+  - Shore
+  - Cliff
+  - Bay
+  - Port
+  - Wall
+  - Tower
+  - Bridge
+  - Path
+
+# Titles that prefix NPC names — used for compound name extraction and anchor title-stripping
+title_tokens:
+  - King
+  - Jarl
+  - Lord
+  - Lady
+  - Captain
+  - Archivist
+  - Elder
+  - Housecarl
+  - Skald
+  - Truthspeaker
+
+# Cosmological forces and metaphysical entities — never individual NPCs
+cosmological_force_names:
+  - Vishara
+  - Maharuq
+  - Dhurvaq
+  - Yantravaq
+
+# Generic single-word skips for the entity extraction role-signal pass
+# (things that match capitalised patterns but are structural or generic terms)
+generic_single_word_skips:
+  - The
+  - They
+  - Which
+  - What
+  - Role
+  - Physical
+  - Players
+  - Gate
+  - Road
+  - Harbour
+  - Harbor
+  - Market
+  - Dock
+  - Docks
+  - Captain
+  - Guard
+  - Clerk
+  - Courier
+  - Merchant
+  - Inn
+  - Council
+
+# Organisation-type suffixes — a multi-word phrase ending in one of these
+# is likely an invented faction/group if not traceable to the corpus anchor.
+# "House" excluded: too many false positives (Safe House, Guard House, etc.)
+org_type_suffixes:
+  - Guild
+  - Council
+  - Order
+  - Company
+  - Clan
+  - Cell
+  - Network
+  - Watch
+  - Circle
+  - Fellowship
+  - Syndicate
+  - League
+  - Brotherhood
+  - Sisterhood
+
+# Stop words for the org-suffix word-level anchor check
+# (short/common words that don't count as meaningful anchor matches)
+org_stop_words:
+  - the
+  - a
+  - an
+  - of
+  - in
+  - at
+  - by
+  - for
+  - to
+  - and
+  - or
+  - its
+  - their
