@@ -21,6 +21,25 @@ export interface PreferredFactionWeapon {
   rider?: string
 }
 
+export interface FactionValidationRule {
+  pattern: string
+  secondaryPattern?: string
+  severity: 'warn' | 'fail'
+  message: string
+}
+
+export interface FactionDetectionSpec {
+  mentionPattern: string
+  positivePatterns: string[]
+  dmNotesSynonyms: string[]
+}
+
+export interface FactionDoctrineSupportMechanic {
+  label: string
+  pattern: string
+  reliableUnderPressure: boolean
+}
+
 export interface FactionProfile {
   slug: string
   displayName: string
@@ -40,6 +59,10 @@ export interface FactionProfile {
   abilityFloors: Record<string, Record<string, number>>
   requiredDoctrineThemes: string[]
   styleNotes: string[]
+  generationConstraints: string[]
+  validationRules: FactionValidationRule[]
+  detection: FactionDetectionSpec | null
+  doctrineSupportMechanics: FactionDoctrineSupportMechanic[]
 }
 
 interface FactionRegistryData {
@@ -116,6 +139,31 @@ function normalizeProfile(raw: Record<string, unknown>): FactionProfile | null {
     abilityFloors: toLowercaseKeyedMap(raw.ability_floors ?? raw.ability_score_floors),
     requiredDoctrineThemes: toStringArray(raw.required_doctrine_themes),
     styleNotes: toStringArray(raw.style_notes),
+    generationConstraints: toStringArray(raw.generation_constraints),
+    validationRules: Array.isArray(raw.validation_rules)
+      ? (raw.validation_rules as Record<string, unknown>[]).map((r) => ({
+          pattern: String(r.pattern ?? ''),
+          secondaryPattern: r.secondary_pattern ? String(r.secondary_pattern) : undefined,
+          severity: String(r.severity ?? 'warn') === 'fail' ? 'fail' as const : 'warn' as const,
+          message: String(r.message ?? ''),
+        })).filter((r) => r.pattern && r.message)
+      : [],
+    detection: (() => {
+      const d = raw.detection as Record<string, unknown> | undefined
+      if (!d) return null
+      return {
+        mentionPattern: String(d.mention_pattern ?? ''),
+        positivePatterns: toStringArray(d.positive_patterns),
+        dmNotesSynonyms: toStringArray(d.dm_notes_synonyms),
+      }
+    })(),
+    doctrineSupportMechanics: Array.isArray(raw.doctrine_support_mechanics)
+      ? (raw.doctrine_support_mechanics as Record<string, unknown>[]).map((m) => ({
+          label: String(m.label ?? ''),
+          pattern: String(m.pattern ?? ''),
+          reliableUnderPressure: Boolean(m.reliable_under_pressure),
+        })).filter((m) => m.label && m.pattern)
+      : [],
   }
 }
 
@@ -152,6 +200,10 @@ export function getFactionProfile(slug: string | null | undefined): FactionProfi
 
 export function getCanonicalLanguages(): string[] {
   return loadFactionRegistry().canonicalLanguages
+}
+
+export function getAllFactionProfiles(): FactionProfile[] {
+  return Object.values(loadFactionRegistry().profiles)
 }
 
 export function clearFactionRegistryCacheForTests(): void {

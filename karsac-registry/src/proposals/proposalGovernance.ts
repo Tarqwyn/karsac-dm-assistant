@@ -430,24 +430,15 @@ function validateWarningPatterns(body: string, frontmatter: Record<string, unkno
   }
 }
 
-function validateShadowWalkerProposal(body: string, issues: string[]): void {
-  const lower = body.toLowerCase()
-  if (!lower.includes('shadow walker') && !lower.includes('shadow-walker')) return
+function validateFactionProposal(factionSlug: string, body: string, issues: string[]): void {
+  const factionProfile = getFactionProfile(factionSlug)
+  if (!factionProfile || factionProfile.validationRules.length === 0) return
 
-  const factionProfile = getFactionProfile('shadow-walkers')
-  if (!factionProfile) return
-
-  if (/\bneutral evil\b|\blawful evil\b|\bchaotic evil\b/i.test(body)) {
-    issues.push('FAIL: Alignment convention: Shadow Walker variants must not include an evil alignment component.')
-  }
-  if (/\bshortbow\b|\blongbow\b/i.test(body) && /\bcover identity|unremarkable presence|blend(?:ing)? in|urban infiltr/i.test(body)) {
-    issues.push('WARN: Shortbow/concealability flag: concealment doctrine should use a faction-appropriate concealable weapon such as a throwing spike.')
-  }
-  if (/\bminor illusion\b|\bcantrip\b|\bspellcasting\b|\bspell attack\b/i.test(body)) {
-    issues.push('WARN: Spell capability flag: Shadow Walker variants should justify any spell use explicitly.')
-  }
-  if (/\bobservation\b|\bread(?:ing)? people\b|\bassessment\b|\bkeen observer\b|\bwatch(?:es|ing)?\b/i.test(body) && /\|\s*\d+\s*\([^)]+\)\s*\|\s*\d+\s*\([^)]+\)\s*\|\s*\d+\s*\([^)]+\)\s*\|\s*\d+\s*\([^)]+\)\s*\|\s*10\s*\(\+0\)\s*\|/i.test(body)) {
-    issues.push(`WARN: Wisdom floor: ${factionProfile.displayName} observation doctrine usually expects WIS 12+.`)
+  for (const rule of factionProfile.validationRules) {
+    const regex = new RegExp(rule.pattern, 'i')
+    if (!regex.test(body)) continue
+    if (rule.secondaryPattern && !new RegExp(rule.secondaryPattern, 'i').test(body)) continue
+    issues.push(`${rule.severity === 'fail' ? 'FAIL' : 'WARN'}: ${rule.message}`)
   }
 }
 
@@ -470,7 +461,7 @@ export function validateProposalGovernance(
       issues.push(`WARN: Provisional entity reference: "${provisional.name}" exists only in unpromoted proposals — cannot be treated as canonical.`)
     }
   }
-  if (proposalType === 'adversary') validateShadowWalkerProposal(body, issues)
+  if (proposalType === 'adversary') validateFactionProposal('shadow-walkers', body, issues)
 
   return { issues }
 }

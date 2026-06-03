@@ -109,11 +109,8 @@ function buildAdversaryConstraintLines(input: ProposalConstraintInput): string[]
       if (factionProfile.styleNotes.length > 0) {
         lines.push(`- Style notes: ${factionProfile.styleNotes.join(' ')}`)
       }
-      if (input.lockedFaction === 'shadow-walkers') {
-        lines.push('- Shadow Walker doctrine must include restraint-as-discipline, controlled withdrawal, and information preservation.')
-        lines.push('- Shadow Walker urban cover identities must not keep shortbow, longbow, or heavy crossbow. Use throwing spike or concealed blade instead.')
-        lines.push('- Shadow Walker urban infiltrators should usually use Common, Trade Tongue (local), and Shadow Walker Sign.')
-        lines.push('- If doctrine involves observation, reading, or assessment, Wisdom should normally be 12 or higher.')
+      for (const constraint of factionProfile.generationConstraints) {
+        lines.push(`- ${constraint}`)
       }
     }
   }
