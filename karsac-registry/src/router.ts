@@ -1,5 +1,12 @@
 export type Profile = 'canon' | 'prose' | 'deep-lore' | 'rules' | 'design' | 'state' | 'encounter-design' | 'adversary-design';
 
+import {
+  getRulesTerms, getDesignTerms, getDeepLoreTerms,
+  getStrongProseTerms, getWeakProseTerms, getStateTerms,
+  getAdversaryDesignTerms, getEncounterDesignTerms, getCanonTerms,
+  getExplicitEncounterScenePattern,
+} from './routerConfigLoader.js'
+
 export interface RouteResult {
   profile: Profile;
   reason: string;
@@ -7,260 +14,17 @@ export interface RouteResult {
   modeOverride?: 'player' | 'dm';
 }
 
-// ── Term lists ────────────────────────────────────────────────────────────────
-// Ordered: longer/more specific phrases come before shorter ones to avoid
-// early partial matches shadowing the more precise entry.
+// ── Term lists — loaded from corpus/registry/router-config.yaml ─────────────
 
-const RULES_TERMS = [
-  // D&D rule vocabulary
-  'rule', 'rules', 'ruling',
-  'mechanically', 'mechanic', 'mechanics',
-  // Actions (long phrases first)
-  'bonus action', 'help action', 'hide action', 'ready action',
-  'reaction', 'action',
-  'dash', 'disengage', 'dodge',
-  // Rolls and checks (long phrases first)
-  'death saving throw', 'saving throw',
-  'ability check', 'attack roll', 'check',
-  'death save',
-  // Specific rules
-  'opportunity attack', 'attack of opportunity',
-  'grappling', 'grapple', 'shove',
-  'concentration', 'spellcasting', 'damage',
-  // Conditions
-  'blinded', 'charmed', 'deafened', 'exhaustion',
-  'frightened', 'grappled', 'incapacitated', 'invisible',
-  'paralyzed', 'petrified', 'poisoned', 'prone',
-  'restrained', 'stunned', 'unconscious',
-  'condition',
-  // Karsac-specific rule queries
-  'karsac table', 'table rule', 'house rule',
-] as const;
-
-const DESIGN_TERMS = [
-  // Explicit need/want + encounter
-  'need an encounter', 'want an encounter',
-  // Design/build/make/create + encounter
-  'design an encounter', 'build an encounter', 'make an encounter', 'create an encounter',
-  // Encounter-type phrases
-  'encounter for the party', 'encounter on the road',
-  'road encounter', 'travel encounter', 'random encounter',
-  'combat encounter', 'non-combat encounter',
-  'challenging encounter', 'balanced encounter', 'creature encounter',
-  'encounter concept', 'encounter idea',
-  // Help phrases
-  'help me design', 'help me make', 'help me build', 'help me create',
-  // Build/design + target (longer phrases first)
-  'build me an', 'build me a',
-  'design me an', 'design me a',
-  'build a creature', 'design a creature',
-  'build an npc', 'design an npc',
-  // Combat encounter requests (fight/ambush/battle language → monster encounter design)
-  'give me a fight', 'want a fight', 'set up a fight',
-  'fight with', 'fight against',
-  'ambush on the road', 'ambush by',
-  'attack on the road', 'bandit attack',
-  'combat scene', 'a fight on',
-] as const;
-
-const DEEP_LORE_TERMS = [
-  // Strong phrase matches first
-  'what is really happening', "what's really happening",
-  'what is actually going on', "what's actually going on",
-  'behind the scenes', 'explain the hidden',
-  'thinning of the particular',
-  'hidden truth', 'larger truth',
-  'dm-only', 'dm only', 'deep lore',
-  // Named cosmology terms
-  'vishara', 'dhurvaq', 'maharuq', 'yantravaq',
-  'the holding', 'the hiding', 'the thinning',
-  'the instruments', 'the waking',
-  // Broader qualifiers (after specific terms)
-  'cosmology', 'hidden', 'secret', 'reveal',
-] as const;
-
-// Strong prose signals that override design (e.g. "write boxed text for an encounter")
-const STRONG_PROSE_TERMS = [
-  'boxed text', 'read-aloud', 'read aloud',
-  'flavour text', 'flavor text',
-  'intro text', 'opening text', 'arrival text',
-  'dm narration',
-  'give me lines',
-  'make it more', 'make this sound',
-  'what would',   // "what would X say"
-  'dialogue',
-  'rewrite', 'write',
-] as const;
-
-// Weaker prose signals checked after design
-const WEAK_PROSE_TERMS = [
-  'description', 'describe',
-  'narration', 'scene', 'voice',
-] as const;
-
-// State profile — table-progress queries (longer phrases first to prevent partial shadowing).
-// Fires after design (step 4) and before deep-lore (step 5).
-const STATE_TERMS = [
-  // Player knowledge
-  'what does the party know',
-  'what do the players know',
-  'party currently know',
-  'player knowledge',
-  'party knowledge',
-  // Revelation state
-  'what has been revealed',
-  'not yet revealed',
-  'unrevealed facts',
-  'unrevealed fact',
-  'what facts are available',
-  'available facts',
-  // Thread state
-  'active threads',
-  'open threads',
-  'hot threads',
-  'simmering threads',
-  'dormant threads',
-  'which threads',
-  'open after session',
-  'thread status',
-  'thread state',
-  // Session / campaign state
-  'what happened in session',
-  'session progress',
-  'session state',
-  'campaign state',
-  'party state',
-  'npc state',
-  'item state',
-  // Handouts
-  'posted handouts',
-  'handouts have been posted',
-  'what handouts',
-  // Chapter prep / hooks
-  'chapter 3',
-  'what should chapter',
-  'what should happen next',
-  'what happens next',
-  'how should the next chapter',
-  'next chapter start',
-  'carry forward',
-  'what threads should carry',
-  'what hooks',
-  'open hooks',
-] as const;
-
-// Adversary-design terms — fire at step 3.25, before encounter-design (3.5) and design (4).
-// These indicate the user wants to CREATE an adversary (stat block, adaptation),
-// not design an encounter scene.
-const ADVERSARY_DESIGN_TERMS = [
-  // Explicit adversary creation (propose/new patterns for proposal mode)
-  'propose a new adversary',
-  'propose an adversary',
-  'new adversary',
-  'design me an adversary',
-  'create an adversary',
-  'make me an adversary',
-  'design an adversary',
-  'create a villain',
-  'design a villain',
-  // Stat block requests
-  'stat block',
-  'statblock',
-  // Using a named base
-  'using the spy',
-  'using the noble',
-  'using the guard',
-  'using the veteran',
-  'using the bandit',
-  'using the thug',
-  'using the scout',
-  'using the mage',
-  'using the priest',
-  'using the acolyte',
-  'using the assassin',
-  'using spy as',
-  'using noble as',
-  'using guard as',
-  'using veteran as',
-  'using bandit as',
-  'based on the spy',
-  'based on the noble',
-  'based on the guard',
-  'based on the veteran',
-  'based on the bandit',
-  'based on a spy',
-  'based on a noble',
-  'based on a guard',
-  'based on a veteran',
-  'based on a bandit',
-  'use spy as',
-  'use noble as',
-  'use guard as',
-  'use veteran as',
-  'use bandit as',
-  'use the spy',
-  'use the noble',
-  'use the guard',
-  'use the veteran',
-  'use the bandit',
-  // Karsac-specific creature adaptation
-  'maw-touched',
-  'vishara-touched',
-  // Generic adversary creation phrases
-  'custom npc enemy',
-  'custom npc',
-  'custom adversary',
-  'villain stat',
-  'turn this into a stat',
-  'turn this idea into a',
-  'make me an npc enemy',
-  'full stat block',
-] as const;
-
-const ENCOUNTER_DESIGN_TERMS = [
-  'social encounter',
-  'npc encounter',
-  'non-monster encounter',
-  'build a scene',
-  'create a scene',
-  'customs inspection',
-  'dock encounter',
-  'dock scene',
-  'dock delay',
-  'interrogation scene',
-  'interrogation encounter',
-  'faction pressure',
-  'procedural delay',
-  'social obstruction',
-  'use adversaries',
-  'using adversaries',
-  'false customs',
-  'mathr agents',
-  'arrival scene',
-  'valweg arrival',
-  'what non-monster',
-  'witness pressure',
-  'public accusation',
-  'false hospitality',
-  'market surveillance',
-  'formal audience',
-  'bribery attempt',
-] as const;
-
-const CANON_TERMS = [
-  'tell me about', 'tell me',
-  'who is', 'who are',
-  'what is', 'what are',
-  'what do we know',
-  'list facts',
-  'summarise', 'summarize',
-  'extract facts',
-  'difference between',
-  'how are',
-  'compare',
-  'cite', 'sources',
-  'player-known', 'ambiguities',
-] as const;
+const RULES_TERMS = getRulesTerms()
+const DESIGN_TERMS = getDesignTerms()
+const DEEP_LORE_TERMS = getDeepLoreTerms()
+const STRONG_PROSE_TERMS = getStrongProseTerms()
+const WEAK_PROSE_TERMS = getWeakProseTerms()
+const STATE_TERMS = getStateTerms()
+const ADVERSARY_DESIGN_TERMS = getAdversaryDesignTerms()
+const ENCOUNTER_DESIGN_TERMS = getEncounterDesignTerms()
+const CANON_TERMS = getCanonTerms()
 
 // ── Matching helpers ──────────────────────────────────────────────────────────
 
@@ -338,8 +102,7 @@ export function routeQuestion(question: string): RouteResult {
 
   // Step 3.25: adversary-design terms — create/adapt a stat block (BEFORE encounter-design)
   // Exception: explicit encounter/scene intent wins over adversary intent.
-  const EXPLICIT_ENCOUNTER_SCENE =
-    /\bdesign\s+an?\s+encounter\b|\bcreate\s+an?\s+(?:scene|encounter)\b|\b(?:dock|gate|arrival|road)\s+encounter\b|\bencounter\s+scene\b/i
+  const EXPLICIT_ENCOUNTER_SCENE = getExplicitEncounterScenePattern()
   const adversaryDesignMatched = findMatchedTerms(lq, ADVERSARY_DESIGN_TERMS);
   if (adversaryDesignMatched.length > 0 && !EXPLICIT_ENCOUNTER_SCENE.test(lq)) {
     return {
