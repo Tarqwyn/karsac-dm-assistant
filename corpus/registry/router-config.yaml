@@ -299,3 +299,89 @@ canon_terms:
 
 # Pattern that indicates explicit encounter/scene intent (overrides adversary-design routing)
 explicit_encounter_scene_pattern: '\bdesign\s+an?\s+encounter\b|\bcreate\s+an?\s+(?:scene|encounter)\b|\b(?:dock|gate|arrival|road)\s+encounter\b|\bencounter\s+scene\b'
+
+# Proposal routing — adversary detection pattern (proposalRouting.ts)
+adversary_proposal_pattern: '\bnew\s+adversary\b|\badversary\b|\bfaction\s+(?:agent|member|operative)\b|\bmartial\s+threat\b|\bcombat\s+threat\b|\bif\s+confronted\b|\bencountered\s+(?:alone|in\s+pairs?)\b|\btraits?\s+and\s+actions?\b|\bstat\s+block\b|\bdm\s+can\s+choo?s\b|\bx\s+out\s+of\s+y\b|\bvariant\b[^.]*(?:faction|threat|danger|shadow|blend)\b|\bblending\s+in\b[^.]*(?:faction|shadow|hidden|agent)\b|\binfiltrator\b|\bnot\s+as\s+dangerous\s+as\b'
+
+# Adversary diagnostic term checks — labeled for reporting
+adversary_term_checks:
+  - pattern: '\bnew\s+adversary\b'
+    label: 'new adversary'
+  - pattern: '\badversary\b'
+    label: adversary
+  - pattern: '\bmartial\s+threat\b'
+    label: 'martial threat'
+  - pattern: '\bif\s+confronted\b'
+    label: 'if confronted'
+  - pattern: '\bencountered\s+alone\b'
+    label: 'encountered alone'
+  - pattern: '\btraits?\s+and\s+actions?\b'
+    label: 'traits and actions'
+  - pattern: '\bstat\s+block\b'
+    label: 'stat block'
+  - pattern: '\bdm\s+can\s+choo?s\b'
+    label: 'dm can choose'
+  - pattern: '\binfiltrator\b'
+    label: infiltrator
+  - pattern: '\bblending\s+in\b'
+    label: 'blending in'
+  - pattern: '\bnot\s+as\s+dangerous\b'
+    label: 'not as dangerous'
+  - pattern: '\bvariant\b'
+    label: variant
+
+# Place indicator terms (proposalRouting.ts)
+place_indicator_terms:
+  - new place
+  - market town
+  - key districts
+  - key landmarks
+  - key regions
+  - miles east
+  - miles west
+  - miles north
+  - miles south
+  - fjord
+  - inland
+  - population
+  - located
+  - landmark
+  - district
+  - settlement
+  - harbour
+  - harbor
+  - village
+  - town
+  - city
+  - place
+  - region
+
+# Explicit proposal opening patterns — type detected from prompt opening phrase
+# Each entry: pattern (regex string) + proposal_type
+explicit_proposal_opening_patterns:
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+npc\b'
+    proposal_type: npc
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+adversary\b'
+    proposal_type: adversary
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+place\b'
+    proposal_type: place
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+encounter\b'
+    proposal_type: encounter
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+scene\b'
+    proposal_type: scene
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+item\b'
+    proposal_type: item
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+clue\b'
+    proposal_type: clue
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+handout\b'
+    proposal_type: handout
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+state(?:\s+update)?\b'
+    proposal_type: state-update
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+session(?:\s+outline)?\b'
+    proposal_type: session-outline
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+chapter(?:\s+outline)?\b'
+    proposal_type: chapter-outline
+
+# Validator mismatch guard patterns (proposalValidator.ts)
+adversary_prompt_signals: '\bnew\s+adversary\b|\badversary\b|\bmartial\s+threat\b|\btraits?\s+and\s+actions?\b|\bstat\s+block\b|\bif\s+confronted\b|\bencountered\s+(?:alone|in\s+pairs?)\b|\bdm\s+can\s+choo?s\b'
+npc_prompt_signals: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+npc\b'

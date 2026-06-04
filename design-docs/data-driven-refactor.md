@@ -108,7 +108,7 @@ via `getTitleTokenAlternation()` — no more duplicated inline alternation strin
 
 ---
 
-## Section 3 — Validation rules and warning patterns
+## Section 3 — Validation rules and warning patterns ✅ Complete
 
 **Independent. Can be done in any order after sections 1–2.**
 
@@ -120,29 +120,17 @@ supernatural atmosphere. These are setting-specific and should live in data.
 
 ### 3.1 Move warning pattern rules from proposalGovernance.ts
 
-- [ ] Flat skill bonus detection pattern — `proposalGovernance.ts:371`
-- [ ] Non-5e mechanic detection pattern — `proposalGovernance.ts:375`
-- [ ] Cosmological force causality pattern — `proposalGovernance.ts:379`
-- [ ] Canonical tradition claim patterns (Skald, housecarl, Lösweg oral) — `proposalGovernance.ts:383`
-- [ ] Supernatural agency atmosphere terms — `proposalGovernance.ts:387`
-- [ ] Action economy useless-check pattern — `proposalGovernance.ts:446`
-
-Each rule in YAML has: `id`, `pattern`, `severity` (warn/fail), `message`.
-After move: `validateWarningPatterns()` iterates the loaded rules. The current
-hardcoded checks are replaced by a single generic loop.
+- [x] All 5 warning/fail patterns + action economy pattern — `validateWarningPatterns()` now generic loop over `getWarningRules()`
 
 ### 3.2 Move adversary validation patterns from adversary-design.ts
 
-- [ ] Modern tech language terms — `adversary-design.ts:1004-1008`
-- [ ] Canonical alignments set — `adversary-design.ts:613-624`
+- [x] Modern tech pattern and canonical alignments — `adversary-design.ts`
 
 ### 3.3 Move design guardrail patterns from design-guardrails.ts
 
-- [ ] `FORBIDDEN_MONSTER_PATTERNS` array (20 patterns) — `design-guardrails.ts:29-49`
-- [ ] `HOMEBREW_VIOLATION_PATTERNS` array (23 patterns) — `design-guardrails.ts:61-83`
-- [ ] `ATTACK_PATTERNS` — `design-guardrails.ts:98-99`
+- [x] `FORBIDDEN_MONSTER_PATTERNS`, `HOMEBREW_VIOLATION_PATTERNS`, `ATTACK_PATTERNS` — included in `validation-rules.yaml`
 
-**Target file:** `corpus/registry/design-guardrails.yaml`
+**New files:** `corpus/registry/validation-rules.yaml`, `karsac-registry/src/proposals/validationRulesLoader.ts`
 
 ---
 
@@ -195,12 +183,13 @@ corpus owner to add new routing signals without a code change.
 
 ### 5.2 Move proposal routing detection patterns from proposalRouting.ts
 
-- [ ] Adversary proposal detection regex — `proposalRouting.ts`
-- [ ] Place indicator terms — `proposalRouting.ts`
-- [ ] Explicit proposal opening patterns — `proposalRouting.ts`
-- [ ] `ADVERSARY_PROMPT_SIGNALS` — `proposalValidator.ts`
+- [x] `ADVERSARY_PROPOSAL_PATTERN` — `proposalRouting.ts`
+- [x] `PLACE_INDICATOR_TERMS` — `proposalRouting.ts`
+- [x] `EXPLICIT_PROPOSAL_OPENING_PATTERNS` — `proposalRouting.ts`
+- [x] `findMatchedAdversaryTerms` labeled checks — `proposalRouting.ts`
+- [x] `ADVERSARY_PROMPT_SIGNALS` + `NPC_PROMPT_SIGNALS` — `proposalValidator.ts`
 
-Note: 5.2 deferred — lower value than 5.1 and routing works correctly.
+All added to `router-config.yaml`, exposed via `routerConfigLoader.ts`.
 
 ---
 

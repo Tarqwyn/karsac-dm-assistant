@@ -10,6 +10,7 @@ import {
   getProposalSuggestedSections,
   getRequiredStatBlockFields,
 } from './proposalContractsLoader.js'
+import { getAdversaryPromptSignals, getNpcPromptSignals } from '../routerConfigLoader.js'
 
 export interface ProposalValidationResult {
   valid: boolean
@@ -79,9 +80,8 @@ export function validateProposalContent(
 
   // Prompt/type mismatch guard
   // If source_prompt strongly indicates an adversary but proposal_type is not adversary, warn.
-  const ADVERSARY_PROMPT_SIGNALS =
-    /\bnew\s+adversary\b|\badversary\b|\bmartial\s+threat\b|\btraits?\s+and\s+actions?\b|\bstat\s+block\b|\bif\s+confronted\b|\bencountered\s+(?:alone|in\s+pairs?)\b|\bdm\s+can\s+choo?s\b/i
-  const NPC_PROMPT_SIGNALS = /^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+npc\b/i
+  const ADVERSARY_PROMPT_SIGNALS = getAdversaryPromptSignals()
+  const NPC_PROMPT_SIGNALS = getNpcPromptSignals()
   const sourcePrompt = String(frontmatter.source_prompt ?? '')
   if (ADVERSARY_PROMPT_SIGNALS.test(sourcePrompt) && proposalType !== 'adversary') {
     fail(
