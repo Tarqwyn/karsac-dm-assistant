@@ -1,0 +1,295 @@
+# Proposal type contracts
+# Single source of truth for required sections, creative treatment contracts,
+# folder mappings, promote targets, and response profile contracts.
+
+proposal_types:
+
+  adversary:
+    folder: adversaries
+    promote_target: corpus/adversary-corpus/karsac-adversaries
+    required_sections:
+      - "## Stat Block"
+      - "## Mechanical Base"
+      - "## Adaptation Summary"
+      - "## Tactics"
+    required_stat_block_fields:
+      - Armour Class
+      - Armor Class
+      - Hit Points
+      - Challenge
+    creative_treatment:
+      required_sections:
+        - "## Doctrine"
+        - "## Doctrine Under Pressure"
+        - "## Behavioural Stages"
+        - "## Tactical Notes"
+      editable_sections:
+        - "## Doctrine"
+        - "## Doctrine Under Pressure"
+        - "## Behavioural Stages"
+        - "## Tactical Notes"
+        - "## Player-Safe Description"
+        - "## DM-Only Notes"
+      instruction: |
+        Add or improve:
+        - Doctrine
+        - Doctrine Under Pressure
+        - Behavioural Stages
+        - Tactical Notes
+        - What It Will Not Do
+        - Player-Safe Description
+        - DM-Only Notes
+      extra_instruction: |
+        An adversary must have doctrine. It should not just be a stat block. The doctrine must explain how the adversary thinks, what it protects, when it retreats, what it refuses to do, and which mechanics express that behaviour. Ensure the mechanics support the doctrine under pressure from a combat-optimised party. Do not give the adversary a doctrine it cannot enact mechanically. You are only patching doctrine/prose sections; do not rewrite mechanical stat block sections directly.
+
+  encounter:
+    folder: encounters
+    promote_target: corpus/planning/scenes
+    required_sections:
+      - "## Encounter Type"
+      - "## Campaign Purpose"
+      - "## Cast"
+      - "## Pressure Ladder"
+      - "## Checks and Mechanics"
+      - "## Outcomes"
+    creative_treatment:
+      required_sections:
+        - "## Story Beat"
+        - "## Pressure"
+        - "## Player Choice"
+        - "## Complication"
+        - "## Consequence"
+        - "## Fail-Forward Path"
+      editable_sections:
+        - "## Story Beat"
+        - "## Pressure"
+        - "## Player Choice"
+        - "## Complication"
+        - "## Consequence"
+        - "## Fail-Forward Path"
+      instruction: |
+        Add or improve:
+        - Story Beat
+        - Pressure
+        - Player Choice
+        - Complication
+        - Consequence
+        - Fail-Forward Path
+      extra_instruction: |
+        An encounter must be a story beat. It should not just place NPCs in a location. It must create pressure, choice, complication, and consequence.
+
+  chapter-outline:
+    folder: chapters
+    promote_target: corpus/planning/chapters
+    required_sections:
+      - "## Chapter Purpose"
+      - "## Starting State"
+      - "## Player Knowledge"
+      - "## Core Pressure"
+      - "## Scene Spine"
+      - "## End Conditions"
+      - "## Suggested State Updates After Play"
+    creative_treatment:
+      required_sections:
+        - "## Starting Emotional State"
+        - "## Central Pressure"
+        - "## Repeated Motif"
+        - "## Midpoint Turn"
+        - "## End State"
+        - "## What This Chapter Changes"
+      editable_sections:
+        - "## Starting Emotional State"
+        - "## Central Pressure"
+        - "## Repeated Motif"
+        - "## Midpoint Turn"
+        - "## End State"
+        - "## What This Chapter Changes"
+      instruction: |
+        Add or improve:
+        - Starting Emotional State
+        - Central Pressure
+        - Repeated Motif
+        - Midpoint Turn
+        - End State
+        - What This Chapter Changes
+
+  session-outline:
+    folder: sessions
+    promote_target: corpus/planning/sessions
+
+  scene:
+    folder: scenes
+    promote_target: corpus/planning/scenes
+    creative_treatment:
+      required_sections:
+        - "## Scene Purpose"
+        - "## Opening Image"
+        - "## Dramatic Question"
+        - "## Escalation"
+        - "## Turn"
+        - "## Exit State"
+      editable_sections:
+        - "## Scene Purpose"
+        - "## Opening Image"
+        - "## Dramatic Question"
+        - "## Escalation"
+        - "## Turn"
+        - "## Exit State"
+      instruction: |
+        Add or improve:
+        - Scene Purpose
+        - Opening Image
+        - Dramatic Question
+        - Escalation
+        - Turn
+        - Exit State
+
+  npc:
+    folder: npcs
+    promote_target: corpus/planning/npcs
+    required_sections:
+      - "## Role"
+      - "## Physical Bearing"
+      - "## What They Want"
+      - "## What They Hide"
+      - "## can_know"
+      - "## must_not_know"
+      - "## Lines to Inhabit"
+      - "## Dramatic Utility"
+      - "## player_safe"
+      - "## dm_only"
+    creative_treatment:
+      required_sections:
+        - "## Public Face"
+        - "## Private Want"
+        - "## Fear"
+        - "## Contradiction"
+        - "## Pressure Point"
+        - "## What They Reveal Under Stress"
+      editable_sections:
+        - "## Public Face"
+        - "## Private Want"
+        - "## Fear"
+        - "## Contradiction"
+        - "## Pressure Point"
+        - "## What They Reveal Under Stress"
+      instruction: |
+        Add or improve:
+        - Public Face
+        - Private Want
+        - Fear
+        - Contradiction
+        - Pressure Point
+        - What They Reveal Under Stress
+
+  place:
+    folder: places
+    promote_target: corpus/planning/places
+    suggested_sections:
+      - "## Overview"
+      - "## Geography"
+      - "## Key Districts"
+      - "## Factions"
+    creative_treatment:
+      required_sections:
+        - "## Cultural Identity"
+        - "## Daily Life"
+        - "## Power Structures"
+        - "## Local Contradiction"
+        - "## What Outsiders Misunderstand"
+        - "## What This Place Hides"
+        - "## Player-Safe Arrival Description"
+      editable_sections:
+        - "## Cultural Identity"
+        - "## Daily Life"
+        - "## Power Structures"
+        - "## Local Contradiction"
+        - "## What Outsiders Misunderstand"
+        - "## What This Place Hides"
+        - "## Player-Safe Arrival Description"
+      instruction: |
+        Add or improve:
+        - Cultural Identity
+        - Daily Life
+        - Power Structures
+        - Local Contradiction
+        - What Outsiders Misunderstand
+        - What This Place Hides
+        - Player-Safe Arrival Description
+      extra_instruction: |
+        A place must have cultural identity. It should not just be a list of districts. It must explain how people live, what the place values, who has power, what tension defines it, and what outsiders misunderstand.
+
+  item:
+    folder: items
+    promote_target: corpus/planning/items
+    creative_treatment:
+      required_sections:
+        - "## What It Appears To Be"
+        - "## What It Represents"
+        - "## Cost or Temptation"
+        - "## First Sign"
+        - "## Future Growth"
+      editable_sections:
+        - "## What It Appears To Be"
+        - "## What It Represents"
+        - "## Cost or Temptation"
+        - "## First Sign"
+        - "## Future Growth"
+      instruction: |
+        Add or improve:
+        - What It Appears To Be
+        - What It Represents
+        - Cost or Temptation
+        - First Sign
+        - Future Growth
+
+  clue:
+    folder: clues
+    promote_target: corpus/planning/clues
+
+  handout:
+    folder: handouts
+    promote_target: corpus/planning/handouts
+
+  state-update:
+    folder: state-updates
+    promote_target: null
+
+# Design/encounter response required headings (used by design-guardrails.ts)
+design_required_headings:
+  - "## provisional encounter concept"
+  - "## why it fits karsac"
+  - "## encounter setup"
+  - "## creatures / opposition"
+  - "## terrain and pressure"
+  - "## what this reveals"
+  - "## running it at the table"
+  - "## scaling options"
+  - "## player-safe description"
+  - "## canon status"
+
+# Response profile contracts (used by ask.ts)
+response_contracts:
+  comparison:
+    required_headings:
+      - "## Direct canon facts"
+      - "## Differences stated by canon"
+      - "## DM interpretation"
+      - "## Not stated / uncertain"
+
+  deep_lore:
+    required_headings:
+      - "## Direct canon facts"
+      - "## Hidden structure"
+      - "## DM interpretation"
+      - "## Not stated / uncertain"
+      - "## Useful table guidance"
+
+  rules:
+    required_headings:
+      - "## Ruling"
+      - "## Base 5e rule"
+      - "## Karsac table rule"
+      - "## At the table"
+      - "## Edge cases"
+      - "## DM call"

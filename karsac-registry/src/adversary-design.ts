@@ -10,8 +10,15 @@ import { readFileSync, existsSync } from 'fs'
 import matter from 'gray-matter'
 import { loadScoredAdversaries } from './encounter-design.js'
 import type { ScoredAdversary } from './encounter-design.js'
-import { getCanonicalLanguages, getFactionProfile, type FactionProfileOverrideConfig } from './faction-profiles.js'
+import { getCanonicalLanguages, getFactionProfile, getAllFactionProfiles, type FactionProfileOverrideConfig } from './faction-profiles.js'
 import { getFactionMechanicalOverrides, type FactionMechanicalOverrideRule } from './faction-mechanical-overrides.js'
+import { getCanonicalAlignments, getModernTechPattern } from './proposals/validationRulesLoader.js'
+import { getStandard5eSkills, getStatBlockImplicitFields } from './rulesDataLoader.js'
+import {
+  getBaseSlugMap, getAllowedProposalBases, getValidSrdBaseNames,
+  getBasesWithoutDarkvision, getBaseSelectionHeuristics, getDefaultBase,
+  getEnvironmentContexts,
+} from './adversaryBasesLoader.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -38,28 +45,7 @@ export interface AdversaryDesignContext {
 // ── Base slug map ─────────────────────────────────────────────────────────────
 // Maps user-facing names (lowercase) to the monster collection filename slug.
 
-const BASE_SLUG_MAP: Record<string, string> = {
-  'spy':             'spy',
-  'noble':           'noble',
-  'guard':           'guard',
-  'veteran':         'veteran',
-  'bandit captain':  'bandit-captain',
-  'bandit-captain':  'bandit-captain',
-  'bandit':          'bandit',
-  'thug':            'thug',
-  'scout':           'scout',
-  'mage':            'mage',
-  'priest':          'priest',
-  'acolyte':         'acolyte',
-  'assassin':        'assassin',
-  'archmage':        'archmage',
-  'commoner':        'commoner',
-  'knight':          'knight',
-  'berserker':       'berserker',
-  'gladiator':       'gladiator',
-}
-
-// Ordered from longest to shortest to avoid early partial matches
+const BASE_SLUG_MAP = getBaseSlugMap()
 const BASE_NAMES_ORDERED = Object.keys(BASE_SLUG_MAP).sort((a, b) => b.length - a.length)
 
 // ── Base detection ────────────────────────────────────────────────────────────
@@ -172,111 +158,28 @@ interface FactionSpec {
   dmNotesSynonyms: string[]
 }
 
-const FACTION_SPECS: FactionSpec[] = [
-  {
-    slug: 'shadow-walkers',
-    displayName: 'Shadow Walkers',
-    mentionPattern: /\bshadow(?:\s|-)?walkers?\b/i,
-    positivePatterns: [
-      /\bpart\s+of\s+(?:the\s+)?shadow(?:\s|-)?walkers?(?:\s+faction)?\b/i,
-      /\bbelongs?\s+to\s+(?:the\s+)?shadow(?:\s|-)?walkers?\b/i,
-      /\bserves?\s+(?:the\s+)?shadow(?:\s|-)?walkers?\b/i,
-      /\bworks?\s+for\s+(?:the\s+)?shadow(?:\s|-)?walkers?\b/i,
-      /\breports?\s+to\s+(?:the\s+)?shadow(?:\s|-)?walkers?\b/i,
-      /\blinked\s+to\s+(?:the\s+)?shadow(?:\s|-)?walkers?\b/i,
-      /\bshadow(?:\s|-)?walkers?\s+faction\b/i,
-      /\bshadow(?:\s|-)?walker\s+(?:agent|operative|network)\b/i,
-    ],
-    dmNotesSynonyms: ['shadow-walker', 'shadow walker'],
-  },
-  {
-    slug: 'mathr',
-    displayName: 'Mathr',
-    mentionPattern: /\bmathr\b/i,
-    positivePatterns: [
-      /\bpart\s+of\s+(?:the\s+)?mathr(?:\s+faction)?\b/i,
-      /\bbelongs?\s+to\s+(?:the\s+)?mathr\b/i,
-      /\bserves?\s+(?:the\s+)?mathr\b/i,
-      /\bworks?\s+for\s+(?:the\s+)?mathr\b/i,
-      /\breports?\s+to\s+(?:the\s+)?mathr\b/i,
-      /\blinked\s+to\s+(?:the\s+)?mathr\b/i,
-      /\bmathr\b.*(?:agent|operative|faction|network)/i,
-      /(?:agent|operative|faction|network).*\bmathr\b/i,
-    ],
-    dmNotesSynonyms: ['mathr'],
-  },
-  {
-    slug: 'yngondi',
-    displayName: 'Yngondi',
-    mentionPattern: /\byngondi\b/i,
-    positivePatterns: [
-      /\bpart\s+of\s+(?:the\s+)?yngondi(?:\s+faction)?\b/i,
-      /\bbelongs?\s+to\s+(?:the\s+)?yngondi\b/i,
-      /\bserves?\s+(?:the\s+)?yngondi\b/i,
-      /\bworks?\s+for\s+(?:the\s+)?yngondi\b/i,
-      /\breports?\s+to\s+(?:the\s+)?yngondi\b/i,
-      /\blinked\s+to\s+(?:the\s+)?yngondi\b/i,
-      /\byngondi\b.*(?:agent|operative|faction|network)/i,
-      /(?:agent|operative|faction|network).*\byngondi\b/i,
-    ],
-    dmNotesSynonyms: ['yngondi'],
-  },
-  {
-    slug: 'vishara',
-    displayName: 'Vishara',
-    mentionPattern: /\bvishara\b/i,
-    positivePatterns: [
-      /\bpart\s+of\s+(?:the\s+)?vishara(?:\s+faction)?\b/i,
-      /\bbelongs?\s+to\s+(?:the\s+)?vishara\b/i,
-      /\bserves?\s+(?:the\s+)?vishara\b/i,
-      /\bworks?\s+for\s+(?:the\s+)?vishara\b/i,
-      /\breports?\s+to\s+(?:the\s+)?vishara\b/i,
-      /\blinked\s+to\s+(?:the\s+)?vishara\b/i,
-      /\bvishara\b.*(?:agent|operative|faction|network)/i,
-      /(?:agent|operative|faction|network).*\bvishara\b/i,
-    ],
-    dmNotesSynonyms: ['vishara'],
-  },
-  {
-    slug: 'yantravaq',
-    displayName: 'Yantravaq',
-    mentionPattern: /\byantravaq\b/i,
-    positivePatterns: [
-      /\bpart\s+of\s+(?:the\s+)?yantravaq(?:\s+faction)?\b/i,
-      /\bbelongs?\s+to\s+(?:the\s+)?yantravaq\b/i,
-      /\bserves?\s+(?:the\s+)?yantravaq\b/i,
-      /\bworks?\s+for\s+(?:the\s+)?yantravaq\b/i,
-      /\breports?\s+to\s+(?:the\s+)?yantravaq\b/i,
-      /\blinked\s+to\s+(?:the\s+)?yantravaq\b/i,
-      /\byantravaq\b.*(?:agent|operative|faction|network)/i,
-      /(?:agent|operative|faction|network).*\byantravaq\b/i,
-    ],
-    dmNotesSynonyms: ['yantravaq'],
-  },
-  {
-    slug: 'vane',
-    displayName: 'Vane',
-    mentionPattern: /\bvane\b/i,
-    positivePatterns: [
-      /\bpart\s+of\s+(?:the\s+)?vane(?:\s+faction)?\b/i,
-      /\bbelongs?\s+to\s+(?:the\s+)?vane\b/i,
-      /\bserves?\s+(?:the\s+)?vane\b/i,
-      /\bworks?\s+for\s+(?:the\s+)?vane\b/i,
-      /\breports?\s+to\s+(?:the\s+)?vane\b/i,
-      /\blinked\s+to\s+(?:the\s+)?vane\b/i,
-      /\bvane\b.*(?:agent|operative|faction|network)/i,
-      /(?:agent|operative|faction|network).*\bvane\b/i,
-    ],
-    dmNotesSynonyms: ['vane'],
-  },
-]
+let compiledFactionSpecs: FactionSpec[] | null = null
+
+function getFactionSpecs(): FactionSpec[] {
+  if (compiledFactionSpecs) return compiledFactionSpecs
+  compiledFactionSpecs = getAllFactionProfiles()
+    .filter((p) => p.detection !== null)
+    .map((p) => ({
+      slug: p.slug,
+      displayName: p.displayName,
+      mentionPattern: new RegExp(p.detection!.mentionPattern, 'i'),
+      positivePatterns: p.detection!.positivePatterns.map((pat) => new RegExp(pat, 'i')),
+      dmNotesSynonyms: p.detection!.dmNotesSynonyms,
+    }))
+  return compiledFactionSpecs
+}
 
 function uniqueOrdered(values: string[]): string[] {
   return [...new Set(values)]
 }
 
 function extractExplicitFactionMentions(text: string): string[] {
-  const matches = FACTION_SPECS
+  const matches = getFactionSpecs()
     .map((spec) => {
       const match = text.match(spec.mentionPattern)
       return match?.index !== undefined ? { slug: spec.slug, index: match.index } : null
@@ -302,14 +205,14 @@ function extractForbiddenFactions(prompt: string): string[] {
 
 function extractRequiredFactions(prompt: string): string[] {
   return uniqueOrdered(
-    FACTION_SPECS
+    getFactionSpecs()
       .filter((spec) => spec.positivePatterns.some((pattern) => pattern.test(prompt)))
       .map((spec) => spec.slug),
   )
 }
 
 function getFactionSpec(slug: string): FactionSpec | undefined {
-  return FACTION_SPECS.find((spec) => spec.slug === slug)
+  return getFactionSpecs().find((spec) => spec.slug === slug)
 }
 
 function isWarningViolation(violation: string): boolean {
@@ -397,62 +300,21 @@ interface DoctrineSupportMechanic {
   reliableUnderPressure: boolean
 }
 
-function findDoctrineSupportingMechanics(text: string): DoctrineSupportMechanic[] {
-  const mechanics: DoctrineSupportMechanic[] = [
-    {
-      label: 'bonus action Disengage or Hide',
-      pattern: /\bbonus action\b[\s\S]{0,160}\b(disengage|hide)\b|\bcunning action\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'reaction movement on being hit',
-      pattern: /\bwhen\b[\s\S]{0,40}\bhit by an attack\b[\s\S]{0,180}\breaction\b[\s\S]{0,180}\b(move up to|half its speed|without provoking opportunity attacks|disengage|hide)\b|\breaction\b[\s\S]{0,180}\bwhen\b[\s\S]{0,40}\bhit by an attack\b[\s\S]{0,180}\b(move up to|half its speed|without provoking opportunity attacks|disengage|hide)\b|\bwhen\b[\s\S]{0,60}\b(hit or missed by an attack|reduced below half hit points|bloodied|exposed by name)\b[\s\S]{0,220}\breaction\b[\s\S]{0,180}\b(move up to|half its speed|without provoking opportunity attacks|disengage|hide)\b|\breaction\b[\s\S]{0,220}\bwhen\b[\s\S]{0,60}\b(hit or missed by an attack|reduced below half hit points|bloodied|exposed by name)\b[\s\S]{0,180}\b(move up to|half its speed|without provoking opportunity attacks|disengage|hide)\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'reaction movement on being missed',
-      pattern: /\bwhen (?:a creature )?miss(?:es|ed)\b[\s\S]{0,180}\breaction\b[\s\S]{0,180}\b(move up to|half its speed|without provoking opportunity attacks|disengage|hide)\b|\breaction\b[\s\S]{0,180}\bwhen (?:a creature )?miss(?:es|ed)\b[\s\S]{0,180}\b(move up to|half its speed|without provoking opportunity attacks|disengage|hide)\b/i,
-      reliableUnderPressure: false,
-    },
-    {
-      label: 'first-round prepared movement',
-      pattern: /\badvantage on initiative\b|\bmapped exits\b|\bon the first round of combat\b[\s\S]{0,140}\b(move up to|half its speed|without provoking opportunity attacks)\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'crowd or urban cover mechanic',
-      pattern: /\bcrowd break\b|\bcrowd dissolution\b|\burban camouflage\b|\bblend\b|\bcamouflage\b|\bat least two non-hostile creatures\b|\bsignificant cover\b|\bgain(?:s)? cover\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'smoke, crowd, or social distraction',
-      pattern: /\bdistraction\b|\bpublic misdirection\b|\bsmoke\b|\bfalse lead\b|\bwhispered suggestion\b|\bdelay someone\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'information protection on pressure',
-      pattern: /\bbelow half hit points\b[\s\S]{0,160}\b(conceal|destroy|pass on)\b[\s\S]{0,120}\b(note|cipher strip|message|ledger|record|tally|chit)\b|\bexposed by name\b[\s\S]{0,160}\b(conceal|destroy|pass on)\b[\s\S]{0,120}\b(note|cipher strip|message|ledger|record|tally|chit)\b|\bbloodied\b[\s\S]{0,160}\b(conceal|destroy|pass on)\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'escape route in prepared urban location',
-      pattern: /\bprepared urban location\b|\bmapped exits\b|\bescape route\b|\bservice corridor\b|\brear stair\b|\bdock ladder\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'non-lethal disabling effect',
-      pattern: /\bnon-?lethal\b|\bunconscious\b|\bsedated\b|\bstunned\b|\brestrain(?:ed)?\b|\bgrappled\b|\bpoisoned\b/i,
-      reliableUnderPressure: true,
-    },
-    {
-      label: 'explicit morale or withdrawal trigger',
-      pattern: /\bbelow half hit points\b[\s\S]{0,120}\b(attempts to flee|attempts to surrender|attempts to withdraw|breaks contact|retreats)\b|\bnamed publicly\b[\s\S]{0,120}\b(attempts to flee|attempts to surrender|attempts to withdraw|breaks contact|retreats)\b|\brestrained\b[\s\S]{0,120}\b(attempts to flee|attempts to surrender|attempts to withdraw|breaks contact|retreats)\b|\bseparated from (?:its|their) cover identity\b[\s\S]{0,120}\b(attempts to flee|attempts to surrender|attempts to withdraw|breaks contact|retreats)\b|\bno last stand\b/i,
-      reliableUnderPressure: true,
-    },
-  ]
+let compiledDoctrineSupport: DoctrineSupportMechanic[] | null = null
 
-  return mechanics
-    .filter((mechanic) => mechanic.pattern.test(text))
+function getCompiledDoctrineSupport(): DoctrineSupportMechanic[] {
+  if (compiledDoctrineSupport) return compiledDoctrineSupport
+  const sw = getFactionProfile('shadow-walkers')
+  compiledDoctrineSupport = (sw?.doctrineSupportMechanics ?? []).map((m) => ({
+    label: m.label,
+    pattern: new RegExp(m.pattern, 'i'),
+    reliableUnderPressure: m.reliableUnderPressure,
+  }))
+  return compiledDoctrineSupport
+}
+
+function findDoctrineSupportingMechanics(text: string): DoctrineSupportMechanic[] {
+  return getCompiledDoctrineSupport().filter((m) => m.pattern.test(text))
 }
 
 function normalizeNamedMechanic(value: string): string {
@@ -485,29 +347,17 @@ export function extractProposalConstraints(
   const lockedFaction = requiredFactions[0] ?? null
 
   // ── Mechanical base ────────────────────────────────────────────────────────
-  const allowedBases = ['spy', 'scout', 'guard', 'veteran', 'bandit', 'bandit captain', 'thug', 'assassin']
+  const allowedBases = getAllowedProposalBases()
 
   // Use loaded base if explicitly requested; otherwise infer from context
   let preferredBase = loadedBaseName
   if (!preferredBase) {
-    if (/blend(?:ing)?\s+in|social|urban|town|cit|market|disguise|infiltrat/i.test(prompt)) {
-      preferredBase = 'spy'
-    } else if (/road|checkpoint|patrol|trail|scout|track/i.test(prompt)) {
-      preferredBase = 'scout'
-    } else if (/captain|leader|veteran|dangerous|hard.to.kill/i.test(prompt)) {
-      preferredBase = 'veteran'
-    } else {
-      preferredBase = 'spy'  // default for unspecified adversary
-    }
+    const heuristic = getBaseSelectionHeuristics().find((h) => h.regex.test(prompt))
+    preferredBase = heuristic?.preferredBase ?? getDefaultBase()
   }
 
   // ── Environment ────────────────────────────────────────────────────────────
-  let environmentContext: string | null = null
-  if (/urban|town|cit|settlement|market|harbour|dock|inn|tavern/i.test(prompt)) {
-    environmentContext = 'urban / towns / cities'
-  } else if (/road|wilderness|outdoor|forest|coast|fjord/i.test(prompt)) {
-    environmentContext = 'road / wilderness'
-  }
+  const environmentContext = getEnvironmentContexts().find((e) => e.regex.test(prompt))?.label ?? null
 
   // ── Variant / modular ──────────────────────────────────────────────────────
   const variantOptionsRequired =
@@ -610,18 +460,8 @@ interface ParsedAbilityScores {
   cha: number
 }
 
-const CANONICAL_ALIGNMENTS = new Set([
-  'lawful good',
-  'neutral good',
-  'chaotic good',
-  'lawful neutral',
-  'neutral',
-  'chaotic neutral',
-  'lawful evil',
-  'neutral evil',
-  'chaotic evil',
-  'unaligned',
-])
+const CANONICAL_ALIGNMENTS = getCanonicalAlignments()
+const STANDARD_5E_SKILLS = getStandard5eSkills()
 
 function normalizeLanguageToken(value: string): string {
   return value
@@ -735,26 +575,6 @@ function themeIsRepresented(theme: string, text: string): boolean {
   }
 }
 
-const STANDARD_5E_SKILLS = new Set([
-  'acrobatics',
-  'animal handling',
-  'arcana',
-  'athletics',
-  'deception',
-  'history',
-  'insight',
-  'intimidation',
-  'investigation',
-  'medicine',
-  'nature',
-  'perception',
-  'performance',
-  'persuasion',
-  'religion',
-  'sleight of hand',
-  'stealth',
-  'survival',
-])
 
 function hasShadowWalkerRestraintTheme(text: string): boolean {
   return /\brestraint is not mercy\b|\bit is discipline\b|\bdiscipline, not mercy\b|\bviolence only to preserve the mission\b|\bdo not kill to punish\b|\bdo not kill to dominate\b|\bdo not kill to prove strength\b|\bcontrolled withdrawal matters more than victory\b/i.test(text)
@@ -896,7 +716,7 @@ function inferFactionSlugFromOutput(
   return (
     constraints?.lockedFaction
     ?? frontmatterFactionList[0]
-    ?? FACTION_SPECS.find((spec) => spec.dmNotesSynonyms.some((synonym) => dmNotesSection.toLowerCase().includes(synonym)))?.slug
+    ?? getFactionSpecs().find((spec) => spec.dmNotesSynonyms.some((synonym) => dmNotesSection.toLowerCase().includes(synonym)))?.slug
     ?? null
   )
 }
@@ -953,11 +773,7 @@ export function validateAdversaryOutput(
 
   // Darkvision validation: base has no darkvision → output must not add it without explanation.
   // Works from baseContent when loaded, OR from known-bases list when baseContent is null.
-  const BASES_WITHOUT_DARKVISION = new Set([
-    'spy', 'noble', 'guard', 'bandit', 'bandit captain', 'bandit-captain',
-    'thug', 'scout', 'commoner', 'mage', 'priest', 'acolyte', 'assassin',
-    'archmage', 'veteran',
-  ])
+  const BASES_WITHOUT_DARKVISION = getBasesWithoutDarkvision()
   const baseHasDarkvision =
     (baseContent && /darkvision/i.test(baseContent)) ||
     (requestedBase != null && !BASES_WITHOUT_DARKVISION.has(requestedBase.toLowerCase()))
@@ -1054,11 +870,7 @@ export function validateAdversaryOutput(
 
   // Mechanical base corpus validity
   // "Rogue (Thief)", "Ranger", "Paladin", etc. are NOT loaded SRD NPC bases.
-  const VALID_SRD_BASE_NAMES = new Set([
-    'spy', 'noble', 'guard', 'veteran', 'bandit captain', 'bandit-captain',
-    'bandit', 'thug', 'scout', 'mage', 'priest', 'acolyte', 'assassin',
-    'archmage', 'commoner',
-  ])
+  const VALID_SRD_BASE_NAMES = getValidSrdBaseNames()
   const mechBaseSection = outputText.match(/##\s+Mechanical\s+Base\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i)?.[1] ?? ''
   const statBlockSection = outputText.match(/#{2,3}\s+Stat\s+Block\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i)?.[1] ?? ''
   const hitPointsLineMatch = statBlockSection.match(/\*{0,2}Hit\s+Points\*{0,2}\s+(\d+)\s*\((\d+)d(\d+)([^)]*)\)/i)
@@ -1156,20 +968,7 @@ export function validateAdversaryOutput(
   // Exempt standard D&D 5e stat block fields that are not custom traits/actions.
   // These appear in specific stat block lines (type line, Languages field, etc.)
   // and do not need to appear as named traits or actions.
-  const STAT_BLOCK_IMPLICIT_FIELDS = new Set([
-    'size', 'alignment', 'type', 'creature type',
-    'languages', 'language',
-    'senses', 'saving throws', 'saves',
-    'skills', 'speed', 'challenge', 'cr',
-    'armor class', 'armour class', 'ac',
-    'hit points', 'hp',
-    'ability score increase', 'ability score increases',
-    'feat', 'feats',
-    'skill proficiency', 'skill proficiencies',
-    'skill versatility',
-    'humanoid stats', 'ability scores',
-    'darkvision',  // handled separately by the darkvision check
-  ])
+  const STAT_BLOCK_IMPLICIT_FIELDS = getStatBlockImplicitFields()
 
   const adaptSection = outputText.match(/##\s+Adaptation\s+Summary\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i)?.[1] ?? ''
   const keptLine = adaptSection.match(/[-*\s]+Kept\s+from\s+base:\s*(.+)/i)?.[1] ?? ''
@@ -1325,7 +1124,7 @@ export function validateAdversaryOutput(
   const factionKnown =
     Boolean(effectiveConstraints?.lockedFaction) ||
     frontmatterFactionList.length > 0 ||
-    FACTION_SPECS.some((spec) => spec.dmNotesSynonyms.some((synonym) => dmNotesSection.toLowerCase().includes(synonym)))
+    getFactionSpecs().some((spec) => spec.dmNotesSynonyms.some((synonym) => dmNotesSection.toLowerCase().includes(synonym)))
 
   if (factionKnown) {
     const missingDoctrineSections = [doctrineSection, behaviouralStagesSection, tacticalNotesSection]
@@ -1563,7 +1362,8 @@ export function validateAdversaryOutput(
       violations.push('Variant options must not grant permanent stat/skill changes — use temporary or scene-scoped effects')
     }
     // Flag modern language in variant options
-    if (/\bdevice\b|\bencrypted\b|\bcomms?\b|\bsurveillance\b/i.test(variantSection)) {
+    const modernTechPattern = getModernTechPattern()
+    if (modernTechPattern && modernTechPattern.test(variantSection)) {
       violations.push('Variant options contain modern technology language — use Karsac-appropriate props')
     }
     for (const match of variantSection.matchAll(/\*\*([^*:]+?)(?:\.|:)\*\*\s+([^\n]+(?:\n(?!\*\*|###|##|- \*\*).+)*)/g)) {

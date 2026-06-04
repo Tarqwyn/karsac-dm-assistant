@@ -1,4 +1,17 @@
 import { getFactionProfile } from '../faction-profiles.js'
+import {
+  getAdversaryConstraintHeader,
+  getEncounterConstraintLines,
+  getNpcConstraintLines,
+  getPlaceConstraintLines,
+  getCorpusAnchorBaseLines,
+  getCorpusAnchorCanonicalReferenceOnlyLines,
+  getCorpusAnchorStubLines,
+  getCorpusAnchorStubPlaceLines,
+  getCorpusAnchorStubCloseLines,
+  getCorpusAnchorBoundedLines,
+  getCorpusAnchorSnippetsHeader,
+} from './generationConstraintsLoader.js'
 import type { ProposalType } from './proposalTypes.js'
 import type { ProposalCorpusAnchor } from './proposalEntityRegistry.js'
 
@@ -83,11 +96,7 @@ function buildStateTrackerBlock(
 }
 
 function buildAdversaryConstraintLines(input: ProposalConstraintInput): string[] {
-  const lines = [
-    'PRE-GENERATION ADVERSARY CONSTRAINTS',
-    '- User constraints and locked faction doctrine trump inherited mechanical base content.',
-    '- If base inheritance conflicts with faction doctrine, repair toward faction doctrine, not toward the base.',
-  ]
+  const lines = [...getAdversaryConstraintHeader()]
 
   if (input.preferredMechanicalBase) {
     lines.push(`- Requested mechanical base: ${input.preferredMechanicalBase}. Use it as a scaffold, not authority.`)
@@ -109,11 +118,8 @@ function buildAdversaryConstraintLines(input: ProposalConstraintInput): string[]
       if (factionProfile.styleNotes.length > 0) {
         lines.push(`- Style notes: ${factionProfile.styleNotes.join(' ')}`)
       }
-      if (input.lockedFaction === 'shadow-walkers') {
-        lines.push('- Shadow Walker doctrine must include restraint-as-discipline, controlled withdrawal, and information preservation.')
-        lines.push('- Shadow Walker urban cover identities must not keep shortbow, longbow, or heavy crossbow. Use throwing spike or concealed blade instead.')
-        lines.push('- Shadow Walker urban infiltrators should usually use Common, Trade Tongue (local), and Shadow Walker Sign.')
-        lines.push('- If doctrine involves observation, reading, or assessment, Wisdom should normally be 12 or higher.')
+      for (const constraint of factionProfile.generationConstraints) {
+        lines.push(`- ${constraint}`)
       }
     }
   }
@@ -125,34 +131,15 @@ function buildAdversaryConstraintLines(input: ProposalConstraintInput): string[]
 }
 
 function buildEncounterConstraintLines(): string[] {
-  return [
-    'PRE-GENERATION ENCOUNTER CONSTRAINTS',
-    '- Maximum two new NPCs unless the prompt explicitly asks for more.',
-    '- Maximum three resolution paths.',
-    '- Do not invent new items outside the canonical item registry.',
-    '- Do not introduce supernatural atmosphere unless the supplied corpus/state context supports it.',
-    '- Downstream consequences must reference only established chapter elements, hot threads, simmering threads, or supplied state context.',
-  ]
+  return getEncounterConstraintLines()
 }
 
 function buildNpcConstraintLines(): string[] {
-  return [
-    'PRE-GENERATION NPC CONSTRAINTS',
-    '- Keep the output as an NPC proposal even if place terms dominate the prompt.',
-    '- Lines to Inhabit must sound like setting speech, not modern or anachronistic dialogue.',
-    '- Use local culture, road duty, settlement pressure, and chapter state as context; do not invent a separate place proposal.',
-    '- Keep can_know and must_not_know grounded in current state context.',
-  ]
+  return getNpcConstraintLines()
 }
 
 function buildPlaceConstraintLines(): string[] {
-  return [
-    'PRE-GENERATION PLACE CONSTRAINTS',
-    '- This is a place proposal, not an NPC or encounter packet.',
-    '- Do not introduce named NPCs with full operational detail unless they are provisional placeholders or already canonical.',
-    '- Keep atmosphere grounded; do not imply supernatural agency without corpus support.',
-    '- Separate established prompt facts from provisional additions clearly.',
-  ]
+  return getPlaceConstraintLines()
 }
 
 function buildCorpusAnchorLines(input: ProposalConstraintInput): string[] {
@@ -160,34 +147,22 @@ function buildCorpusAnchorLines(input: ProposalConstraintInput): string[] {
   if (!anchor?.corpusNamed || !anchor.entity) return []
   const policy = anchor.policy
 
-  const lines = [
-    `CORPUS-ANCHOR CONSTRAINT`,
-    `- This ${anchor.entity.type} is named in existing corpus.`,
-    `- Characterisation and description must derive from corpus references only.`,
-    `- Do not invent backstory, secrets, affiliations, geographical features, factions, or landmarks not present in or directly implied by corpus.`,
-    `- Scope the proposal to what corpus actually provides; do not elaborate beyond it.`,
-    `- Flag any gap between corpus description and proposal content in validation notes.`,
-  ]
+  const lines = [...getCorpusAnchorBaseLines(anchor.entity.type)]
 
   if (policy?.canonicalReferenceOnly) {
-    lines.push('- Treat this entity as corpus-anchored: unsupported additions should be omitted, not improvised.')
+    lines.push(...getCorpusAnchorCanonicalReferenceOnlyLines())
   }
 
   if (policy?.coverageLevel === 'stub' || (anchor.stubLevel && input.proposalType === 'place')) {
-    lines.push('- Corpus description for this entity is stub level or intentionally minimal.')
-    lines.push('- Describe only what the corpus explicitly states.')
+    lines.push(...getCorpusAnchorStubLines())
     if (input.proposalType === 'place') {
-      lines.push('- Do not invent geography, rivers, districts, landmarks, factions, or power structures.')
-      lines.push('- Do not invent named individuals.')
-      lines.push('- Where the corpus provides atmosphere, use it.')
+      lines.push(...getCorpusAnchorStubPlaceLines())
     }
-    lines.push('- Where the corpus provides no detail, leave the field absent, unresolved, or minimal.')
-    lines.push('- A correct minimal proposal is preferable to a detailed invented one.')
+    lines.push(...getCorpusAnchorStubCloseLines())
   }
 
   if (policy?.coverageLevel === 'bounded') {
-    lines.push('- Corpus coverage for this entity is bounded.')
-    lines.push('- Match the scope of the supplied corpus passages rather than expanding into new substructures or lore layers.')
+    lines.push(...getCorpusAnchorBoundedLines())
   }
 
   if (policy?.allowedSections.length) {
@@ -213,7 +188,7 @@ function buildCorpusAnchorLines(input: ProposalConstraintInput): string[] {
   }
 
   if (anchor.exactSnippets.length > 0) {
-    lines.push('Corpus reference passages:')
+    lines.push(getCorpusAnchorSnippetsHeader())
     for (const snippet of anchor.exactSnippets) lines.push(`- ${snippet}`)
   }
 

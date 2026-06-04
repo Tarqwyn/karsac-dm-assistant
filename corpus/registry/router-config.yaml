@@ -1,0 +1,387 @@
+# Router configuration — profile routing term lists and detection patterns
+# Loaded at runtime by routerConfigLoader.ts
+# Terms within each list are ordered: longer/more-specific phrases first.
+
+rules_terms:
+  - rule
+  - rules
+  - ruling
+  - mechanically
+  - mechanic
+  - mechanics
+  - bonus action
+  - help action
+  - hide action
+  - ready action
+  - reaction
+  - action
+  - dash
+  - disengage
+  - dodge
+  - death saving throw
+  - saving throw
+  - ability check
+  - attack roll
+  - check
+  - death save
+  - opportunity attack
+  - attack of opportunity
+  - grappling
+  - grapple
+  - shove
+  - concentration
+  - spellcasting
+  - damage
+  - blinded
+  - charmed
+  - deafened
+  - exhaustion
+  - frightened
+  - grappled
+  - incapacitated
+  - invisible
+  - paralyzed
+  - petrified
+  - poisoned
+  - prone
+  - restrained
+  - stunned
+  - unconscious
+  - condition
+  - karsac table
+  - table rule
+  - house rule
+
+design_terms:
+  - need an encounter
+  - want an encounter
+  - design an encounter
+  - build an encounter
+  - make an encounter
+  - create an encounter
+  - encounter for the party
+  - encounter on the road
+  - road encounter
+  - travel encounter
+  - random encounter
+  - combat encounter
+  - non-combat encounter
+  - challenging encounter
+  - balanced encounter
+  - creature encounter
+  - encounter concept
+  - encounter idea
+  - help me design
+  - help me make
+  - help me build
+  - help me create
+  - build me an
+  - build me a
+  - design me an
+  - design me a
+  - build a creature
+  - design a creature
+  - build an npc
+  - design an npc
+  - give me a fight
+  - want a fight
+  - set up a fight
+  - fight with
+  - fight against
+  - ambush on the road
+  - ambush by
+  - attack on the road
+  - bandit attack
+  - combat scene
+  - a fight on
+
+deep_lore_terms:
+  - what is really happening
+  - what's really happening
+  - what is actually going on
+  - what's actually going on
+  - behind the scenes
+  - explain the hidden
+  - thinning of the particular
+  - hidden truth
+  - larger truth
+  - dm-only
+  - dm only
+  - deep lore
+  - vishara
+  - dhurvaq
+  - maharuq
+  - yantravaq
+  - the holding
+  - the hiding
+  - the thinning
+  - the instruments
+  - the waking
+  - cosmology
+  - hidden
+  - secret
+  - reveal
+
+strong_prose_terms:
+  - boxed text
+  - read-aloud
+  - read aloud
+  - flavour text
+  - flavor text
+  - intro text
+  - opening text
+  - arrival text
+  - dm narration
+  - give me lines
+  - make it more
+  - make this sound
+  - what would
+  - dialogue
+  - rewrite
+  - write
+
+weak_prose_terms:
+  - description
+  - describe
+  - narration
+  - scene
+  - voice
+
+state_terms:
+  - what does the party know
+  - what do the players know
+  - party currently know
+  - player knowledge
+  - party knowledge
+  - what has been revealed
+  - not yet revealed
+  - unrevealed facts
+  - unrevealed fact
+  - what facts are available
+  - available facts
+  - active threads
+  - open threads
+  - hot threads
+  - simmering threads
+  - dormant threads
+  - which threads
+  - open after session
+  - thread status
+  - thread state
+  - what happened in session
+  - session progress
+  - session state
+  - campaign state
+  - party state
+  - npc state
+  - item state
+  - posted handouts
+  - handouts have been posted
+  - what handouts
+  - chapter 3
+  - what should chapter
+  - what should happen next
+  - what happens next
+  - how should the next chapter
+  - next chapter start
+  - carry forward
+  - what threads should carry
+  - what hooks
+  - open hooks
+
+adversary_design_terms:
+  - propose a new adversary
+  - propose an adversary
+  - new adversary
+  - design me an adversary
+  - create an adversary
+  - make me an adversary
+  - design an adversary
+  - create a villain
+  - design a villain
+  - stat block
+  - statblock
+  - using the spy
+  - using the noble
+  - using the guard
+  - using the veteran
+  - using the bandit
+  - using the thug
+  - using the scout
+  - using the mage
+  - using the priest
+  - using the acolyte
+  - using the assassin
+  - using spy as
+  - using noble as
+  - using guard as
+  - using veteran as
+  - using bandit as
+  - based on the spy
+  - based on the noble
+  - based on the guard
+  - based on the veteran
+  - based on the bandit
+  - based on a spy
+  - based on a noble
+  - based on a guard
+  - based on a veteran
+  - based on a bandit
+  - use spy as
+  - use noble as
+  - use guard as
+  - use veteran as
+  - use bandit as
+  - use the spy
+  - use the noble
+  - use the guard
+  - use the veteran
+  - use the bandit
+  - maw-touched
+  - vishara-touched
+  - custom npc enemy
+  - custom npc
+  - custom adversary
+  - villain stat
+  - turn this into a stat
+  - turn this idea into a
+  - make me an npc enemy
+  - full stat block
+
+encounter_design_terms:
+  - social encounter
+  - npc encounter
+  - non-monster encounter
+  - build a scene
+  - create a scene
+  - customs inspection
+  - dock encounter
+  - dock scene
+  - dock delay
+  - interrogation scene
+  - interrogation encounter
+  - faction pressure
+  - procedural delay
+  - social obstruction
+  - use adversaries
+  - using adversaries
+  - false customs
+  - mathr agents
+  - arrival scene
+  - valweg arrival
+  - what non-monster
+  - witness pressure
+  - public accusation
+  - false hospitality
+  - market surveillance
+  - formal audience
+  - bribery attempt
+
+canon_terms:
+  - tell me about
+  - tell me
+  - who is
+  - who are
+  - what is
+  - what are
+  - what do we know
+  - list facts
+  - summarise
+  - summarize
+  - extract facts
+  - difference between
+  - how are
+  - compare
+  - cite
+  - sources
+  - player-known
+  - ambiguities
+
+# Pattern that indicates explicit encounter/scene intent (overrides adversary-design routing)
+explicit_encounter_scene_pattern: '\bdesign\s+an?\s+encounter\b|\bcreate\s+an?\s+(?:scene|encounter)\b|\b(?:dock|gate|arrival|road)\s+encounter\b|\bencounter\s+scene\b'
+
+# Proposal routing — adversary detection pattern (proposalRouting.ts)
+adversary_proposal_pattern: '\bnew\s+adversary\b|\badversary\b|\bfaction\s+(?:agent|member|operative)\b|\bmartial\s+threat\b|\bcombat\s+threat\b|\bif\s+confronted\b|\bencountered\s+(?:alone|in\s+pairs?)\b|\btraits?\s+and\s+actions?\b|\bstat\s+block\b|\bdm\s+can\s+choo?s\b|\bx\s+out\s+of\s+y\b|\bvariant\b[^.]*(?:faction|threat|danger|shadow|blend)\b|\bblending\s+in\b[^.]*(?:faction|shadow|hidden|agent)\b|\binfiltrator\b|\bnot\s+as\s+dangerous\s+as\b'
+
+# Adversary diagnostic term checks — labeled for reporting
+adversary_term_checks:
+  - pattern: '\bnew\s+adversary\b'
+    label: 'new adversary'
+  - pattern: '\badversary\b'
+    label: adversary
+  - pattern: '\bmartial\s+threat\b'
+    label: 'martial threat'
+  - pattern: '\bif\s+confronted\b'
+    label: 'if confronted'
+  - pattern: '\bencountered\s+alone\b'
+    label: 'encountered alone'
+  - pattern: '\btraits?\s+and\s+actions?\b'
+    label: 'traits and actions'
+  - pattern: '\bstat\s+block\b'
+    label: 'stat block'
+  - pattern: '\bdm\s+can\s+choo?s\b'
+    label: 'dm can choose'
+  - pattern: '\binfiltrator\b'
+    label: infiltrator
+  - pattern: '\bblending\s+in\b'
+    label: 'blending in'
+  - pattern: '\bnot\s+as\s+dangerous\b'
+    label: 'not as dangerous'
+  - pattern: '\bvariant\b'
+    label: variant
+
+# Place indicator terms (proposalRouting.ts)
+place_indicator_terms:
+  - new place
+  - market town
+  - key districts
+  - key landmarks
+  - key regions
+  - miles east
+  - miles west
+  - miles north
+  - miles south
+  - fjord
+  - inland
+  - population
+  - located
+  - landmark
+  - district
+  - settlement
+  - harbour
+  - harbor
+  - village
+  - town
+  - city
+  - place
+  - region
+
+# Explicit proposal opening patterns — type detected from prompt opening phrase
+# Each entry: pattern (regex string) + proposal_type
+explicit_proposal_opening_patterns:
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+npc\b'
+    proposal_type: npc
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+adversary\b'
+    proposal_type: adversary
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+place\b'
+    proposal_type: place
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+encounter\b'
+    proposal_type: encounter
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+scene\b'
+    proposal_type: scene
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+item\b'
+    proposal_type: item
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+clue\b'
+    proposal_type: clue
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+handout\b'
+    proposal_type: handout
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+state(?:\s+update)?\b'
+    proposal_type: state-update
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+session(?:\s+outline)?\b'
+    proposal_type: session-outline
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+chapter(?:\s+outline)?\b'
+    proposal_type: chapter-outline
+
+# Validator mismatch guard patterns (proposalValidator.ts)
+adversary_prompt_signals: '\bnew\s+adversary\b|\badversary\b|\bmartial\s+threat\b|\btraits?\s+and\s+actions?\b|\bstat\s+block\b|\bif\s+confronted\b|\bencountered\s+(?:alone|in\s+pairs?)\b|\bdm\s+can\s+choo?s\b'
+npc_prompt_signals: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+npc\b'

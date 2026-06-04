@@ -1,0 +1,102 @@
+# Adversary base configuration — slug maps, selection heuristics, environment patterns
+
+# Maps user-friendly names to canonical file slugs
+base_slug_map:
+  spy: spy
+  noble: noble
+  guard: guard
+  veteran: veteran
+  bandit captain: bandit-captain
+  bandit-captain: bandit-captain
+  bandit: bandit
+  thug: thug
+  scout: scout
+  mage: mage
+  priest: priest
+  acolyte: acolyte
+  assassin: assassin
+  archmage: archmage
+  commoner: commoner
+  knight: knight
+  berserker: berserker
+  gladiator: gladiator
+
+# Bases that can appear in anchored proposal selection
+allowed_proposal_bases:
+  - spy
+  - scout
+  - guard
+  - veteran
+  - bandit
+  - bandit captain
+  - thug
+  - assassin
+
+# Valid SRD base names for citation checks
+valid_srd_base_names:
+  - spy
+  - noble
+  - guard
+  - veteran
+  - bandit captain
+  - bandit-captain
+  - bandit
+  - thug
+  - scout
+  - mage
+  - priest
+  - acolyte
+  - assassin
+  - archmage
+  - commoner
+
+# Bases that don't have darkvision in the SRD
+bases_without_darkvision:
+  - spy
+  - noble
+  - guard
+  - bandit
+  - bandit captain
+  - bandit-captain
+  - thug
+  - scout
+  - commoner
+  - mage
+  - priest
+  - acolyte
+  - assassin
+  - archmage
+  - veteran
+
+# Context heuristics: pattern → preferred_base
+# Checked in order; first match wins. If no match, spy is default.
+base_selection_heuristics:
+  - pattern: 'blend(?:ing)?\s+in|social|urban|town|cit|market|disguise|infiltrat'
+    preferred_base: spy
+  - pattern: 'road|checkpoint|patrol|trail|scout|track'
+    preferred_base: scout
+  - pattern: 'captain|leader|veteran|dangerous|hard.to.kill'
+    preferred_base: veteran
+default_base: spy
+
+# Environment context detection: pattern → label
+environment_contexts:
+  - pattern: 'urban|town|cit|settlement|market|harbour|dock|inn|tavern'
+    label: 'urban / towns / cities'
+  - pattern: 'road|wilderness|outdoor|forest|coast|fjord'
+    label: 'road / wilderness'
+
+# NPC base summaries for encounter context
+npc_base_summaries:
+  spy: 'Spy — CR 1, AC 12, HP 27. Cunning Action, Sneak Attack 2d6. Deception +6, Insight +4, Persuasion +6, Stealth +6.'
+  guard: 'Guard — CR 1/8, AC 16 (chain shirt + shield), HP 11. Spear +3.'
+  noble: 'Noble — CR 1/8, AC 15 (breastplate), HP 9. Persuasion +5.'
+  scout: 'Scout — CR 1/2, AC 13, HP 16. Multiattack, Longbow +5. Keen Sight/Hearing.'
+  veteran: 'Veteran — CR 3, AC 17 (splint), HP 58. Multiattack (3 attacks). Parry.'
+  bandit: 'Bandit — CR 1/8, AC 12, HP 11. Scimitar +3.'
+  bandit captain: 'Bandit Captain — CR 2, AC 15, HP 65. Multiattack, Parry reaction.'
+  thug: 'Thug — CR 1/2, AC 11, HP 32. Multiattack, Heavy Crossbow.'
+  commoner: 'Commoner — CR 0, AC 10, HP 4. Club +2.'
+  priest: 'Priest — CR 2, AC 13, HP 27. Spellcasting (Channel Divinity, healing).'
+  mage: 'Mage — CR 6, AC 12, HP 40. Arcane spellcasting.'
+  acolyte: 'Acolyte — CR 1/4, AC 10, HP 9. Minor spellcasting.'

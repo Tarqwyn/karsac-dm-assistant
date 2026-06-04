@@ -5,84 +5,15 @@
  * triggering ask.ts's CLI main() side-effect.
  */
 
-// ── Required headings ─────────────────────────────────────────────────────────
-
-export const DESIGN_REQUIRED_HEADINGS = [
-  '## provisional encounter concept',
-  '## why it fits karsac',
-  '## encounter setup',
-  '## creatures / opposition',
-  '## terrain and pressure',
-  '## what this reveals',
-  '## running it at the table',
-  '## scaling options',
-  '## player-safe description',
-  '## canon status',
-] as const;
-
-// ── No-monster-data patterns ──────────────────────────────────────────────────
-
-/**
- * Patterns forbidden when no monster corpus is loaded (NO_MONSTER_DATA mode).
- * Each entry: [pattern, label] for diagnostic output.
- */
-export const FORBIDDEN_MONSTER_PATTERNS: Array<[RegExp, string]> = [
-  // Named SRD monsters
-  [/\bstone giant/i, 'Stone Giant'],
-  [/\bdire wolf/i, 'Dire Wolf'],
-  [/\broper\b/i, 'Roper'],
-  [/\b(?:young|adult|ancient|wyrmling)\s+\w+\s+dragon\b/i, 'named dragon'],
-  [/\bdragon\s+stats\b/i, 'dragon stats'],
-  [/\buse\s+\w+\s+stats\b/i, 'use X stats'],
-  [/\breskin(?:ned|ning)?\b/i, 'reskin'],
-  // Mechanical stats
-  [/\bCR\s+\d/i, 'CR rating'],
-  [/\bAC\s+\d{1,2}\b/i, 'AC value'],
-  [/[+-]\d+\s*(?:to\s+)?AC\b/i, 'AC modifier'],
-  [/(?:reduce|increase|modify|add)\b[^.]*\bHP\b/i, 'HP modification'],
-  [/\bdamage\s+resistance\b/i, 'damage resistance'],
-  [/\bresistance\s+to\b/i, 'resistance to'],
-  [/\bspellcasting\b/i, 'spellcasting'],
-  [/\bbreath\s+weapon\b/i, 'breath weapon'],
-  [/\bhit\s+dice\b/i, 'hit dice'],
-  [/\bboar\s+stats\b/i, 'boar stats'],
-];
+import { getDesignRequiredHeadings } from './proposals/proposalContractsLoader.js'
+import {
+  getForbiddenMonsterPatterns,
+  getHomebrewViolationPatterns,
+  getAttackPattern,
+} from './proposals/validationRulesLoader.js'
 
 export const NO_MONSTER_DISCLAIMER =
   'monster metadata is not yet loaded, so these are encounter roles';
-
-// ── Homebrew-gate patterns ────────────────────────────────────────────────────
-
-/**
- * Patterns that indicate homebrew stat modifications — forbidden unless
- * --allow-homebrew is active or the user explicitly requested homebrew.
- * Applied to the full response text even when monster data IS loaded.
- */
-export const HOMEBREW_VIOLATION_PATTERNS: Array<[RegExp, string]> = [
-  // Reskin indicators
-  [/\bbased on\b/i, 'based on (homebrew reskin)'],
-  // HP modifications
-  [/(?:reduce|lower|decrease|increase|raise|modify|give|add)\b[^.]{0,50}\b(?:hp|hit points?)\b/i, 'HP modification'],
-  [/\bextra\s+hit\s+points?\b/i, 'extra hit points'],
-  [/\bHP\s+to\s+\d/i, 'HP assignment'],
-  // Damage modifications
-  [/(?:increase|reduce|boost|lower|raise)\b[^.]{0,30}\b(?:\w+\s+)?damage\b/i, 'damage modification'],
-  // AC modifications
-  [/(?:reduce|lower|decrease|increase|raise|modify)\b[^.]{0,40}\b(?:ac\b|armou?r class)\b/i, 'AC modification'],
-  [/[+-]\d+\s*(?:to\s+)?AC\b/i, 'AC modifier'],
-  // Ability score changes
-  [/[+-]\d+\s+(?:strength|dexterity|constitution|intelligence|wisdom|charisma|str|dex|con|int|wis|cha)\b/i, 'ability score modifier'],
-  // Saving throw invented modifiers
-  [/\badvantage\b[^.]{0,40}\b(?:saving throws?|saves?)\b/i, 'invented saving throw advantage'],
-  [/\bdisadvantage\b[^.]{0,40}\b(?:saving throws?|saves?)\b/i, 'invented saving throw disadvantage'],
-  [/\bsaving\s+throw\s+(?:advantage|disadvantage)\b/i, 'invented saving throw modifier'],
-  // Resistance and invented special abilities
-  [/\bresistance\s+to\b/i, 'resistance to (invented)'],
-  [/\bdamage\s+resistance\b/i, 'damage resistance (invented)'],
-  [/\bnew\s+(?:attack|special\s+ability|action|feature)\b/i, 'new attack/ability (invented)'],
-];
-
-// ── Checker functions ─────────────────────────────────────────────────────────
 
 // ── Composition-plan validation ───────────────────────────────────────────────
 
@@ -93,10 +24,6 @@ function extractCreaturesSectionLower(text: string): string {
   const match = text.match(/##\s+creatures\s*\/\s*opposition\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i);
   return (match?.[1] ?? '').toLowerCase();
 }
-
-/** Attack-action patterns that only a combatant should perform. */
-const ATTACK_PATTERNS =
-  /\battacks?\b|\bdive.bomb|\bdeals?\s+damage|\bclaws?\s+at\b|\bjoins?\s+the\s+fight|\bswoops?\s+(?:down|at)\b|\bstrikes?\b/i;
 
 /**
  * Check the response text against the composition plan. Detects:
@@ -159,6 +86,7 @@ export function checkCompositionViolations(
     // Strip negated attack phrases first ("does NOT attack", "not attacks", "does not engage")
     // so that the scaffold's own prohibition wording doesn't false-positive.
     if (!creature.useAsCombatant) {
+      const attackPatterns = getAttackPattern() ?? /\battacks?\b/i
       for (const name of names) {
         const sentences = creaturesSection.split(/[.!?]/);
         for (const sentence of sentences) {
@@ -166,7 +94,7 @@ export function checkCompositionViolations(
             .replace(/\b(?:does\s+)?not\s+attacks?\b/gi, '')
             .replace(/\bdoes\s+not\s+engage\b/gi, '')
             .replace(/\bnever\s+attacks?\b/gi, '');
-          if (sentence.includes(name.toLowerCase()) && ATTACK_PATTERNS.test(stripped)) {
+          if (sentence.includes(name.toLowerCase()) && attackPatterns.test(stripped)) {
             violations.push(`non-combatant "${name}" described as attacking in ## Creatures / opposition`);
             break;
           }
@@ -183,7 +111,7 @@ export function checkNoMonsterViolations(text: string): string[] {
   if (!text.toLowerCase().includes(NO_MONSTER_DISCLAIMER)) {
     violations.push('missing mandatory disclaimer line');
   }
-  for (const [pattern, label] of FORBIDDEN_MONSTER_PATTERNS) {
+  for (const [pattern, label] of getForbiddenMonsterPatterns()) {
     if (pattern.test(text)) violations.push(label);
   }
   return violations;
@@ -191,7 +119,7 @@ export function checkNoMonsterViolations(text: string): string[] {
 
 export function checkHomebrewViolations(text: string): string[] {
   const violations: string[] = [];
-  for (const [pattern, label] of HOMEBREW_VIOLATION_PATTERNS) {
+  for (const [pattern, label] of getHomebrewViolationPatterns()) {
     if (pattern.test(text)) violations.push(label);
   }
   return violations;
@@ -204,8 +132,9 @@ export function validateDesignResponse(
   compositionPlan?: EncounterCompositionPlan | null,
 ): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## provisional encounter concept')) return false;
-  if (!DESIGN_REQUIRED_HEADINGS.every(h => lower.includes(h))) return false;
+  const designHeadings = getDesignRequiredHeadings()
+  if (!lower.trimStart().startsWith(designHeadings[0] ?? '## provisional encounter concept')) return false;
+  if (!designHeadings.every(h => lower.includes(h))) return false;
   if (!lower.includes('provisional table material')) return false;
   if (noMonsterData && checkNoMonsterViolations(text).length > 0) return false;
   if (!allowHomebrew && checkHomebrewViolations(text).length > 0) return false;
@@ -237,9 +166,9 @@ export function stripViolatingContent(
     }
 
     const hasNoMonsterViolation =
-      noMonsterData && FORBIDDEN_MONSTER_PATTERNS.some(([p]) => p.test(line));
+      noMonsterData && getForbiddenMonsterPatterns().some(([p]) => p.test(line));
     const hasHomebrewViolation =
-      !allowHomebrew && HOMEBREW_VIOLATION_PATTERNS.some(([p]) => p.test(line));
+      !allowHomebrew && getHomebrewViolationPatterns().some(([p]) => p.test(line));
 
     if (hasNoMonsterViolation || hasHomebrewViolation) {
       removed.push(line.trim());

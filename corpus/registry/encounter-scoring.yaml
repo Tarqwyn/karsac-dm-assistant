@@ -1,0 +1,45 @@
+# Encounter scoring configuration — social/monster detection, pattern boosts, exclusion guards
+
+social_query_pattern: 'non-monster|non-combat|social\s+encounter|procedural|customs|inspection|\bgate\b|\bdock\b|officials?\b|faction\s+pressure|arrival\s+scene|social\s+obstruction'
+
+monster_exception_pattern: '\bcreature|\bcorruption|\bmaw.changed|\bcombat\b|\bsupernatural|\bfight\b|\bambush|\bbattle|\battack'
+
+dock_arrival_keywords: '\bdock\b|\bport\b|\bharbour\b|\bharbor\b|\bcargo\b|\bcustoms\b|\binspection\b|\bofficials?\b|\bgate\b|\bdelay\b|\bpaperwork\b|\bauthority\b|\bdocument|\barrival\b|\bvalweg\b|\bmathr\s+agents?\b'
+
+arrival_event_pattern: '\barriv(?:es?|al|ing\b)'
+
+# Maps query keywords → pattern filenames that should receive a score boost
+pattern_boosts:
+  - pattern: '\bdock\b|\bport\b|\bharbour\b|\bharbor\b|\bcargo\b|\bship\b|\barrival\b'
+    boosts:
+      - dock-delay
+      - customs-inspection
+  - pattern: '\bgate\b|\bcheckpoint\b|\bentry\b|\bborder\b'
+    boosts:
+      - roadblock
+      - customs-inspection
+  - pattern: '\bbribe\b|\bpay\s+them\s+off\b'
+    boosts:
+      - bribery-attempt
+  - pattern: '\baudience\b|\bcourt\b|\bcouncil\b|\bsummons\b|\bhearing\b|\bpetition\b'
+    boosts:
+      - formal-audience
+  - pattern: '\binterrogat'
+    boosts:
+      - interrogation
+  - pattern: '\bmarket\b|\bsurveillance\b|\bwatchers?\b'
+    boosts:
+      - market-surveillance
+  - pattern: '\bwitness\b'
+    boosts:
+      - witness-pressure
+  - pattern: '\bpublic\b.*\baccus|\baccus.*\bpublic\b'
+    boosts:
+      - public-accusation
+
+# Some patterns require specific keywords to be selected; without them they are excluded
+pattern_exclusion_guards:
+  - slug: bribery-attempt
+    required_pattern: '\bbribe|\bbribery|\bpay\b|\btoll\b|\bfee\b|\bcorrupt|\bextort|\bpayment|\btax\b'
+  - slug: formal-audience
+    required_pattern: '\baudience\b|\bformal\s+meeting\b|\bcouncil\b|\bhearing\b|\bsummons\b|\bcourt\b|\bpetition\b'

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { INDEX_DIR } from '../paths.js'
-import { getCanonicalLanguages, getFactionProfile } from '../faction-profiles.js'
+import { getCanonicalLanguages, getFactionProfile, getAllFactionProfiles } from '../faction-profiles.js'
 import type { AliasMap, EntityMap, Entity } from '../types.js'
 import type { ProposalType } from './proposalTypes.js'
 import {
@@ -11,6 +11,20 @@ import {
   normalizeEntityName,
 } from './proposalEntityRegistry.js'
 import { getProposalEntityPolicy } from './proposalEntityPolicies.js'
+import {
+  getSentenceBoundaryPronouns,
+  getCommonNounSkips,
+  getTitleTokens,
+  getCosmologicalForceNames,
+  getGenericSingleWordSkips,
+  getTitleTokenAlternation,
+} from './styleGuardsLoader.js'
+import {
+  getWarningRules,
+  getActionEconomyPattern,
+  getActionEconomyMessage,
+  getStateChangePattern,
+} from './validationRulesLoader.js'
 
 interface GovernanceValidationResult {
   issues: string[]
@@ -104,40 +118,17 @@ function extractNpcCandidates(section: string): string[] {
   return [...new Set(names)].filter((name) => !/^provisional\b/i.test(name))
 }
 
-// Capitalised pronouns that can appear at sentence boundaries — never proper nouns
-const SENTENCE_BOUNDARY_PRONOUNS = new Set([
-  'He', 'His', 'Him', 'She', 'Her', 'Hers', 'They', 'Their', 'Them', 'Theirs',
-  'It', 'Its', 'We', 'Our', 'Ours', 'Us', 'You', 'Your', 'Yours', 'I', 'My', 'Mine',
-  'Myself', 'Himself', 'Herself', 'Themselves', 'Itself', 'Yourself',
-  'Who', 'Whom', 'Whose', 'Which', 'What', 'That',
-])
-
-// Common nouns that appear capitalised in D&D/fantasy prose but are never proper names
-const COMMON_NOUN_SKIPS = new Set([
-  'Fog', 'Mist', 'Shadow', 'Dark', 'Darkness', 'Light', 'Stone', 'River', 'Sea', 'Ocean',
-  'Mountain', 'Wind', 'Ice', 'Snow', 'Fire', 'Flame', 'Rain', 'Storm', 'Sun', 'Moon',
-  'Night', 'Dawn', 'Dusk', 'Tide', 'Salt', 'Ash', 'Dust', 'Blood', 'Bone',
-  'Forest', 'Shore', 'Cliff', 'Bay', 'Port', 'Wall', 'Tower', 'Bridge', 'Path',
-])
-
-const TITLE_TOKENS = new Set([
-  'King', 'Jarl', 'Lord', 'Lady', 'Captain', 'Archivist', 'Elder',
-  'Housecarl', 'Skald', 'Truthspeaker',
-])
-
-// Cosmological forces and metaphysical entities — never individual NPCs
-const COSMOLOGICAL_FORCE_NAMES = new Set([
-  'Vishara', 'Maharuq', 'Dhurvaq', 'Yantravaq',
-])
+// Word lists loaded from corpus/registry/style-guards.yaml
+const SENTENCE_BOUNDARY_PRONOUNS = getSentenceBoundaryPronouns()
+const COMMON_NOUN_SKIPS = getCommonNounSkips()
+const TITLE_TOKENS = getTitleTokens()
+const COSMOLOGICAL_FORCE_NAMES = getCosmologicalForceNames()
 
 function extractNamedIndividuals(section: string): string[] {
   const names = new Set<string>(extractNpcCandidates(section))
-  const genericSingleWordSkips = new Set([
-    'The', 'They', 'Which', 'What', 'Role', 'Physical', 'Players',
-    'Gate', 'Road', 'Harbour', 'Harbor', 'Market', 'Dock', 'Docks',
-    'Captain', 'Guard', 'Clerk', 'Courier', 'Merchant', 'Inn', 'Council',
-  ])
-  const titleCompoundPattern = /\b(King|Jarl|Lord|Lady|Captain|Archivist|Elder|Housecarl|Skald|Truthspeaker)\s+([A-Z][\p{L}''-]+(?:\s+[A-Z][\p{L}''-]+){0,2})\b/gu
+  const genericSingleWordSkips = getGenericSingleWordSkips()
+  const titleAlt = getTitleTokenAlternation()
+  const titleCompoundPattern = new RegExp(`\\b(${titleAlt})\\s+([A-Z][\\p{L}''-]+(?:\\s+[A-Z][\\p{L}''-]+){0,2})\\b`, 'gu')
   for (const match of section.matchAll(titleCompoundPattern)) {
     const candidate = `${match[1]} ${match[2]}`.trim()
     names.add(candidate)
@@ -340,8 +331,8 @@ function validateRegistryReferences(index: RegistryIndex, frontmatter: Record<st
 }
 
 function validateCanonicalItemStateChanges(index: RegistryIndex, body: string, issues: string[]): void {
-  const stateChangePattern = /\b(fragment|copy|replica|lost version|shard|broken piece|duplicate|current holder|new holder|changed hands|stolen from|moved to)\b/i
-  if (!stateChangePattern.test(body)) return
+  const stateChangePattern = getStateChangePattern()
+  if (!stateChangePattern || !stateChangePattern.test(body)) return
 
   const items = allEntitiesOfType(index, 'item')
   for (const item of items) {
@@ -368,24 +359,10 @@ function validateWarningPatterns(body: string, frontmatter: Record<string, unkno
     issues.push('WARN: visibility/content mismatch: dm-only proposal contains a player_safe section and should be reviewed before promotion.')
   }
 
-  if (/\+\d+\s+to\s+(?:persuasion|deception|insight|investigation|perception|stealth|history|religion|arcana|athletics|acrobatics)\b/i.test(body)) {
-    issues.push('WARN: Flat skill bonus detection: replace flat numeric bonuses with a scene-runnable mechanic.')
-  }
-
-  if (/(?:Charisma\s*\(Reputation\)|Intelligence\s*\(Forgery\)|Wisdom\s*\(Rumou?r\)|temporarily hindered)/i.test(body)) {
-    issues.push('FAIL: Non-5e mechanic detection: proposal contains a non-standard ability check, save, or condition.')
-  }
-
-  if (/\b(?:Vishara|Maharuq|Dhurvaq|Yantravaq)\b/i.test(body) && /\b(caused|guides|wants|steers|commands|sent|directed by|answering to)\b/i.test(body)) {
-    issues.push('WARN: Cosmological claim: proposal introduces a causal or directional relationship involving a force and should be DM-reviewed.')
-  }
-
-  if (/\b(?:Skald tradition|housecarl honour|housecarl honor|Lösweg oral culture|Losweg oral culture)\b/i.test(body)) {
-    issues.push('WARN: Canonical tradition claim: confirm this behavioural or cultural claim against the corpus before promotion.')
-  }
-
-  if (/\b(?:guided fog|ritual scent|ritual scents|unexplained glow|unexplained glows|watching fog|whispering lanterns)\b/i.test(body)) {
-    issues.push('WARN: Supernatural agency in atmosphere: confirm corpus support before promotion.')
+  for (const rule of getWarningRules()) {
+    if (!rule.regex.test(body)) continue
+    if (rule.secondaryRegex && !rule.secondaryRegex.test(body)) continue
+    issues.push(`${rule.severity === 'fail' ? 'FAIL' : 'WARN'}: ${rule.message}`)
   }
 
   const inventedCount = (body.match(/\bProvisional:/g) ?? []).length
@@ -443,32 +420,25 @@ function validateWarningPatterns(body: string, frontmatter: Record<string, unkno
     }
   }
 
-  const actionEconomyPattern = /(?:\*\*([^*]+)\*\*|([A-Z][A-Za-z'' -]+):)[^\n]*\b(?:action|bonus action)\b[\s\S]{0,100}\b(?:make|attempt)\s+an?\s+(?:Wisdom|Charisma|Intelligence|Dexterity|Strength|Constitution)\s*\([^)]+\)\s+check\b(?![\s\S]{0,120}(?:advantage|disadvantage|until the end|speed reduced|damage|condition|save|dc\s+\d+|without provoking))/i
-  const actionEconomyMatch = body.match(actionEconomyPattern)
-  if (actionEconomyMatch) {
-    const actionName = (actionEconomyMatch[1] ?? actionEconomyMatch[2] ?? 'Unnamed action').trim()
-    issues.push(`WARN: Action economy warning: ${actionName} spends action economy to perform a check achievable without action cost — add concrete mechanical benefit or convert to trait.`)
+  const actionEconomyPattern = getActionEconomyPattern()
+  if (actionEconomyPattern) {
+    const actionEconomyMatch = body.match(actionEconomyPattern)
+    if (actionEconomyMatch) {
+      const actionName = (actionEconomyMatch[1] ?? actionEconomyMatch[2] ?? 'Unnamed action').trim()
+      issues.push(`WARN: Action economy warning: ${actionName} ${getActionEconomyMessage()}`)
+    }
   }
 }
 
-function validateShadowWalkerProposal(body: string, issues: string[]): void {
-  const lower = body.toLowerCase()
-  if (!lower.includes('shadow walker') && !lower.includes('shadow-walker')) return
+function validateFactionProposal(factionSlug: string, body: string, issues: string[]): void {
+  const factionProfile = getFactionProfile(factionSlug)
+  if (!factionProfile || factionProfile.validationRules.length === 0) return
 
-  const factionProfile = getFactionProfile('shadow-walkers')
-  if (!factionProfile) return
-
-  if (/\bneutral evil\b|\blawful evil\b|\bchaotic evil\b/i.test(body)) {
-    issues.push('FAIL: Alignment convention: Shadow Walker variants must not include an evil alignment component.')
-  }
-  if (/\bshortbow\b|\blongbow\b/i.test(body) && /\bcover identity|unremarkable presence|blend(?:ing)? in|urban infiltr/i.test(body)) {
-    issues.push('WARN: Shortbow/concealability flag: concealment doctrine should use a faction-appropriate concealable weapon such as a throwing spike.')
-  }
-  if (/\bminor illusion\b|\bcantrip\b|\bspellcasting\b|\bspell attack\b/i.test(body)) {
-    issues.push('WARN: Spell capability flag: Shadow Walker variants should justify any spell use explicitly.')
-  }
-  if (/\bobservation\b|\bread(?:ing)? people\b|\bassessment\b|\bkeen observer\b|\bwatch(?:es|ing)?\b/i.test(body) && /\|\s*\d+\s*\([^)]+\)\s*\|\s*\d+\s*\([^)]+\)\s*\|\s*\d+\s*\([^)]+\)\s*\|\s*\d+\s*\([^)]+\)\s*\|\s*10\s*\(\+0\)\s*\|/i.test(body)) {
-    issues.push(`WARN: Wisdom floor: ${factionProfile.displayName} observation doctrine usually expects WIS 12+.`)
+  for (const rule of factionProfile.validationRules) {
+    const regex = new RegExp(rule.pattern, 'i')
+    if (!regex.test(body)) continue
+    if (rule.secondaryPattern && !new RegExp(rule.secondaryPattern, 'i').test(body)) continue
+    issues.push(`${rule.severity === 'fail' ? 'FAIL' : 'WARN'}: ${rule.message}`)
   }
 }
 
@@ -491,7 +461,13 @@ export function validateProposalGovernance(
       issues.push(`WARN: Provisional entity reference: "${provisional.name}" exists only in unpromoted proposals — cannot be treated as canonical.`)
     }
   }
-  if (proposalType === 'adversary') validateShadowWalkerProposal(body, issues)
+  if (proposalType === 'adversary') {
+    for (const profile of getAllFactionProfiles()) {
+      if (!profile.detection) continue
+      if (!new RegExp(profile.detection.mentionPattern, 'i').test(body)) continue
+      validateFactionProposal(profile.slug, body, issues)
+    }
+  }
 
   return { issues }
 }

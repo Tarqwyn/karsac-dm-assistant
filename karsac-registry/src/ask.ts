@@ -1,4 +1,5 @@
 import { resolve } from 'path';
+import { getResponseContractHeadings } from './proposals/proposalContractsLoader.js';
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
 import { routeQuestion } from './router.js';
 import type { RouteResult } from './router.js';
@@ -623,23 +624,19 @@ async function callOllama(
 
 // ── Comparison output validation ──────────────────────────────────────────────
 
-const REQUIRED_HEADINGS = [
-  '## direct canon facts',
-  '## differences stated by canon',
-  '## dm interpretation',
-  '## not stated / uncertain',
-];
-
 function validateComparisonResponse(text: string): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## direct canon facts')) return false;
-  return REQUIRED_HEADINGS.every(h => lower.includes(h));
+  const headings = getResponseContractHeadings('comparison')
+  if (!lower.trimStart().startsWith((headings[0] ?? '## direct canon facts').toLowerCase())) return false;
+  return headings.every(h => lower.includes(h.toLowerCase()));
 }
 
 function buildRepairMessages(
   originalMessages: Array<{ role: string; content: string }>,
   badResponse: string,
 ): Array<{ role: string; content: string }> {
+  const headings = getResponseContractHeadings('comparison')
+  const numberedList = headings.map((h, i) => `${i + 1}. \`${h}\``).join('\n')
   return [
     ...originalMessages,
     { role: 'assistant', content: badResponse },
@@ -647,27 +644,16 @@ function buildRepairMessages(
       role: 'user',
       content: `Your previous answer did not follow the required output contract.
 Rewrite it using exactly these headings:
-1. \`## Direct canon facts\`
-2. \`## Differences stated by canon\`
-3. \`## DM interpretation\`
-4. \`## Not stated / uncertain\`
+${numberedList}
 
 Do not add an introduction.
 Do not use alternative headings.
-Start with \`## Direct canon facts\`.`,
+Start with \`${headings[0]}\`.`,
     },
   ];
 }
 
 // ── Deep Lore output validation ───────────────────────────────────────────────
-
-const DEEP_LORE_REQUIRED_HEADINGS = [
-  '## direct canon facts',
-  '## hidden structure',
-  '## dm interpretation',
-  '## not stated / uncertain',
-  '## useful table guidance',
-];
 
 function deepLoreHasRawContext(text: string): boolean {
   if (text.includes('--- FILE:')) return true;
@@ -676,8 +662,9 @@ function deepLoreHasRawContext(text: string): boolean {
 
 function validateDeepLoreResponse(text: string): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## direct canon facts')) return false;
-  if (!DEEP_LORE_REQUIRED_HEADINGS.every(h => lower.includes(h))) return false;
+  const headings = getResponseContractHeadings('deep_lore')
+  if (!lower.trimStart().startsWith((headings[0] ?? '## direct canon facts').toLowerCase())) return false;
+  if (!headings.every(h => lower.includes(h.toLowerCase()))) return false;
   if (deepLoreHasRawContext(text)) return false;
   return true;
 }
@@ -690,6 +677,8 @@ function buildDeepLoreRepairMessages(
   question: string,
   badResponse: string,
 ): Array<{ role: string; content: string }> {
+  const headings = getResponseContractHeadings('deep_lore')
+  const headingBlock = headings.join('\n\n')
   return [
     {
       role: 'system',
@@ -714,21 +703,13 @@ ${badResponse}
 
 Required output structure:
 
-## Direct canon facts
-
-## Hidden structure
-
-## DM interpretation
-
-## Not stated / uncertain
-
-## Useful table guidance
+${headingBlock}
 
 Rules:
 - Do not add an introduction.
 - Do not rename headings.
-- Move unsupported synthesis into \`## DM interpretation\`.
-- Move gaps into \`## Not stated / uncertain\`.
+- Move unsupported synthesis into \`${headings[2]}\`.
+- Move gaps into \`${headings[3]}\`.
 - Preserve useful content from the previous answer.
 - Do not add new claims.
 - Do not output raw source context.`,
@@ -738,25 +719,19 @@ Rules:
 
 // ── Rules output validation ───────────────────────────────────────────────────
 
-const RULES_REQUIRED_HEADINGS = [
-  '## ruling',
-  '## base 5e rule',
-  '## karsac table rule',
-  '## at the table',
-  '## edge cases',
-  '## dm call',
-];
-
 function validateRulesResponse(text: string): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## ruling')) return false;
-  return RULES_REQUIRED_HEADINGS.every(h => lower.includes(h));
+  const headings = getResponseContractHeadings('rules')
+  if (!lower.trimStart().startsWith((headings[0] ?? '## ruling').toLowerCase())) return false;
+  return headings.every(h => lower.includes(h.toLowerCase()));
 }
 
 function buildRulesRepairMessages(
   question: string,
   badResponse: string,
 ): Array<{ role: string; content: string }> {
+  const headings = getResponseContractHeadings('rules')
+  const headingBlock = headings.join('\n\n')
   return [
     {
       role: 'system',
@@ -778,23 +753,13 @@ ${badResponse}
 
 Required output structure:
 
-## Ruling
-
-## Base 5e rule
-
-## Karsac table rule
-
-## At the table
-
-## Edge cases
-
-## DM call
+${headingBlock}
 
 Rules:
 - Do not add an introduction.
 - Do not rename headings.
-- Start with \`## Ruling\`.
-- Move unsupported claims into \`## DM call\`.
+- Start with \`${headings[0]}\`.
+- Move unsupported claims into \`${headings[headings.length - 1]}\`.
 - Preserve useful content from the previous answer.`,
     },
   ];

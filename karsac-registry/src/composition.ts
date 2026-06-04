@@ -9,6 +9,9 @@
  * within the constraints set here.
  */
 
+import { getCrXpTable, getCharXpThresholds, getXpMultipliers } from './rulesDataLoader.js'
+import { getLosweqRegionalCreatureNames, getPhantomMonsters } from './regionalNamesLoader.js'
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type DifficultyIntent = 'easy' | 'medium' | 'hard' | 'push' | 'unknown';
@@ -62,70 +65,35 @@ export interface EncounterCompositionPlan {
   balanceNotes: string[];
 }
 
-// ── XP and difficulty data ────────────────────────────────────────────────────
-
-const CR_XP: Readonly<Record<string, number>> = {
-  '0': 10, '0.125': 25, '0.25': 50, '0.5': 100,
-  '1': 200, '2': 450, '3': 700, '4': 1100, '5': 1800,
-  '6': 2300, '7': 2900, '8': 3900, '9': 5000, '10': 5900,
-};
-
-// Per-character XP thresholds: [easy, medium, hard, deadly]
-const CHAR_THRESHOLDS: Readonly<Record<number, [number, number, number, number]>> = {
-  1: [25, 50, 75, 100], 2: [50, 100, 150, 200], 3: [75, 150, 225, 400],
-  4: [125, 250, 375, 500], 5: [250, 500, 750, 1100], 6: [300, 600, 900, 1400],
-  7: [350, 750, 1100, 1700], 8: [450, 900, 1400, 2100],
-};
+// ── XP and difficulty data — loaded from corpus/rules-data/dnd5e-rules.yaml ──
 
 function crXp(cr: number): number {
-  return CR_XP[String(cr)] ?? CR_XP[String(Math.floor(cr))] ?? 10;
+  const table = getCrXpTable()
+  return table[String(cr)] ?? table[String(Math.floor(cr))] ?? 10;
 }
 
 function xpMultiplier(count: number): number {
-  if (count <= 1) return 1;
-  if (count === 2) return 1.5;
-  if (count <= 6) return 2;
-  if (count <= 10) return 2.5;
+  for (const [maxCount, multiplier] of getXpMultipliers()) {
+    if (count <= maxCount) return multiplier
+  }
   return 3;
 }
 
 function xpBudget(partySize: number, partyLevel: number, difficulty: DifficultyIntent): number {
-  const thresh = CHAR_THRESHOLDS[Math.min(partyLevel, 8)] ?? CHAR_THRESHOLDS[3];
+  const thresholds = getCharXpThresholds()
+  const thresh = thresholds[Math.min(partyLevel, 8)] ?? thresholds[3];
   const [easy, medium, hard, deadly] = thresh;
   const push = Math.round((hard + deadly) / 2);
   const perChar = { easy, medium, hard, push, unknown: medium }[difficulty] ?? medium;
   return perChar * partySize;
 }
 
-// ── Regional name table ───────────────────────────────────────────────────────
+// ── Regional name table — loaded from corpus/rules-data/losweg-regional-names.yaml ──
 
-const LOSWEG_REGIONAL_NAMES: Readonly<Record<string, { name: string; meaning: string }>> = {
-  'wolf':          { name: 'Vargr',               meaning: 'common mountain wolf' },
-  'dire-wolf':     { name: 'Fjallvarg',            meaning: 'great mountain wolf' },
-  'polar-bear':    { name: 'Isbjørn',              meaning: 'ice bear, a large coastal predator' },
-  'brown-bear':    { name: 'Fjell-Bjørn',          meaning: 'mountain bear' },
-  'black-bear':    { name: 'Skogs-Bjørn',          meaning: 'forest bear' },
-  'giant-eagle':   { name: 'Fjell-Ørn',            meaning: 'mountain eagle' },
-  'giant-vulture': { name: 'Skarvgrip',            meaning: 'cliff-grip, scavenger following displaced animals' },
-  'giant-bat':     { name: 'Skumringsflaggermus', meaning: 'twilight bat of coastal caves' },
-  'blood-hawk':    { name: 'Blodhøk',              meaning: 'blood-hawk, aggressive cliff raptor' },
-  'griffon':       { name: 'Klippøgle',            meaning: 'cliff beast, mythic mountain hunter' },
-  'harpy':         { name: 'Strandvætte',          meaning: 'shore-spirit, coastal lure-creature' },
-  'ogre':          { name: 'Jötunn',               meaning: 'displaced mountain giant-kin' },
-  'ettin':         { name: 'Tvihøved',             meaning: 'two-headed mountain-kin, rarely near coasts' },
-  'troll':         { name: 'Bergtroll',            meaning: 'mountain troll, hard to kill' },
-  'worg':          { name: 'Nidvarg',              meaning: 'ill-wolf, large malicious predator' },
-  'wyvern':        { name: 'Orm',                  meaning: 'the great serpent, seen only at distance' },
-  'manticore':     { name: 'Mennekselion',         meaning: 'man-lion, a mountain terror' },
-  'owlbear':       { name: 'Uglebjørn',            meaning: 'owl-bear, displaced from deep forest' },
-};
+const LOSWEG_REGIONAL_NAMES = getLosweqRegionalCreatureNames()
 
 /** Common "phantom" monsters models tend to invent when no data restricts them. */
-const PHANTOM_MONSTERS = [
-  'Dire Wolf', 'Dire Wolves', 'Goblin', 'Goblins',
-  'Orc', 'Orcs', 'Bandit', 'Hobgoblin', 'Kobold',
-  'Skeleton', 'Zombie', 'Gnoll', 'Cultist',
-];
+const PHANTOM_MONSTERS = getPhantomMonsters()
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

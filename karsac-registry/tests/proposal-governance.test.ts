@@ -5,11 +5,25 @@ import { buildConstrainedProposalPrompt } from '../src/proposals/proposalConstra
 import { validateProposalContent } from '../src/proposals/proposalValidator.js'
 import { PROPOSALS_ROOT } from '../src/paths.js'
 import {
+  getSentenceBoundaryPronouns, getCommonNounSkips, getTitleTokens,
+  getCosmologicalForceNames, getGenericSingleWordSkips,
+  getOrgTypeSuffixes, getOrgStopWords, getTitleTokenAlternation,
+  clearStyleGuardsCacheForTests,
+} from '../src/proposals/styleGuardsLoader.js'
+import {
+  getWarningRules, getActionEconomyPattern, getStateChangePattern,
+  getCanonicalAlignments, getModernTechPattern,
+  getForbiddenMonsterPatterns, getHomebrewViolationPatterns, getAttackPattern,
+  clearValidationRulesCacheForTests,
+} from '../src/proposals/validationRulesLoader.js'
+import {
   clearProposalEntityRegistryCachesForTests,
   detectCorpusAnchorForProposal,
   loadProvisionalEntityRegister,
 } from '../src/proposals/proposalEntityRegistry.js'
-import { clearProposalGovernanceCachesForTests } from '../src/proposals/proposalGovernance.js'
+import { clearProposalGovernanceCachesForTests, validateProposalGovernance } from '../src/proposals/proposalGovernance.js'
+import { clearRouterConfigCacheForTests } from '../src/routerConfigLoader.js'
+import { guardArray } from '../src/loaderUtils.js'
 
 const TEMP_PROVISIONAL_DIR = resolve('/tmp/karsac-provisional-entity-tests')
 
@@ -1027,5 +1041,230 @@ Misled by Jarl Mathr.
     const result = validateProposalContent(frontmatter, body, 'npc')
     const mathrConflict = result.issues.filter((i) => /character conflict/i.test(i) && /Mathr/i.test(i))
     expect(mathrConflict).toHaveLength(0)
+  })
+})
+
+// ── Section 2: style-guards.yaml loader tests ─────────────────────────────────
+
+describe('styleGuardsLoader — YAML is the source of truth', () => {
+  afterEach(() => { clearStyleGuardsCacheForTests() })
+
+  it('loads sentence boundary pronouns from YAML', () => {
+    const pronouns = getSentenceBoundaryPronouns()
+    expect(pronouns.has('He')).toBe(true)
+    expect(pronouns.has('They')).toBe(true)
+    expect(pronouns.has('Himself')).toBe(true)
+    expect(pronouns.has('Which')).toBe(true)
+    expect(pronouns.size).toBeGreaterThanOrEqual(30)
+  })
+
+  it('loads common noun skips from YAML', () => {
+    const nouns = getCommonNounSkips()
+    expect(nouns.has('Fog')).toBe(true)
+    expect(nouns.has('Stone')).toBe(true)
+    expect(nouns.has('River')).toBe(true)
+    expect(nouns.has('Shadow')).toBe(true)
+  })
+
+  it('loads title tokens from YAML', () => {
+    const tokens = getTitleTokens()
+    expect(tokens.has('King')).toBe(true)
+    expect(tokens.has('Jarl')).toBe(true)
+    expect(tokens.has('Truthspeaker')).toBe(true)
+  })
+
+  it('loads cosmological force names from YAML', () => {
+    const forces = getCosmologicalForceNames()
+    expect(forces.has('Vishara')).toBe(true)
+    expect(forces.has('Maharuq')).toBe(true)
+    expect(forces.has('Yantravaq')).toBe(true)
+  })
+
+  it('loads generic single word skips from YAML', () => {
+    const skips = getGenericSingleWordSkips()
+    expect(skips.has('Gate')).toBe(true)
+    expect(skips.has('Harbour')).toBe(true)
+    expect(skips.has('Council')).toBe(true)
+  })
+
+  it('loads org type suffixes from YAML', () => {
+    const suffixes = getOrgTypeSuffixes()
+    expect(suffixes.has('Guild')).toBe(true)
+    expect(suffixes.has('Council')).toBe(true)
+    expect(suffixes.has('Fellowship')).toBe(true)
+    expect(suffixes.has('House')).toBe(false)
+  })
+
+  it('loads org stop words from YAML', () => {
+    const stops = getOrgStopWords()
+    expect(stops.has('the')).toBe(true)
+    expect(stops.has('of')).toBe(true)
+    expect(stops.has('their')).toBe(true)
+  })
+
+  it('builds title token alternation string from YAML', () => {
+    const alt = getTitleTokenAlternation()
+    expect(alt).toContain('King')
+    expect(alt).toContain('Jarl')
+    expect(alt).toContain('Truthspeaker')
+    // Should be usable in a regex
+    const re = new RegExp(`^(${alt})$`, 'i')
+    expect(re.test('King')).toBe(true)
+    expect(re.test('Jarl')).toBe(true)
+    expect(re.test('Smith')).toBe(false)
+  })
+})
+
+// ── Section 3: validation-rules.yaml loader tests ─────────────────────────────
+
+describe('validationRulesLoader — YAML is the source of truth', () => {
+  afterEach(() => { clearValidationRulesCacheForTests() })
+
+  it('loads warning rules and each fires on matching text', () => {
+    const rules = getWarningRules()
+    expect(rules.length).toBeGreaterThanOrEqual(5)
+    const flatBonus = rules.find((r) => r.id === 'flat_skill_bonus')
+    expect(flatBonus).toBeDefined()
+    expect(flatBonus!.regex.test('+2 to persuasion')).toBe(true)
+    expect(flatBonus!.severity).toBe('warn')
+  })
+
+  it('non_5e_mechanic rule has fail severity', () => {
+    const rules = getWarningRules()
+    const rule = rules.find((r) => r.id === 'non_5e_mechanic')
+    expect(rule).toBeDefined()
+    expect(rule!.severity).toBe('fail')
+    expect(rule!.regex.test('Charisma (Reputation)')).toBe(true)
+  })
+
+  it('cosmological_causality rule requires both patterns', () => {
+    const rules = getWarningRules()
+    const rule = rules.find((r) => r.id === 'cosmological_causality')
+    expect(rule).toBeDefined()
+    expect(rule!.secondaryRegex).toBeDefined()
+    expect(rule!.regex.test('Vishara')).toBe(true)
+    expect(rule!.secondaryRegex!.test('guides the hand')).toBe(true)
+    expect(rule!.secondaryRegex!.test('appeared in a vision')).toBe(false)
+  })
+
+  it('loads action economy pattern and message', () => {
+    const pattern = getActionEconomyPattern()
+    expect(pattern).not.toBeNull()
+    // Should be a valid regex
+    expect(pattern instanceof RegExp).toBe(true)
+  })
+
+  it('builds state change pattern from term list', () => {
+    const pattern = getStateChangePattern()
+    expect(pattern).not.toBeNull()
+    expect(pattern!.test('stolen from Jarl Mathr')).toBe(true)
+    expect(pattern!.test('current holder is unknown')).toBe(true)
+    expect(pattern!.test('the sword gleams')).toBe(false)
+  })
+
+  it('loads canonical alignments from YAML', () => {
+    const alignments = getCanonicalAlignments()
+    expect(alignments.has('lawful good')).toBe(true)
+    expect(alignments.has('unaligned')).toBe(true)
+    expect(alignments.has('chaotic evil')).toBe(true)
+    expect(alignments.size).toBe(10)
+  })
+
+  it('loads modern tech pattern from YAML', () => {
+    const pattern = getModernTechPattern()
+    expect(pattern).not.toBeNull()
+    expect(pattern!.test('an encrypted device')).toBe(true)
+    expect(pattern!.test('a bone tally')).toBe(false)
+  })
+
+  it('loads forbidden monster patterns and they match expected text', () => {
+    const patterns = getForbiddenMonsterPatterns()
+    expect(patterns.length).toBeGreaterThanOrEqual(10)
+    const labels = patterns.map(([, label]) => label)
+    expect(labels).toContain('Stone Giant')
+    expect(labels).toContain('spellcasting')
+    const stoneGiant = patterns.find(([, label]) => label === 'Stone Giant')
+    expect(stoneGiant![0].test('the stone giant emerges')).toBe(true)
+  })
+
+  it('loads homebrew violation patterns and they match expected text', () => {
+    const patterns = getHomebrewViolationPatterns()
+    expect(patterns.length).toBeGreaterThanOrEqual(10)
+    const based = patterns.find(([, label]) => label.includes('based on'))
+    expect(based![0].test('based on the spy')).toBe(true)
+  })
+
+  it('loads attack pattern from YAML', () => {
+    const pattern = getAttackPattern()
+    expect(pattern).not.toBeNull()
+    expect(pattern!.test('the wolf attacks the party')).toBe(true)
+    expect(pattern!.test('the wolf slinks away')).toBe(false)
+  })
+})
+
+// ── Faction validation gate regression ────────────────────────────────────────
+
+describe('faction validation gate — only runs for detected faction', () => {
+  it('does not apply Shadow Walker spellcasting rules to a non-Shadow-Walker adversary', () => {
+    const frontmatter = {
+      proposal_type: 'adversary',
+      id: 'proposals/test-harbour-guard',
+      title: 'Harbour Watch Guard',
+      status: 'proposed',
+      canonical: 'provisional',
+      visibility: 'dm-only',
+      source_prompt: 'Propose a new adversary: harbour watch guard.',
+      promote_target: 'corpus/adversary-corpus/karsac-adversaries',
+      summary: 'A standard harbour authority guard with minor spellcasting.',
+      route_profile: 'adversary-design',
+      related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+    }
+    const body = `# Adversary: Harbour Watch Guard
+
+## Mechanical Base
+Base: guard
+
+## Stat Block
+**Spellcasting.** The guard is a 1st-level spellcaster. It has the cantrip minor illusion.
+
+## Tactics
+Patrol the docks. Use spellcasting to signal.
+`
+    const result = validateProposalGovernance(frontmatter, body, 'adversary')
+    const shadowWalkerIssues = result.issues.filter((i) =>
+      i.toLowerCase().includes('shadow walker') || i.includes('Spell capability flag'),
+    )
+    expect(shadowWalkerIssues).toHaveLength(0)
+  })
+})
+
+// ── guardArray malformed-config regression ────────────────────────────────────
+
+describe('guardArray — warns and falls back on malformed YAML config', () => {
+  it('returns empty array and writes a named warning to stderr when value is a scalar', () => {
+    const stderrWrites: string[] = []
+    const orig = process.stderr.write.bind(process.stderr)
+    ;(process.stderr as any).write = (chunk: unknown) => { stderrWrites.push(String(chunk)); return true }
+    try {
+      const result = guardArray('not-an-array', 'rules_terms')
+      expect(result).toEqual([])
+      expect(stderrWrites.some((w) => w.includes('rules_terms'))).toBe(true)
+      expect(stderrWrites.some((w) => w.includes('string'))).toBe(true)
+    } finally {
+      ;(process.stderr as any).write = orig
+    }
+  })
+
+  it('returns empty array silently when value is undefined', () => {
+    const stderrWrites: string[] = []
+    const orig = process.stderr.write.bind(process.stderr)
+    ;(process.stderr as any).write = (chunk: unknown) => { stderrWrites.push(String(chunk)); return true }
+    try {
+      const result = guardArray(undefined, 'missing_field')
+      expect(result).toEqual([])
+      expect(stderrWrites).toHaveLength(0)
+    } finally {
+      ;(process.stderr as any).write = orig
+    }
   })
 })

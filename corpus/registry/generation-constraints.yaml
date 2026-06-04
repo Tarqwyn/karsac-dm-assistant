@@ -1,0 +1,59 @@
+# Generation constraint strings injected into proposal generation prompts.
+# Loaded at runtime by generationConstraintsLoader.ts.
+# Use {entity_type} as a placeholder where the entity type is substituted at runtime.
+
+adversary:
+  header:
+    - 'PRE-GENERATION ADVERSARY CONSTRAINTS'
+    - '- User constraints and locked faction doctrine trump inherited mechanical base content.'
+    - '- If base inheritance conflicts with faction doctrine, repair toward faction doctrine, not toward the base.'
+
+encounter:
+  header:
+    - 'PRE-GENERATION ENCOUNTER CONSTRAINTS'
+    - '- Maximum two new NPCs unless the prompt explicitly asks for more.'
+    - '- Maximum three resolution paths.'
+    - '- Do not invent new items outside the canonical item registry.'
+    - '- Do not introduce supernatural atmosphere unless the supplied corpus/state context supports it.'
+    - '- Downstream consequences must reference only established chapter elements, hot threads, simmering threads, or supplied state context.'
+
+npc:
+  header:
+    - 'PRE-GENERATION NPC CONSTRAINTS'
+    - '- Keep the output as an NPC proposal even if place terms dominate the prompt.'
+    - '- Lines to Inhabit must sound like setting speech, not modern or anachronistic dialogue.'
+    - '- Use local culture, road duty, settlement pressure, and chapter state as context; do not invent a separate place proposal.'
+    - '- Keep can_know and must_not_know grounded in current state context.'
+
+place:
+  header:
+    - 'PRE-GENERATION PLACE CONSTRAINTS'
+    - '- This is a place proposal, not an NPC or encounter packet.'
+    - '- Do not introduce named NPCs with full operational detail unless they are provisional placeholders or already canonical.'
+    - '- Keep atmosphere grounded; do not imply supernatural agency without corpus support.'
+    - '- Separate established prompt facts from provisional additions clearly.'
+
+corpus_anchor:
+  base:
+    - 'CORPUS-ANCHOR CONSTRAINT'
+    - '- This {entity_type} is named in existing corpus.'
+    - '- Characterisation and description must derive from corpus references only.'
+    - '- Do not invent backstory, secrets, affiliations, geographical features, factions, or landmarks not present in or directly implied by corpus.'
+    - '- Scope the proposal to what corpus actually provides; do not elaborate beyond it.'
+    - '- Flag any gap between corpus description and proposal content in validation notes.'
+  canonical_reference_only:
+    - '- Treat this entity as corpus-anchored: unsupported additions should be omitted, not improvised.'
+  stub:
+    - '- Corpus description for this entity is stub level or intentionally minimal.'
+    - '- Describe only what the corpus explicitly states.'
+  stub_place:
+    - '- Do not invent geography, rivers, districts, landmarks, factions, or power structures.'
+    - '- Do not invent named individuals.'
+    - '- Where the corpus provides atmosphere, use it.'
+  stub_close:
+    - '- Where the corpus provides no detail, leave the field absent, unresolved, or minimal.'
+    - '- A correct minimal proposal is preferable to a detailed invented one.'
+  bounded:
+    - '- Corpus coverage for this entity is bounded.'
+    - '- Match the scope of the supplied corpus passages rather than expanding into new substructures or lore layers.'
+  snippets_header: 'Corpus reference passages:'
