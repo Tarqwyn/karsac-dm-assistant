@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { RULES_DATA_DIR } from './paths.js'
+import { guardArray } from './loaderUtils.js'
 
 const REGIONAL_PATH = `${RULES_DATA_DIR}/losweg-regional-names.yaml`
 
@@ -26,7 +27,7 @@ export function getLosweqRegionalCreatureNames(): Record<string, { name: string;
 }
 
 export function getPhantomMonsters(): string[] {
-  return load().phantom_monsters ?? []
+  return guardArray<string>(load().phantom_monsters, 'phantom_monsters')
 }
 
 export function clearRegionalNamesCacheForTests(): void {

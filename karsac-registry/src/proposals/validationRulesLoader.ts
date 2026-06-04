@@ -79,7 +79,7 @@ export function getStateChangePattern(): RegExp | null {
 }
 
 export function getCanonicalAlignments(): Set<string> {
-  return new Set(load().canonical_alignments ?? [])
+  return new Set(guardArray<string>(load().canonical_alignments, 'canonical_alignments'))
 }
 
 export function getModernTechPattern(): RegExp | null {
