@@ -1274,6 +1274,124 @@ describe('guardArray — warns and falls back on malformed YAML config', () => {
   })
 })
 
+// ── Session B: canonical tradition, supernatural atmosphere, visibility mismatch
+
+describe('canonical_tradition warning rule', () => {
+  afterEach(() => { clearValidationRulesCacheForTests() })
+
+  it('rule exists and fires on "Skald tradition"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')
+    expect(rule).toBeDefined()
+    expect(rule!.severity).toBe('warn')
+    expect(rule!.regex.test('a practitioner of the Skald tradition')).toBe(true)
+  })
+
+  it('fires on "housecarl honour"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('bound by housecarl honour to serve')).toBe(true)
+  })
+
+  it('fires on "housecarl honor" (US spelling)', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('housecarl honor demands obedience')).toBe(true)
+  })
+
+  it('fires on "Lösweg oral culture"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('rooted in Lösweg oral culture')).toBe(true)
+  })
+
+  it('does not fire on unrelated cultural references', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('a traveller from the south')).toBe(false)
+    expect(rule.regex.test('warrior culture of the fjords')).toBe(false)
+  })
+})
+
+describe('supernatural_atmosphere warning rule', () => {
+  afterEach(() => { clearValidationRulesCacheForTests() })
+
+  it('rule exists and fires on "guided fog"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')
+    expect(rule).toBeDefined()
+    expect(rule!.severity).toBe('warn')
+    expect(rule!.regex.test('the guided fog rolls in from the fjord')).toBe(true)
+  })
+
+  it('fires on "whispering lanterns"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('whispering lanterns line the street')).toBe(true)
+  })
+
+  it('fires on "unexplained glow"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('an unexplained glow from the harbour mouth')).toBe(true)
+  })
+
+  it('fires on "watching fog"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('the watching fog clung to the docks')).toBe(true)
+  })
+
+  it('does not fire on mundane atmosphere', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('fog rolls in from the sea at dusk')).toBe(false)
+    expect(rule.regex.test('lanterns hang above the gate')).toBe(false)
+  })
+})
+
+describe('visibility/content mismatch warning', () => {
+  const baseFrontmatter = (proposalType: string, visibility = 'dm-only') => ({
+    proposal_type: proposalType,
+    id: `proposals/test-${proposalType}`,
+    title: 'Test',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility,
+    source_prompt: 'test',
+    promote_target: 'corpus/planning/encounters',
+    summary: 'Test',
+    route_profile: 'encounter-design',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  })
+
+  it('warns when a dm-only non-npc/place/adversary proposal contains a player_safe section', () => {
+    const result = validateProposalGovernance(
+      baseFrontmatter('encounter'),
+      `## Encounter Setup\nSome content.\n\n## player_safe\nDescribe this to players.`,
+      'encounter',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(true)
+  })
+
+  it('does not warn for npc proposals — player_safe is expected there', () => {
+    const result = validateProposalGovernance(
+      { ...baseFrontmatter('npc'), promote_target: 'corpus/planning/npcs', route_profile: 'npc-design' },
+      `## Role\nA guard.\n\n## player_safe\nA tall figure in grey.`,
+      'npc',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(false)
+  })
+
+  it('does not warn when dm-only proposal has no player_safe section', () => {
+    const result = validateProposalGovernance(
+      baseFrontmatter('encounter'),
+      `## Encounter Setup\nSome content.\n\n## dm_only\nDM notes here.`,
+      'encounter',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(false)
+  })
+
+  it('does not warn for adversary proposals with player_safe section', () => {
+    const result = validateProposalGovernance(
+      { ...baseFrontmatter('adversary'), promote_target: 'corpus/adversary-corpus/karsac-adversaries', route_profile: 'adversary-design' },
+      `## Mechanical Base\nBase: spy\n\n## player_safe\nA nondescript figure.`,
+      'adversary',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(false)
+  })
+})
+
 // ── Provisional entity register — _rejected/ exclusion ───────────────────────
 
 const TEMP_REGISTER_DIR = resolve('/tmp/karsac-register-exclusion-tests')
