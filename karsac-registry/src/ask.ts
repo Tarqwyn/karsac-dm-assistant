@@ -626,8 +626,9 @@ async function callOllama(
 
 function validateComparisonResponse(text: string): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## direct canon facts')) return false;
-  return getResponseContractHeadings('comparison').every(h => lower.includes(h.toLowerCase()));
+  const headings = getResponseContractHeadings('comparison')
+  if (!lower.trimStart().startsWith((headings[0] ?? '## direct canon facts').toLowerCase())) return false;
+  return headings.every(h => lower.includes(h.toLowerCase()));
 }
 
 function buildRepairMessages(
@@ -661,8 +662,9 @@ function deepLoreHasRawContext(text: string): boolean {
 
 function validateDeepLoreResponse(text: string): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## direct canon facts')) return false;
-  if (!getResponseContractHeadings('deep_lore').every(h => lower.includes(h.toLowerCase()))) return false;
+  const headings = getResponseContractHeadings('deep_lore')
+  if (!lower.trimStart().startsWith((headings[0] ?? '## direct canon facts').toLowerCase())) return false;
+  if (!headings.every(h => lower.includes(h.toLowerCase()))) return false;
   if (deepLoreHasRawContext(text)) return false;
   return true;
 }
@@ -719,8 +721,9 @@ Rules:
 
 function validateRulesResponse(text: string): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## ruling')) return false;
-  return getResponseContractHeadings('rules').every(h => lower.includes(h.toLowerCase()));
+  const headings = getResponseContractHeadings('rules')
+  if (!lower.trimStart().startsWith((headings[0] ?? '## ruling').toLowerCase())) return false;
+  return headings.every(h => lower.includes(h.toLowerCase()));
 }
 
 function buildRulesRepairMessages(

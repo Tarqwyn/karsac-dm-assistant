@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { REGISTRY_ROOT } from '../paths.js'
+import { guardArray } from '../loaderUtils.js'
 import type { ProposalType } from './proposalTypes.js'
 import type { CreativeTreatmentContract } from '../creativeTreatment/treatmentContracts.js'
 
@@ -54,34 +55,36 @@ export function getPromoteTarget(type: ProposalType): string | null {
 }
 
 export function getProposalRequiredSections(type: ProposalType): string[] {
-  return load().proposal_types?.[type]?.required_sections ?? []
+  return guardArray<string>(load().proposal_types?.[type]?.required_sections, `${type}.required_sections`)
 }
 
 export function getProposalSuggestedSections(type: ProposalType): string[] {
-  return load().proposal_types?.[type]?.suggested_sections ?? []
+  return guardArray<string>(load().proposal_types?.[type]?.suggested_sections, `${type}.suggested_sections`)
 }
 
 export function getRequiredStatBlockFields(type: ProposalType): string[] {
-  return load().proposal_types?.[type]?.required_stat_block_fields ?? []
+  return guardArray<string>(load().proposal_types?.[type]?.required_stat_block_fields, `${type}.required_stat_block_fields`)
 }
 
 export function getCreativeTreatmentContractFromData(type: ProposalType): CreativeTreatmentContract | null {
   const ct = load().proposal_types?.[type]?.creative_treatment
   if (!ct) return null
+  const instruction = typeof ct.instruction === 'string' ? ct.instruction.trimEnd() : ''
+  const extraInstruction = typeof ct.extra_instruction === 'string' ? ct.extra_instruction.trimEnd() : undefined
   return {
-    requiredSections: ct.required_sections,
-    editableSections: ct.editable_sections,
-    instruction: ct.instruction.trimEnd(),
-    extraInstruction: ct.extra_instruction?.trimEnd(),
+    requiredSections: guardArray<string>(ct.required_sections, `${type}.creative_treatment.required_sections`),
+    editableSections: guardArray<string>(ct.editable_sections, `${type}.creative_treatment.editable_sections`),
+    instruction,
+    extraInstruction,
   }
 }
 
 export function getDesignRequiredHeadings(): string[] {
-  return load().design_required_headings ?? []
+  return guardArray<string>(load().design_required_headings, 'design_required_headings')
 }
 
 export function getResponseContractHeadings(profile: string): string[] {
-  return load().response_contracts?.[profile]?.required_headings ?? []
+  return guardArray<string>(load().response_contracts?.[profile]?.required_headings, `response_contracts.${profile}.required_headings`)
 }
 
 export function clearProposalContractsCacheForTests(): void {

@@ -132,8 +132,9 @@ export function validateDesignResponse(
   compositionPlan?: EncounterCompositionPlan | null,
 ): boolean {
   const lower = text.toLowerCase();
-  if (!lower.trimStart().startsWith('## provisional encounter concept')) return false;
-  if (!getDesignRequiredHeadings().every(h => lower.includes(h))) return false;
+  const designHeadings = getDesignRequiredHeadings()
+  if (!lower.trimStart().startsWith(designHeadings[0] ?? '## provisional encounter concept')) return false;
+  if (!designHeadings.every(h => lower.includes(h))) return false;
   if (!lower.includes('provisional table material')) return false;
   if (noMonsterData && checkNoMonsterViolations(text).length > 0) return false;
   if (!allowHomebrew && checkHomebrewViolations(text).length > 0) return false;

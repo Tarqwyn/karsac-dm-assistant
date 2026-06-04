@@ -40,15 +40,15 @@ function load(): RouterConfigFile {
   return cached
 }
 
-export function getRulesTerms(): readonly string[] { return load().rules_terms ?? [] }
-export function getDesignTerms(): readonly string[] { return load().design_terms ?? [] }
-export function getDeepLoreTerms(): readonly string[] { return load().deep_lore_terms ?? [] }
-export function getStrongProseTerms(): readonly string[] { return load().strong_prose_terms ?? [] }
-export function getWeakProseTerms(): readonly string[] { return load().weak_prose_terms ?? [] }
-export function getStateTerms(): readonly string[] { return load().state_terms ?? [] }
-export function getAdversaryDesignTerms(): readonly string[] { return load().adversary_design_terms ?? [] }
-export function getEncounterDesignTerms(): readonly string[] { return load().encounter_design_terms ?? [] }
-export function getCanonTerms(): readonly string[] { return load().canon_terms ?? [] }
+export function getRulesTerms(): readonly string[] { return guardArray<string>(load().rules_terms, 'rules_terms') }
+export function getDesignTerms(): readonly string[] { return guardArray<string>(load().design_terms, 'design_terms') }
+export function getDeepLoreTerms(): readonly string[] { return guardArray<string>(load().deep_lore_terms, 'deep_lore_terms') }
+export function getStrongProseTerms(): readonly string[] { return guardArray<string>(load().strong_prose_terms, 'strong_prose_terms') }
+export function getWeakProseTerms(): readonly string[] { return guardArray<string>(load().weak_prose_terms, 'weak_prose_terms') }
+export function getStateTerms(): readonly string[] { return guardArray<string>(load().state_terms, 'state_terms') }
+export function getAdversaryDesignTerms(): readonly string[] { return guardArray<string>(load().adversary_design_terms, 'adversary_design_terms') }
+export function getEncounterDesignTerms(): readonly string[] { return guardArray<string>(load().encounter_design_terms, 'encounter_design_terms') }
+export function getCanonTerms(): readonly string[] { return guardArray<string>(load().canon_terms, 'canon_terms') }
 
 export function getExplicitEncounterScenePattern(): RegExp {
   const p = load().explicit_encounter_scene_pattern
@@ -65,7 +65,7 @@ export function getAdversaryTermChecks(): Array<{ regex: RegExp; label: string }
     .map((c) => ({ regex: new RegExp(c.pattern, 'i'), label: c.label }))
 }
 
-export function getPlaceIndicatorTerms(): readonly string[] { return load().place_indicator_terms ?? [] }
+export function getPlaceIndicatorTerms(): readonly string[] { return guardArray<string>(load().place_indicator_terms, 'place_indicator_terms') }
 
 export function getExplicitProposalOpeningPatterns(): Array<{ regex: RegExp; proposalType: string }> {
   return guardArray<ExplicitOpeningPattern>(load().explicit_proposal_opening_patterns, 'explicit_proposal_opening_patterns')
