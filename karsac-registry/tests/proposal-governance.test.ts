@@ -29,6 +29,7 @@ import {
   loadProposalEntityPolicies,
   clearProposalEntityPolicyCachesForTests,
 } from '../src/proposals/proposalEntityPolicies.js'
+import { getAllFactionProfiles, getFactionProfile } from '../src/faction-profiles.js'
 
 const TEMP_PROVISIONAL_DIR = resolve('/tmp/karsac-provisional-entity-tests')
 
@@ -1274,7 +1275,137 @@ describe('guardArray — warns and falls back on malformed YAML config', () => {
   })
 })
 
-// ── Session B: canonical tradition, supernatural atmosphere, visibility mismatch
+// ── Session C: invention threshold, Vane type-downgrade, faction guard ────────
+
+describe('invention volume threshold', () => {
+  const baseFrontmatter = {
+    proposal_type: 'place',
+    id: 'proposals/test-place',
+    title: 'Holvstad',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    source_prompt: 'Propose a new place.',
+    promote_target: 'corpus/planning/places',
+    summary: 'A place.',
+    route_profile: 'place-design',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  }
+
+  it('does not warn when provisional count is 4 or fewer', () => {
+    const body = [
+      '# Place: Holvstad',
+      '## Overview\nA small settlement.',
+      '## Geography and Layout\nProvisional: sits on a rocky headland.',
+      '## Key Districts\nProvisional: the upper ward.',
+      '## Notable Landmarks\nProvisional: the old mill.',
+      '## DM Notes\nProvisional: connection to House Mathr.',
+    ].join('\n\n')
+    const result = validateProposalGovernance(baseFrontmatter, body, 'place')
+    expect(result.issues.some((i) => i.includes('Invention volume threshold'))).toBe(false)
+  })
+
+  it('warns when provisional count exceeds 4', () => {
+    const body = [
+      '# Place: Holvstad',
+      '## Overview\nProvisional: a small settlement.',
+      '## Geography and Layout\nProvisional: sits on a rocky headland.',
+      '## Key Districts\nProvisional: the upper ward.',
+      '## Notable Landmarks\nProvisional: the old mill.',
+      '## Factions and Power Structures\nProvisional: a merchant council.',
+      '## DM Notes\nProvisional: connection to House Mathr.',
+    ].join('\n\n')
+    const result = validateProposalGovernance(baseFrontmatter, body, 'place')
+    expect(result.issues.some((i) => i.includes('Invention volume threshold'))).toBe(true)
+    expect(result.issues.some((i) => i.includes('WARN'))).toBe(true)
+  })
+
+  it('threshold fires at exactly 5 provisional markers (> 4)', () => {
+    const markers = Array.from({ length: 5 }, (_, i) => `Provisional: detail ${i + 1}`).join('\n')
+    const body = `# Place: Holvstad\n\n## Overview\n${markers}`
+    const result = validateProposalGovernance(baseFrontmatter, body, 'place')
+    expect(result.issues.some((i) => i.includes('Invention volume threshold'))).toBe(true)
+  })
+})
+
+describe('Vane — corpus-present non-NPC name downgrades to WARN', () => {
+  const baseFrontmatter = (proposalType: string) => ({
+    proposal_type: proposalType,
+    id: `proposals/test-${proposalType}`,
+    title: 'Dock Scene',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    source_prompt: 'test',
+    promote_target: 'corpus/planning/places',
+    summary: 'test',
+    route_profile: 'place-design',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  })
+
+  it('mention of "Vane" in a place proposal produces WARN not FAIL', () => {
+    const body = `# Place: Dock
+
+## Overview
+The harbour is controlled by the Vane family.
+
+## Key NPCs
+- **Vane:** oversees docking fees.
+
+## DM Notes
+Nothing hidden.
+`
+    const result = validateProposalContent(baseFrontmatter('place') as any, body, 'place')
+    const vaneIssues = result.issues.filter((i) => i.includes('"Vane"'))
+    if (vaneIssues.length > 0) {
+      // Must be WARN not FAIL — Vane is corpus-present under a non-NPC type
+      expect(vaneIssues.every((i) => i.startsWith('WARN:'))).toBe(true)
+      expect(vaneIssues.every((i) => !i.startsWith('FAIL:'))).toBe(true)
+    }
+  })
+})
+
+describe('faction profiles — array field shape guards', () => {
+  it('getAllFactionProfiles returns at least one profile', () => {
+    const profiles = getAllFactionProfiles()
+    expect(profiles.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shadow-walkers profile loads with all array fields as actual arrays', () => {
+    const profile = getFactionProfile('shadow-walkers')
+    expect(profile).not.toBeNull()
+    expect(Array.isArray(profile!.aliases)).toBe(true)
+    expect(Array.isArray(profile!.allowedAlignments)).toBe(true)
+    expect(Array.isArray(profile!.languageWhitelist)).toBe(true)
+    expect(Array.isArray(profile!.bannedLanguages)).toBe(true)
+    expect(Array.isArray(profile!.preferredWeapons)).toBe(true)
+    expect(Array.isArray(profile!.doctrineTags)).toBe(true)
+    expect(Array.isArray(profile!.validationRules)).toBe(true)
+    expect(Array.isArray(profile!.generationConstraints)).toBe(true)
+    expect(Array.isArray(profile!.doctrineSupportMechanics)).toBe(true)
+  })
+
+  it('every loaded profile has array fields — no scalar leak from YAML', () => {
+    for (const profile of getAllFactionProfiles()) {
+      expect(Array.isArray(profile.aliases)).toBe(true)
+      expect(Array.isArray(profile.languageWhitelist)).toBe(true)
+      expect(Array.isArray(profile.bannedLanguages)).toBe(true)
+      expect(Array.isArray(profile.validationRules)).toBe(true)
+      expect(Array.isArray(profile.generationConstraints)).toBe(true)
+    }
+  })
+
+  it('shadow-walkers has spellcasting prohibited by default', () => {
+    const profile = getFactionProfile('shadow-walkers')!
+    expect(profile.spellcasting.default).toBe('prohibited')
+  })
+
+  it('shadow-walkers languageWhitelist contains no Undercommon', () => {
+    const profile = getFactionProfile('shadow-walkers')!
+    const lower = profile.languageWhitelist.map((l) => l.toLowerCase())
+    expect(lower.every((l) => !l.includes('undercommon'))).toBe(true)
+  })
+})
 
 describe('canonical_tradition warning rule', () => {
   afterEach(() => { clearValidationRulesCacheForTests() })
