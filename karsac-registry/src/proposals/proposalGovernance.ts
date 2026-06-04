@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { INDEX_DIR } from '../paths.js'
-import { getCanonicalLanguages, getFactionProfile } from '../faction-profiles.js'
+import { getCanonicalLanguages, getFactionProfile, getAllFactionProfiles } from '../faction-profiles.js'
 import type { AliasMap, EntityMap, Entity } from '../types.js'
 import type { ProposalType } from './proposalTypes.js'
 import {
@@ -461,7 +461,13 @@ export function validateProposalGovernance(
       issues.push(`WARN: Provisional entity reference: "${provisional.name}" exists only in unpromoted proposals — cannot be treated as canonical.`)
     }
   }
-  if (proposalType === 'adversary') validateFactionProposal('shadow-walkers', body, issues)
+  if (proposalType === 'adversary') {
+    for (const profile of getAllFactionProfiles()) {
+      if (!profile.detection) continue
+      if (!new RegExp(profile.detection.mentionPattern, 'i').test(body)) continue
+      validateFactionProposal(profile.slug, body, issues)
+    }
+  }
 
   return { issues }
 }

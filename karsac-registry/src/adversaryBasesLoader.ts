@@ -34,15 +34,15 @@ export function getBaseSlugMap(): Record<string, string> {
 }
 
 export function getAllowedProposalBases(): string[] {
-  return load().allowed_proposal_bases ?? []
+  return guardArray<string>(load().allowed_proposal_bases, 'allowed_proposal_bases')
 }
 
 export function getValidSrdBaseNames(): Set<string> {
-  return new Set(load().valid_srd_base_names ?? [])
+  return new Set(guardArray<string>(load().valid_srd_base_names, 'valid_srd_base_names'))
 }
 
 export function getBasesWithoutDarkvision(): Set<string> {
-  return new Set(load().bases_without_darkvision ?? [])
+  return new Set(guardArray<string>(load().bases_without_darkvision, 'bases_without_darkvision'))
 }
 
 export function getBaseSelectionHeuristics(): Array<{ regex: RegExp; preferredBase: string }> {

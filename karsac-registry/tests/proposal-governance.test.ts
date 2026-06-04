@@ -21,7 +21,9 @@ import {
   detectCorpusAnchorForProposal,
   loadProvisionalEntityRegister,
 } from '../src/proposals/proposalEntityRegistry.js'
-import { clearProposalGovernanceCachesForTests } from '../src/proposals/proposalGovernance.js'
+import { clearProposalGovernanceCachesForTests, validateProposalGovernance } from '../src/proposals/proposalGovernance.js'
+import { clearRouterConfigCacheForTests } from '../src/routerConfigLoader.js'
+import { guardArray } from '../src/loaderUtils.js'
 
 const TEMP_PROVISIONAL_DIR = resolve('/tmp/karsac-provisional-entity-tests')
 
@@ -1197,5 +1199,72 @@ describe('validationRulesLoader — YAML is the source of truth', () => {
     expect(pattern).not.toBeNull()
     expect(pattern!.test('the wolf attacks the party')).toBe(true)
     expect(pattern!.test('the wolf slinks away')).toBe(false)
+  })
+})
+
+// ── Faction validation gate regression ────────────────────────────────────────
+
+describe('faction validation gate — only runs for detected faction', () => {
+  it('does not apply Shadow Walker spellcasting rules to a non-Shadow-Walker adversary', () => {
+    const frontmatter = {
+      proposal_type: 'adversary',
+      id: 'proposals/test-harbour-guard',
+      title: 'Harbour Watch Guard',
+      status: 'proposed',
+      canonical: 'provisional',
+      visibility: 'dm-only',
+      source_prompt: 'Propose a new adversary: harbour watch guard.',
+      promote_target: 'corpus/adversary-corpus/karsac-adversaries',
+      summary: 'A standard harbour authority guard with minor spellcasting.',
+      route_profile: 'adversary-design',
+      related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+    }
+    const body = `# Adversary: Harbour Watch Guard
+
+## Mechanical Base
+Base: guard
+
+## Stat Block
+**Spellcasting.** The guard is a 1st-level spellcaster. It has the cantrip minor illusion.
+
+## Tactics
+Patrol the docks. Use spellcasting to signal.
+`
+    const result = validateProposalGovernance(frontmatter, body, 'adversary')
+    const shadowWalkerIssues = result.issues.filter((i) =>
+      i.toLowerCase().includes('shadow walker') || i.includes('Spell capability flag'),
+    )
+    expect(shadowWalkerIssues).toHaveLength(0)
+  })
+})
+
+// ── guardArray malformed-config regression ────────────────────────────────────
+
+describe('guardArray — warns and falls back on malformed YAML config', () => {
+  it('returns empty array and writes a named warning to stderr when value is a scalar', () => {
+    const stderrWrites: string[] = []
+    const orig = process.stderr.write.bind(process.stderr)
+    ;(process.stderr as any).write = (chunk: unknown) => { stderrWrites.push(String(chunk)); return true }
+    try {
+      const result = guardArray('not-an-array', 'rules_terms')
+      expect(result).toEqual([])
+      expect(stderrWrites.some((w) => w.includes('rules_terms'))).toBe(true)
+      expect(stderrWrites.some((w) => w.includes('string'))).toBe(true)
+    } finally {
+      ;(process.stderr as any).write = orig
+    }
+  })
+
+  it('returns empty array silently when value is undefined', () => {
+    const stderrWrites: string[] = []
+    const orig = process.stderr.write.bind(process.stderr)
+    ;(process.stderr as any).write = (chunk: unknown) => { stderrWrites.push(String(chunk)); return true }
+    try {
+      const result = guardArray(undefined, 'missing_field')
+      expect(result).toEqual([])
+      expect(stderrWrites).toHaveLength(0)
+    } finally {
+      ;(process.stderr as any).write = orig
+    }
   })
 })

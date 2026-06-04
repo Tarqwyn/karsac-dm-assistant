@@ -41,19 +41,19 @@ function load(): GenerationConstraintsFile {
 }
 
 export function getAdversaryConstraintHeader(): string[] {
-  return load().adversary?.header ?? []
+  return guardArray<string>(load().adversary?.header, 'adversary.header')
 }
 
 export function getEncounterConstraintLines(): string[] {
-  return load().encounter?.header ?? []
+  return guardArray<string>(load().encounter?.header, 'encounter.header')
 }
 
 export function getNpcConstraintLines(): string[] {
-  return load().npc?.header ?? []
+  return guardArray<string>(load().npc?.header, 'npc.header')
 }
 
 export function getPlaceConstraintLines(): string[] {
-  return load().place?.header ?? []
+  return guardArray<string>(load().place?.header, 'place.header')
 }
 
 export function getCorpusAnchorBaseLines(entityType: string): string[] {
@@ -62,23 +62,23 @@ export function getCorpusAnchorBaseLines(entityType: string): string[] {
 }
 
 export function getCorpusAnchorCanonicalReferenceOnlyLines(): string[] {
-  return load().corpus_anchor?.canonical_reference_only ?? []
+  return guardArray<string>(load().corpus_anchor?.canonical_reference_only, 'corpus_anchor.canonical_reference_only')
 }
 
 export function getCorpusAnchorStubLines(): string[] {
-  return load().corpus_anchor?.stub ?? []
+  return guardArray<string>(load().corpus_anchor?.stub, 'corpus_anchor.stub')
 }
 
 export function getCorpusAnchorStubPlaceLines(): string[] {
-  return load().corpus_anchor?.stub_place ?? []
+  return guardArray<string>(load().corpus_anchor?.stub_place, 'corpus_anchor.stub_place')
 }
 
 export function getCorpusAnchorStubCloseLines(): string[] {
-  return load().corpus_anchor?.stub_close ?? []
+  return guardArray<string>(load().corpus_anchor?.stub_close, 'corpus_anchor.stub_close')
 }
 
 export function getCorpusAnchorBoundedLines(): string[] {
-  return load().corpus_anchor?.bounded ?? []
+  return guardArray<string>(load().corpus_anchor?.bounded, 'corpus_anchor.bounded')
 }
 
 export function getCorpusAnchorSnippetsHeader(): string {

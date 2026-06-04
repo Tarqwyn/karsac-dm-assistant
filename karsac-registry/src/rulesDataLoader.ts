@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { RULES_DATA_DIR } from './paths.js'
+import { guardArray } from './loaderUtils.js'
 
 const RULES_PATH = `${RULES_DATA_DIR}/dnd5e-rules.yaml`
 
@@ -31,15 +32,15 @@ export function getCharXpThresholds(): Record<number, [number, number, number, n
 }
 
 export function getXpMultipliers(): Array<[number, number]> {
-  return (load().xp_multipliers ?? []) as Array<[number, number]>
+  return guardArray<[number, number]>(load().xp_multipliers, 'xp_multipliers')
 }
 
 export function getStandard5eSkills(): Set<string> {
-  return new Set(load().standard_5e_skills ?? [])
+  return new Set(guardArray<string>(load().standard_5e_skills, 'standard_5e_skills'))
 }
 
 export function getStatBlockImplicitFields(): Set<string> {
-  return new Set(load().stat_block_implicit_fields ?? [])
+  return new Set(guardArray<string>(load().stat_block_implicit_fields, 'stat_block_implicit_fields'))
 }
 
 export function clearRulesDataCacheForTests(): void {
