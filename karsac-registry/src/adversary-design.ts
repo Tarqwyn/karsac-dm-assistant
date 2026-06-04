@@ -13,6 +13,12 @@ import type { ScoredAdversary } from './encounter-design.js'
 import { getCanonicalLanguages, getFactionProfile, getAllFactionProfiles, type FactionProfileOverrideConfig } from './faction-profiles.js'
 import { getFactionMechanicalOverrides, type FactionMechanicalOverrideRule } from './faction-mechanical-overrides.js'
 import { getCanonicalAlignments, getModernTechPattern } from './proposals/validationRulesLoader.js'
+import { getStandard5eSkills, getStatBlockImplicitFields } from './rulesDataLoader.js'
+import {
+  getBaseSlugMap, getAllowedProposalBases, getValidSrdBaseNames,
+  getBasesWithoutDarkvision, getBaseSelectionHeuristics, getDefaultBase,
+  getEnvironmentContexts,
+} from './adversaryBasesLoader.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,28 +45,7 @@ export interface AdversaryDesignContext {
 // ── Base slug map ─────────────────────────────────────────────────────────────
 // Maps user-facing names (lowercase) to the monster collection filename slug.
 
-const BASE_SLUG_MAP: Record<string, string> = {
-  'spy':             'spy',
-  'noble':           'noble',
-  'guard':           'guard',
-  'veteran':         'veteran',
-  'bandit captain':  'bandit-captain',
-  'bandit-captain':  'bandit-captain',
-  'bandit':          'bandit',
-  'thug':            'thug',
-  'scout':           'scout',
-  'mage':            'mage',
-  'priest':          'priest',
-  'acolyte':         'acolyte',
-  'assassin':        'assassin',
-  'archmage':        'archmage',
-  'commoner':        'commoner',
-  'knight':          'knight',
-  'berserker':       'berserker',
-  'gladiator':       'gladiator',
-}
-
-// Ordered from longest to shortest to avoid early partial matches
+const BASE_SLUG_MAP = getBaseSlugMap()
 const BASE_NAMES_ORDERED = Object.keys(BASE_SLUG_MAP).sort((a, b) => b.length - a.length)
 
 // ── Base detection ────────────────────────────────────────────────────────────
@@ -362,29 +347,17 @@ export function extractProposalConstraints(
   const lockedFaction = requiredFactions[0] ?? null
 
   // ── Mechanical base ────────────────────────────────────────────────────────
-  const allowedBases = ['spy', 'scout', 'guard', 'veteran', 'bandit', 'bandit captain', 'thug', 'assassin']
+  const allowedBases = getAllowedProposalBases()
 
   // Use loaded base if explicitly requested; otherwise infer from context
   let preferredBase = loadedBaseName
   if (!preferredBase) {
-    if (/blend(?:ing)?\s+in|social|urban|town|cit|market|disguise|infiltrat/i.test(prompt)) {
-      preferredBase = 'spy'
-    } else if (/road|checkpoint|patrol|trail|scout|track/i.test(prompt)) {
-      preferredBase = 'scout'
-    } else if (/captain|leader|veteran|dangerous|hard.to.kill/i.test(prompt)) {
-      preferredBase = 'veteran'
-    } else {
-      preferredBase = 'spy'  // default for unspecified adversary
-    }
+    const heuristic = getBaseSelectionHeuristics().find((h) => h.regex.test(prompt))
+    preferredBase = heuristic?.preferredBase ?? getDefaultBase()
   }
 
   // ── Environment ────────────────────────────────────────────────────────────
-  let environmentContext: string | null = null
-  if (/urban|town|cit|settlement|market|harbour|dock|inn|tavern/i.test(prompt)) {
-    environmentContext = 'urban / towns / cities'
-  } else if (/road|wilderness|outdoor|forest|coast|fjord/i.test(prompt)) {
-    environmentContext = 'road / wilderness'
-  }
+  const environmentContext = getEnvironmentContexts().find((e) => e.regex.test(prompt))?.label ?? null
 
   // ── Variant / modular ──────────────────────────────────────────────────────
   const variantOptionsRequired =
@@ -488,6 +461,7 @@ interface ParsedAbilityScores {
 }
 
 const CANONICAL_ALIGNMENTS = getCanonicalAlignments()
+const STANDARD_5E_SKILLS = getStandard5eSkills()
 
 function normalizeLanguageToken(value: string): string {
   return value
@@ -601,26 +575,6 @@ function themeIsRepresented(theme: string, text: string): boolean {
   }
 }
 
-const STANDARD_5E_SKILLS = new Set([
-  'acrobatics',
-  'animal handling',
-  'arcana',
-  'athletics',
-  'deception',
-  'history',
-  'insight',
-  'intimidation',
-  'investigation',
-  'medicine',
-  'nature',
-  'perception',
-  'performance',
-  'persuasion',
-  'religion',
-  'sleight of hand',
-  'stealth',
-  'survival',
-])
 
 function hasShadowWalkerRestraintTheme(text: string): boolean {
   return /\brestraint is not mercy\b|\bit is discipline\b|\bdiscipline, not mercy\b|\bviolence only to preserve the mission\b|\bdo not kill to punish\b|\bdo not kill to dominate\b|\bdo not kill to prove strength\b|\bcontrolled withdrawal matters more than victory\b/i.test(text)
@@ -819,11 +773,7 @@ export function validateAdversaryOutput(
 
   // Darkvision validation: base has no darkvision → output must not add it without explanation.
   // Works from baseContent when loaded, OR from known-bases list when baseContent is null.
-  const BASES_WITHOUT_DARKVISION = new Set([
-    'spy', 'noble', 'guard', 'bandit', 'bandit captain', 'bandit-captain',
-    'thug', 'scout', 'commoner', 'mage', 'priest', 'acolyte', 'assassin',
-    'archmage', 'veteran',
-  ])
+  const BASES_WITHOUT_DARKVISION = getBasesWithoutDarkvision()
   const baseHasDarkvision =
     (baseContent && /darkvision/i.test(baseContent)) ||
     (requestedBase != null && !BASES_WITHOUT_DARKVISION.has(requestedBase.toLowerCase()))
@@ -920,11 +870,7 @@ export function validateAdversaryOutput(
 
   // Mechanical base corpus validity
   // "Rogue (Thief)", "Ranger", "Paladin", etc. are NOT loaded SRD NPC bases.
-  const VALID_SRD_BASE_NAMES = new Set([
-    'spy', 'noble', 'guard', 'veteran', 'bandit captain', 'bandit-captain',
-    'bandit', 'thug', 'scout', 'mage', 'priest', 'acolyte', 'assassin',
-    'archmage', 'commoner',
-  ])
+  const VALID_SRD_BASE_NAMES = getValidSrdBaseNames()
   const mechBaseSection = outputText.match(/##\s+Mechanical\s+Base\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i)?.[1] ?? ''
   const statBlockSection = outputText.match(/#{2,3}\s+Stat\s+Block\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i)?.[1] ?? ''
   const hitPointsLineMatch = statBlockSection.match(/\*{0,2}Hit\s+Points\*{0,2}\s+(\d+)\s*\((\d+)d(\d+)([^)]*)\)/i)
@@ -1022,20 +968,7 @@ export function validateAdversaryOutput(
   // Exempt standard D&D 5e stat block fields that are not custom traits/actions.
   // These appear in specific stat block lines (type line, Languages field, etc.)
   // and do not need to appear as named traits or actions.
-  const STAT_BLOCK_IMPLICIT_FIELDS = new Set([
-    'size', 'alignment', 'type', 'creature type',
-    'languages', 'language',
-    'senses', 'saving throws', 'saves',
-    'skills', 'speed', 'challenge', 'cr',
-    'armor class', 'armour class', 'ac',
-    'hit points', 'hp',
-    'ability score increase', 'ability score increases',
-    'feat', 'feats',
-    'skill proficiency', 'skill proficiencies',
-    'skill versatility',
-    'humanoid stats', 'ability scores',
-    'darkvision',  // handled separately by the darkvision check
-  ])
+  const STAT_BLOCK_IMPLICIT_FIELDS = getStatBlockImplicitFields()
 
   const adaptSection = outputText.match(/##\s+Adaptation\s+Summary\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i)?.[1] ?? ''
   const keptLine = adaptSection.match(/[-*\s]+Kept\s+from\s+base:\s*(.+)/i)?.[1] ?? ''

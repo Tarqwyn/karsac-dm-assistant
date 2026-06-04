@@ -1,0 +1,74 @@
+# Lösweg regional creature names and phantom monster list
+
+# Regional name mappings: SRD slug → local name + meaning
+regional_creature_names:
+  wolf:
+    name: Vargr
+    meaning: common mountain wolf
+  dire-wolf:
+    name: Fjallvarg
+    meaning: great mountain wolf
+  polar-bear:
+    name: "Isbjørn"
+    meaning: "ice bear, a large coastal predator"
+  brown-bear:
+    name: "Fjell-Bjørn"
+    meaning: mountain bear
+  black-bear:
+    name: "Skogs-Bjørn"
+    meaning: forest bear
+  giant-eagle:
+    name: "Fjell-Ørn"
+    meaning: mountain eagle
+  giant-vulture:
+    name: Skarvgrip
+    meaning: "cliff-grip, scavenger following displaced animals"
+  giant-bat:
+    name: Skumringsflaggermus
+    meaning: twilight bat of coastal caves
+  blood-hawk:
+    name: "Blodhøk"
+    meaning: "blood-hawk, aggressive cliff raptor"
+  griffon:
+    name: "Klippøgle"
+    meaning: "cliff beast, mythic mountain hunter"
+  harpy:
+    name: "Strandvætte"
+    meaning: "shore-spirit, coastal lure-creature"
+  ogre:
+    name: "Jötunn"
+    meaning: displaced mountain giant-kin
+  ettin:
+    name: "Tvihøved"
+    meaning: "two-headed mountain-kin, rarely near coasts"
+  troll:
+    name: Bergtroll
+    meaning: "mountain troll, hard to kill"
+  worg:
+    name: Nidvarg
+    meaning: "ill-wolf, large malicious predator"
+  wyvern:
+    name: Orm
+    meaning: "the great serpent, seen only at distance"
+  manticore:
+    name: Mennekselion
+    meaning: "man-lion, a mountain terror"
+  owlbear:
+    name: "Uglebjørn"
+    meaning: "owl-bear, displaced from deep forest"
+
+# Common phantom monsters models invent when no data restricts them
+phantom_monsters:
+  - Dire Wolf
+  - Dire Wolves
+  - Goblin
+  - Goblins
+  - Orc
+  - Orcs
+  - Bandit
+  - Hobgoblin
+  - Kobold
+  - Skeleton
+  - Zombie
+  - Gnoll
+  - Cultist

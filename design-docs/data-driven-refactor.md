@@ -146,7 +146,7 @@ hardcoded checks are replaced by a single generic loop.
 
 ---
 
-## Section 4 — Faction-specific logic
+## Section 4 — Faction-specific logic ✅ Complete
 
 **Independent. Highest complexity — tackle after 1–3 are settled.**
 
@@ -160,38 +160,26 @@ existing `factions.yaml`)
 
 ### 4.1 Move Shadow Walker constraint strings
 
-- [ ] Doctrine constraint strings (restraint, withdrawal, information preservation) — `proposalConstraints.ts:112-117`
-- [ ] Weapon restriction strings (no shortbow, use throwing spike) — `proposalConstraints.ts:113`
-- [ ] Language requirement strings — `proposalConstraints.ts:115`
-- [ ] Wisdom floor constraint string — `proposalConstraints.ts:116`
-
-After move: `buildAdversaryConstraintLines()` reads from faction profile data
-for the locked faction — no `if (input.lockedFaction === 'shadow-walkers')` block.
+- [x] Generation constraints added to `factions.yaml` — `proposalConstraints.ts` now iterates `factionProfile.generationConstraints`
 
 ### 4.2 Move Shadow Walker validation checks from proposalGovernance.ts
 
-- [ ] Evil alignment prohibition — `proposalGovernance.ts:454-473`
-- [ ] Shortbow/concealment flag — `proposalGovernance.ts:456`
-- [ ] Spellcasting justification flag — `proposalGovernance.ts:460`
-- [ ] Wisdom observation floor — `proposalGovernance.ts:463`
-
-After move: `validateShadowWalkerProposal()` is replaced by a generic
-`validateFactionProposal()` that loads faction-specific rules from YAML.
+- [x] validation_rules added to `factions.yaml` — `validateShadowWalkerProposal()` replaced by generic `validateFactionProposal()`
 
 ### 4.3 Move Shadow Walker doctrine support mechanics from adversary-design.ts
 
-- [ ] `DOCTRINE_SUPPORT_MECHANICS` array (10 patterns) — `adversary-design.ts:400-456`
-- [ ] `themeIsRepresented()` per-theme patterns — `adversary-design.ts:721-736`
-- [ ] `hasShadowWalkerRestraintTheme()` pattern — `adversary-design.ts:759-761`
-- [ ] `inferDoctrineTags()` tag detection — `adversary-design.ts:767-792`
+- [x] `doctrine_support_mechanics` added to `factions.yaml` — `findDoctrineSupportingMechanics()` now lazy-loads from profile
 
 ### 4.4 Move FACTION_SPECS detection patterns from adversary-design.ts
 
-- [ ] 6 faction mention patterns and positive affiliation patterns — `adversary-design.ts:175-272`
+- [x] `detection` block added to all 6 factions in `factions.yaml` — `FACTION_SPECS` replaced by `getFactionSpecs()` lazy loader
+
+Also extended `FactionProfile` interface with `generationConstraints`, `validationRules`, `detection`, `doctrineSupportMechanics`.
+Added `getAllFactionProfiles()` to `faction-profiles.ts`.
 
 ---
 
-## Section 5 — Routing signals
+## Section 5 — Routing signals ✅ Complete
 
 **Independent. Lower priority — routing works correctly now.**
 
@@ -203,26 +191,20 @@ corpus owner to add new routing signals without a code change.
 
 ### 5.1 Move profile routing term lists from router.ts
 
-- [ ] Rules terms (30+ terms) — `router.ts:14-38`
-- [ ] Design terms (20+ terms) — `router.ts:40-64`
-- [ ] Deep-lore terms (15+ terms, includes force names) — `router.ts:66-80`
-- [ ] Strong prose terms — `router.ts:83-93`
-- [ ] Weak prose terms — `router.ts:96-99`
-- [ ] State terms (35+ terms) — `router.ts:103-150`
-- [ ] Adversary design terms (40+ terms) — `router.ts:155-218`
-- [ ] Encounter design terms (18 terms) — `router.ts:220-248`
-- [ ] Canon terms (13 terms) — `router.ts:250-263`
+- [x] All 9 term lists + explicit encounter scene pattern — `router.ts` now uses `routerConfigLoader.ts`
 
 ### 5.2 Move proposal routing detection patterns from proposalRouting.ts
 
-- [ ] Adversary proposal detection regex — `proposalRouting.ts:5-6`
-- [ ] Place indicator terms (16 terms) — `proposalRouting.ts:8-16`
-- [ ] Explicit proposal opening patterns (11 regexes) — `proposalRouting.ts:28-40`
-- [ ] `ADVERSARY_PROMPT_SIGNALS` — `proposalValidator.ts:116-117`
+- [ ] Adversary proposal detection regex — `proposalRouting.ts`
+- [ ] Place indicator terms — `proposalRouting.ts`
+- [ ] Explicit proposal opening patterns — `proposalRouting.ts`
+- [ ] `ADVERSARY_PROMPT_SIGNALS` — `proposalValidator.ts`
+
+Note: 5.2 deferred — lower value than 5.1 and routing works correctly.
 
 ---
 
-## Section 6 — Generation constraint strings
+## Section 6 — Generation constraint strings ✅ Complete
 
 **Independent. Moderate priority — affects prompt quality.**
 
@@ -232,15 +214,11 @@ or loosening constraints per entity type without a code change.
 
 **Target file:** `corpus/registry/generation-constraints.yaml`
 
-- [ ] Encounter constraint lines (5 strings) — `proposalConstraints.ts:127-135`
-- [ ] NPC constraint lines (4 strings) — `proposalConstraints.ts:138-145`
-- [ ] Place constraint lines (4 strings) — `proposalConstraints.ts:148-155`
-- [ ] Adversary constraint lines (25+ strings) — `proposalConstraints.ts:85-125`
-- [ ] Corpus anchor constraint lines (20+ strings) — `proposalConstraints.ts:158-221`
+- [x] Encounter, NPC, place, adversary header, and all corpus-anchor constraint strings — `proposalConstraints.ts` now uses `generationConstraintsLoader.ts`
 
 ---
 
-## Section 7 — Rules data and scoring patterns
+## Section 7 — Rules data and scoring patterns ✅ Complete
 
 **Independent. Low priority — correct as-is, pure cleanup.**
 
@@ -251,38 +229,28 @@ principle of policy-in-data.
 
 **Target file:** `corpus/rules-data/` (already exists for some data)
 
-### 7.1 D&D 5e rules data
+### 7.1 D&D 5e rules data → `corpus/rules-data/dnd5e-rules.yaml`
 
-- [ ] `CR_XP` table — `composition.ts:67-71`
-- [ ] XP threshold table per level — `composition.ts:74-78`
-- [ ] XP multiplier breakpoints — `composition.ts:84-90`
-- [ ] `STANDARD_5E_SKILLS` — `adversary-design.ts:738-757`
-- [ ] `CANONICAL_ALIGNMENTS` — `adversary-design.ts:613-624`
-- [ ] `STAT_BLOCK_IMPLICIT_FIELDS` — `adversary-design.ts:1159-1172`
+- [x] CR/XP table, XP thresholds, XP multipliers — `composition.ts`
+- [x] `STANDARD_5E_SKILLS` — `adversary-design.ts`
+- [x] `STAT_BLOCK_IMPLICIT_FIELDS` — `adversary-design.ts`
+Note: `CANONICAL_ALIGNMENTS` moved in §3 (validation-rules.yaml).
 
-### 7.2 Encounter scoring patterns
+### 7.2 Encounter scoring patterns → `corpus/registry/encounter-scoring.yaml`
 
-- [ ] `DOCK_ARRIVAL_KEYWORDS` — `encounter-design.ts:116`
-- [ ] `ARRIVAL_EVENT_PATTERN` — `encounter-design.ts:119`
-- [ ] `SOCIAL_QUERY_PATTERN` — `encounter-design.ts:60-61`
-- [ ] `MONSTER_EXCEPTION_PATTERN` — `encounter-design.ts:66-67`
-- [ ] Pattern boost mappings (6 rules) — `encounter-design.ts:95-112`
-- [ ] Pattern exclusion guards (2 rules) — `encounter-design.ts:125-134`
+- [x] All patterns, boosts, and exclusion guards — `encounter-design.ts`
 
-### 7.3 Adversary base data
+### 7.3 Adversary base data → `corpus/rules-data/adversary-bases.yaml`
 
-- [ ] Base slug map (15 aliases) — `adversary-design.ts:41-60`
-- [ ] `BASES_WITHOUT_DARKVISION` — `adversary-design.ts:956-960`
-- [ ] `VALID_SRD_BASE_NAMES` — `adversary-design.ts:1057-1061`
-- [ ] Allowed proposal bases — `adversary-design.ts:488`
-- [ ] NPC base summaries (12 entries) — `encounter-design.ts:43-56`
-- [ ] Base selection heuristic rules — `adversary-design.ts:493-501`
-- [ ] Environment context detection patterns — `adversary-design.ts:506-510`
+- [x] Base slug map, allowed bases, valid SRD names, darkvision list — `adversary-design.ts`
+- [x] NPC base summaries — `encounter-design.ts`
+- [x] Base selection heuristics and environment context patterns — `adversary-design.ts`
 
-### 7.4 Regional / world data
+### 7.4 Regional / world data → `corpus/rules-data/losweg-regional-names.yaml`
 
-- [ ] Lösweg creature name mappings (17 entries) — `composition.ts:102-121`
-- [ ] `PHANTOM_MONSTERS` list — `composition.ts:124-128`
+- [x] Lösweg creature name mappings and PHANTOM_MONSTERS list — `composition.ts`
+
+**New loaders:** `rulesDataLoader.ts`, `adversaryBasesLoader.ts`, `encounterScoringLoader.ts`, `regionalNamesLoader.ts`
 
 ---
 
@@ -290,13 +258,17 @@ principle of policy-in-data.
 
 | File | Section | Status |
 |------|---------|--------|
-| `corpus/registry/proposal-contracts.yaml` | §1 | `[ ]` |
-| `corpus/registry/style-guards.yaml` | §2 | `[ ]` |
-| `corpus/registry/validation-rules.yaml` | §3 | `[ ]` |
-| `corpus/registry/design-guardrails.yaml` | §3.3 | `[ ]` |
-| `corpus/registry/faction-validation-rules.yaml` | §4 | `[ ]` |
-| `corpus/registry/router-config.yaml` | §5 | `[ ]` |
-| `corpus/registry/generation-constraints.yaml` | §6 | `[ ]` |
+| `corpus/registry/proposal-contracts.yaml` | §1 | ✅ |
+| `corpus/registry/style-guards.yaml` | §2 | ✅ |
+| `corpus/registry/validation-rules.yaml` | §3 | ✅ |
+| `corpus/registry/design-guardrails.yaml` | §3.3 | ✅ (in validation-rules.yaml) |
+| `corpus/registry/factions.yaml` (extended) | §4 | ✅ |
+| `corpus/registry/router-config.yaml` | §5 | ✅ |
+| `corpus/registry/generation-constraints.yaml` | §6 | ✅ |
+| `corpus/registry/encounter-scoring.yaml` | §7 | ✅ |
+| `corpus/rules-data/dnd5e-rules.yaml` | §7 | ✅ |
+| `corpus/rules-data/adversary-bases.yaml` | §7 | ✅ |
+| `corpus/rules-data/losweg-regional-names.yaml` | §7 | ✅ |
 
 Existing files extended:
 | File | Section |
@@ -315,4 +287,4 @@ Existing files extended:
    change what the policy is. If a test fails, the YAML is wrong, not the test.
 4. Keep the old constant as a fallback during transition if needed — but
    remove it once the YAML path is tested and passing.
-5. 625 tests must pass at the end of every section.
+5. 657 tests passing at completion of all sections.

@@ -1,6 +1,12 @@
 import { readdirSync, readFileSync, existsSync } from 'fs'
 import { resolve, basename } from 'path'
 import matter from 'gray-matter'
+import {
+  getSocialQueryPattern, getMonsterExceptionPattern,
+  getDockArrivalKeywords, getArrivalEventPattern,
+  getPatternBoosts, getPatternExclusionGuards,
+} from './encounterScoringLoader.js'
+import { getNpcBaseSummariesMap } from './adversaryBasesLoader.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,31 +46,14 @@ export interface ScoredPattern {
 
 // ── NPC base summaries ────────────────────────────────────────────────────────
 
-const NPC_BASES: Record<string, string> = {
-  'spy': 'Spy — CR 1, AC 12, HP 27. Cunning Action, Sneak Attack 2d6. Deception +6, Insight +4, Persuasion +6, Stealth +6.',
-  'guard': 'Guard — CR 1/8, AC 16 (chain shirt + shield), HP 11. Spear +3.',
-  'noble': 'Noble — CR 1/8, AC 15 (breastplate), HP 9. Persuasion +5.',
-  'scout': 'Scout — CR 1/2, AC 13, HP 16. Multiattack, Longbow +5. Keen Sight/Hearing.',
-  'veteran': 'Veteran — CR 3, AC 17 (splint), HP 58. Multiattack (3 attacks). Parry.',
-  'bandit': 'Bandit — CR 1/8, AC 12, HP 11. Scimitar +3.',
-  'bandit captain': 'Bandit Captain — CR 2, AC 15, HP 65. Multiattack, Parry reaction.',
-  'thug': 'Thug — CR 1/2, AC 11, HP 32. Multiattack, Heavy Crossbow.',
-  'commoner': 'Commoner — CR 0, AC 10, HP 4. Club +2.',
-  'priest': 'Priest — CR 2, AC 13, HP 27. Spellcasting (Channel Divinity, healing).',
-  'mage': 'Mage — CR 6, AC 12, HP 40. Arcane spellcasting.',
-  'acolyte': 'Acolyte — CR 1/4, AC 10, HP 9. Minor spellcasting.',
-}
+const NPC_BASES: Record<string, string> = getNpcBaseSummariesMap()
 
 // ── Social vs monster query detection ────────────────────────────────────────
 
-const SOCIAL_QUERY_PATTERN =
-  /non-monster|non-combat|social\s+encounter|procedural|customs|inspection|\bgate\b|\bdock\b|officials?\b|faction\s+pressure|arrival\s+scene|social\s+obstruction/i
-
+// Loaded from corpus/registry/encounter-scoring.yaml
+const SOCIAL_QUERY_PATTERN = getSocialQueryPattern()
 // "non-monster" must NEVER be treated as a monster exception keyword.
-// The regex below matches only contexts where the user is asking FOR monsters/combat.
-// Note: \bmonster is intentionally avoided here because it would match "non-monster".
-const MONSTER_EXCEPTION_PATTERN =
-  /\bcreature|\bcorruption|\bmaw.changed|\bcombat\b|\bsupernatural|\bfight\b|\bambush|\bbattle|\battack/i
+const MONSTER_EXCEPTION_PATTERN = getMonsterExceptionPattern()
 
 /** True when query explicitly requests monsters/combat (as opposed to social encounters). */
 function hasMonsterException(question: string): boolean {
@@ -91,47 +80,11 @@ function isMonsterAdversary(fm: Record<string, unknown>): boolean {
 
 // ── Keyword-to-pattern boost map ──────────────────────────────────────────────
 
-/** Maps query keywords → pattern filenames that should receive a score boost. */
-const PATTERN_BOOSTS: Array<[RegExp, string[]]> = [
-  // Dock / port / arrival → dock-delay, customs-inspection
-  [/\bdock\b|\bport\b|\bharbour\b|\bharbor\b|\bcargo\b|\bship\b|\barrival\b/, ['dock-delay', 'customs-inspection']],
-  // Gate / checkpoint → roadblock, customs-inspection
-  [/\bgate\b|\bcheckpoint\b|\bentry\b|\bborder\b/, ['roadblock', 'customs-inspection']],
-  // Bribery
-  [/\bbribe\b|\bpay\s+them\s+off\b/, ['bribery-attempt']],
-  // Formal audience (only for court/council/audience keywords, NOT mere official presence)
-  [/\baudience\b|\bcourt\b|\bcouncil\b|\bsummons\b|\bhearing\b|\bpetition\b/, ['formal-audience']],
-  // Interrogation
-  [/\binterrogat/, ['interrogation']],
-  // Market / surveillance
-  [/\bmarket\b|\bsurveillance\b|\bwatchers?\b/, ['market-surveillance']],
-  // Witness pressure
-  [/\bwitness\b/, ['witness-pressure']],
-  // Public accusation
-  [/\bpublic\b.*\baccus|\baccus.*\bpublic\b/, ['public-accusation']],
-]
-
-// ── Dock/arrival context detection ───────────────────────────────────────────
-
-const DOCK_ARRIVAL_KEYWORDS = /\bdock\b|\bport\b|\bharbour\b|\bharbor\b|\bcargo\b|\bcustoms\b|\binspection\b|\bofficials?\b|\bgate\b|\bdelay\b|\bpaperwork\b|\bauthority\b|\bdocument|\barrival\b|\bvalweg\b|\bmathr\s+agents?\b/i
-
-// True when the query explicitly describes an arrival event at a named location or dock/gate
-const ARRIVAL_EVENT_PATTERN = /\barriv(?:es?|al|ing\b)/i
-
-// ── Pattern exclusion guards ──────────────────────────────────────────────────
-// Some patterns should only be selected when the query contains specific keywords.
-// Without those keywords the pattern is irrelevant and must not appear.
-
-const PATTERN_EXCLUSION_GUARDS: Array<[slug: string, requiredKeywords: RegExp]> = [
-  [
-    'bribery-attempt',
-    /\bbribe|\bbribery|\bpay\b|\btoll\b|\bfee\b|\bcorrupt|\bextort|\bpayment|\btax\b/i,
-  ],
-  [
-    'formal-audience',
-    /\baudience\b|\bformal\s+meeting\b|\bcouncil\b|\bhearing\b|\bsummons\b|\bcourt\b|\bpetition\b/i,
-  ],
-]
+// Loaded from corpus/registry/encounter-scoring.yaml
+const PATTERN_BOOSTS: Array<[RegExp, string[]]> = getPatternBoosts()
+const DOCK_ARRIVAL_KEYWORDS = getDockArrivalKeywords()
+const ARRIVAL_EVENT_PATTERN = getArrivalEventPattern()
+const PATTERN_EXCLUSION_GUARDS: Array<[string, RegExp]> = getPatternExclusionGuards()
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
