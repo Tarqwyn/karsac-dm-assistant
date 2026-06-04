@@ -14,18 +14,6 @@ export interface RouteResult {
   modeOverride?: 'player' | 'dm';
 }
 
-// ── Term lists — loaded from corpus/registry/router-config.yaml ─────────────
-
-const RULES_TERMS = getRulesTerms()
-const DESIGN_TERMS = getDesignTerms()
-const DEEP_LORE_TERMS = getDeepLoreTerms()
-const STRONG_PROSE_TERMS = getStrongProseTerms()
-const WEAK_PROSE_TERMS = getWeakProseTerms()
-const STATE_TERMS = getStateTerms()
-const ADVERSARY_DESIGN_TERMS = getAdversaryDesignTerms()
-const ENCOUNTER_DESIGN_TERMS = getEncounterDesignTerms()
-const CANON_TERMS = getCanonTerms()
-
 // ── Matching helpers ──────────────────────────────────────────────────────────
 
 function escapeRegExp(s: string): string {
@@ -81,7 +69,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 2: strong prose terms (write, boxed text, dialogue, what would — beats design)
-  const strongProseMatched = findMatchedTerms(lq, STRONG_PROSE_TERMS);
+  const strongProseMatched = findMatchedTerms(lq, getStrongProseTerms());
   if (strongProseMatched.length > 0) {
     return {
       profile: 'prose',
@@ -91,7 +79,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 3: rules terms
-  const rulesMatched = findMatchedTerms(lq, RULES_TERMS);
+  const rulesMatched = findMatchedTerms(lq, getRulesTerms());
   if (rulesMatched.length > 0) {
     return {
       profile: 'rules',
@@ -103,7 +91,7 @@ export function routeQuestion(question: string): RouteResult {
   // Step 3.25: adversary-design terms — create/adapt a stat block (BEFORE encounter-design)
   // Exception: explicit encounter/scene intent wins over adversary intent.
   const EXPLICIT_ENCOUNTER_SCENE = getExplicitEncounterScenePattern()
-  const adversaryDesignMatched = findMatchedTerms(lq, ADVERSARY_DESIGN_TERMS);
+  const adversaryDesignMatched = findMatchedTerms(lq, getAdversaryDesignTerms());
   if (adversaryDesignMatched.length > 0 && !EXPLICIT_ENCOUNTER_SCENE.test(lq)) {
     return {
       profile: 'adversary-design',
@@ -113,7 +101,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 3.5: encounter-design terms — social/non-monster encounter scene design
-  const encounterDesignMatched = findMatchedTerms(lq, ENCOUNTER_DESIGN_TERMS);
+  const encounterDesignMatched = findMatchedTerms(lq, getEncounterDesignTerms());
   if (encounterDesignMatched.length > 0) {
     return {
       profile: 'encounter-design',
@@ -123,7 +111,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 4: design terms
-  const designMatched = findMatchedTerms(lq, DESIGN_TERMS);
+  const designMatched = findMatchedTerms(lq, getDesignTerms());
   if (designMatched.length > 0) {
     return {
       profile: 'design',
@@ -133,7 +121,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 4.5: state terms — table-progress questions (after design, before deep-lore)
-  const stateMatched = findMatchedTerms(lq, STATE_TERMS);
+  const stateMatched = findMatchedTerms(lq, getStateTerms());
   if (stateMatched.length > 0) {
     return {
       profile: 'state',
@@ -143,7 +131,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 5: deep-lore terms
-  const deepLoreMatched = findMatchedTerms(lq, DEEP_LORE_TERMS);
+  const deepLoreMatched = findMatchedTerms(lq, getDeepLoreTerms());
   if (deepLoreMatched.length > 0) {
     return {
       profile: 'deep-lore',
@@ -153,7 +141,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 6: weak prose terms (describe, scene, narration — checked after design)
-  const weakProseMatched = findMatchedTerms(lq, WEAK_PROSE_TERMS);
+  const weakProseMatched = findMatchedTerms(lq, getWeakProseTerms());
   if (weakProseMatched.length > 0) {
     return {
       profile: 'prose',
@@ -163,7 +151,7 @@ export function routeQuestion(question: string): RouteResult {
   }
 
   // Step 7: canon terms
-  const canonMatched = findMatchedTerms(lq, CANON_TERMS);
+  const canonMatched = findMatchedTerms(lq, getCanonTerms());
   if (canonMatched.length > 0) {
     return {
       profile: 'canon',

@@ -8,9 +8,6 @@ import {
   getExplicitProposalOpeningPatterns,
 } from '../routerConfigLoader.js'
 
-const ADVERSARY_PROPOSAL_PATTERN = getAdversaryProposalPattern()
-const PLACE_INDICATOR_TERMS = getPlaceIndicatorTerms()
-
 export interface ProposalExecutionPlan {
   proposalType: ProposalType
   proposalProfile: string
@@ -21,11 +18,8 @@ export interface ProposalExecutionPlan {
   explicitType: boolean
 }
 
-const EXPLICIT_PROPOSAL_OPENING_PATTERNS: Array<[RegExp, ProposalType]> =
-  getExplicitProposalOpeningPatterns().map(({ regex, proposalType }) => [regex, proposalType as ProposalType])
-
 function isAdversaryProposal(prompt: string): boolean {
-  return ADVERSARY_PROPOSAL_PATTERN.test(prompt)
+  return getAdversaryProposalPattern().test(prompt)
 }
 
 export function findMatchedAdversaryTerms(prompt: string): string[] {
@@ -37,7 +31,7 @@ export function findMatchedAdversaryTerms(prompt: string): string[] {
 
 export function findMatchedPlaceTerms(prompt: string): string[] {
   const lq = prompt.toLowerCase()
-  return PLACE_INDICATOR_TERMS.filter((t) =>
+  return getPlaceIndicatorTerms().filter((t) =>
     new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}s?\\b`, 'i').test(lq),
   ).slice(0, 5)
 }
@@ -56,8 +50,8 @@ export function profileForExplicitType(t: ProposalType): string {
 }
 
 export function detectExplicitProposalType(prompt: string): ProposalType | null {
-  for (const [pattern, proposalType] of EXPLICIT_PROPOSAL_OPENING_PATTERNS) {
-    if (pattern.test(prompt)) return proposalType
+  for (const { regex, proposalType } of getExplicitProposalOpeningPatterns()) {
+    if (regex.test(prompt)) return proposalType as ProposalType
   }
   return null
 }

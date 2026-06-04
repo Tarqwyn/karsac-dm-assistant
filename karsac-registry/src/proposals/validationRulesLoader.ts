@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { REGISTRY_ROOT } from '../paths.js'
+import { guardArray } from '../loaderUtils.js'
 
 const VALIDATION_RULES_PATH = `${REGISTRY_ROOT}/validation-rules.yaml`
 
@@ -52,7 +53,7 @@ function load(): ValidationRulesFile {
 }
 
 export function getWarningRules(): CompiledWarningRule[] {
-  return (load().warning_rules ?? []).map((rule) => ({
+  return guardArray<WarningRule>(load().warning_rules, 'warning_rules').map((rule) => ({
     id: rule.id,
     regex: new RegExp(rule.pattern, rule.flags ?? 'i'),
     secondaryRegex: rule.secondary_pattern ? new RegExp(rule.secondary_pattern, rule.flags ?? 'i') : undefined,
@@ -71,8 +72,8 @@ export function getActionEconomyMessage(): string {
 }
 
 export function getStateChangePattern(): RegExp | null {
-  const terms = load().state_change_terms
-  if (!terms || terms.length === 0) return null
+  const terms = guardArray<string>(load().state_change_terms, 'state_change_terms')
+  if (terms.length === 0) return null
   const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
   return new RegExp(`\\b(${escaped})\\b`, 'i')
 }
@@ -87,11 +88,13 @@ export function getModernTechPattern(): RegExp | null {
 }
 
 export function getForbiddenMonsterPatterns(): Array<[RegExp, string]> {
-  return (load().forbidden_monster_patterns ?? []).map((e) => [new RegExp(e.pattern, 'i'), e.label])
+  return guardArray<PatternEntry>(load().forbidden_monster_patterns, 'forbidden_monster_patterns')
+    .map((e) => [new RegExp(e.pattern, 'i'), e.label])
 }
 
 export function getHomebrewViolationPatterns(): Array<[RegExp, string]> {
-  return (load().homebrew_violation_patterns ?? []).map((e) => [new RegExp(e.pattern, 'i'), e.label])
+  return guardArray<PatternEntry>(load().homebrew_violation_patterns, 'homebrew_violation_patterns')
+    .map((e) => [new RegExp(e.pattern, 'i'), e.label])
 }
 
 export function getAttackPattern(): RegExp | null {

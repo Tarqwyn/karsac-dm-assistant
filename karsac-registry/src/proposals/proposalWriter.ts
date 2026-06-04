@@ -3,7 +3,7 @@ import { resolve, relative } from 'path'
 import matter from 'gray-matter'
 import { slugify } from './slugify.js'
 import type { ProposalType, ProposalFrontmatter } from './proposalTypes.js'
-import { PROPOSAL_FOLDERS } from './proposalTypes.js'
+import { getProposalFolder } from './proposalContractsLoader.js'
 
 export interface WriteResult {
   path: string
@@ -67,7 +67,7 @@ export function writeProposal(
   frontmatter: ProposalFrontmatter,
   body: string,
 ): WriteResult {
-  const subfolder = PROPOSAL_FOLDERS[proposalType]
+  const subfolder = getProposalFolder(proposalType)
   const dir = resolve(proposalsRoot, subfolder)
 
   // Safety check — ensure output is under proposalsRoot

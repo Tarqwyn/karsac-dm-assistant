@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { REGISTRY_ROOT } from '../paths.js'
+import { guardArray } from '../loaderUtils.js'
 
 const CONSTRAINTS_PATH = `${REGISTRY_ROOT}/generation-constraints.yaml`
 
@@ -56,7 +57,8 @@ export function getPlaceConstraintLines(): string[] {
 }
 
 export function getCorpusAnchorBaseLines(entityType: string): string[] {
-  return (load().corpus_anchor?.base ?? []).map((line) => line.replace('{entity_type}', entityType))
+  return guardArray<string>(load().corpus_anchor?.base, 'corpus_anchor.base')
+    .map((line) => line.replace('{entity_type}', entityType))
 }
 
 export function getCorpusAnchorCanonicalReferenceOnlyLines(): string[] {

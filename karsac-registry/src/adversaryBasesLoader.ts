@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { RULES_DATA_DIR } from './paths.js'
+import { guardArray } from './loaderUtils.js'
 
 const BASES_PATH = `${RULES_DATA_DIR}/adversary-bases.yaml`
 
@@ -45,10 +46,8 @@ export function getBasesWithoutDarkvision(): Set<string> {
 }
 
 export function getBaseSelectionHeuristics(): Array<{ regex: RegExp; preferredBase: string }> {
-  return (load().base_selection_heuristics ?? []).map((h) => ({
-    regex: new RegExp(h.pattern, 'i'),
-    preferredBase: h.preferred_base,
-  }))
+  return guardArray<BaseHeuristic>(load().base_selection_heuristics, 'base_selection_heuristics')
+    .map((h) => ({ regex: new RegExp(h.pattern, 'i'), preferredBase: h.preferred_base }))
 }
 
 export function getDefaultBase(): string {
@@ -56,10 +55,8 @@ export function getDefaultBase(): string {
 }
 
 export function getEnvironmentContexts(): Array<{ regex: RegExp; label: string }> {
-  return (load().environment_contexts ?? []).map((e) => ({
-    regex: new RegExp(e.pattern, 'i'),
-    label: e.label,
-  }))
+  return guardArray<EnvironmentContext>(load().environment_contexts, 'environment_contexts')
+    .map((e) => ({ regex: new RegExp(e.pattern, 'i'), label: e.label }))
 }
 
 export function getNpcBaseSummariesMap(): Record<string, string> {

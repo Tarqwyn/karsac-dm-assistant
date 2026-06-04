@@ -12,31 +12,8 @@ import {
   getAttackPattern,
 } from './proposals/validationRulesLoader.js'
 
-// ── Required headings ─────────────────────────────────────────────────────────
-
-export const DESIGN_REQUIRED_HEADINGS: readonly string[] = getDesignRequiredHeadings()
-
-// ── No-monster-data patterns ──────────────────────────────────────────────────
-
-/**
- * Patterns forbidden when no monster corpus is loaded (NO_MONSTER_DATA mode).
- * Each entry: [pattern, label] for diagnostic output.
- */
-export const FORBIDDEN_MONSTER_PATTERNS: Array<[RegExp, string]> = getForbiddenMonsterPatterns()
-
 export const NO_MONSTER_DISCLAIMER =
   'monster metadata is not yet loaded, so these are encounter roles';
-
-// ── Homebrew-gate patterns ────────────────────────────────────────────────────
-
-/**
- * Patterns that indicate homebrew stat modifications — forbidden unless
- * --allow-homebrew is active or the user explicitly requested homebrew.
- * Applied to the full response text even when monster data IS loaded.
- */
-export const HOMEBREW_VIOLATION_PATTERNS: Array<[RegExp, string]> = getHomebrewViolationPatterns()
-
-// ── Checker functions ─────────────────────────────────────────────────────────
 
 // ── Composition-plan validation ───────────────────────────────────────────────
 
@@ -47,9 +24,6 @@ function extractCreaturesSectionLower(text: string): string {
   const match = text.match(/##\s+creatures\s*\/\s*opposition\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i);
   return (match?.[1] ?? '').toLowerCase();
 }
-
-/** Attack-action patterns that only a combatant should perform. */
-const ATTACK_PATTERNS = getAttackPattern() ?? /\battacks?\b/i;
 
 /**
  * Check the response text against the composition plan. Detects:
@@ -112,6 +86,7 @@ export function checkCompositionViolations(
     // Strip negated attack phrases first ("does NOT attack", "not attacks", "does not engage")
     // so that the scaffold's own prohibition wording doesn't false-positive.
     if (!creature.useAsCombatant) {
+      const attackPatterns = getAttackPattern() ?? /\battacks?\b/i
       for (const name of names) {
         const sentences = creaturesSection.split(/[.!?]/);
         for (const sentence of sentences) {
@@ -119,7 +94,7 @@ export function checkCompositionViolations(
             .replace(/\b(?:does\s+)?not\s+attacks?\b/gi, '')
             .replace(/\bdoes\s+not\s+engage\b/gi, '')
             .replace(/\bnever\s+attacks?\b/gi, '');
-          if (sentence.includes(name.toLowerCase()) && ATTACK_PATTERNS.test(stripped)) {
+          if (sentence.includes(name.toLowerCase()) && attackPatterns.test(stripped)) {
             violations.push(`non-combatant "${name}" described as attacking in ## Creatures / opposition`);
             break;
           }
@@ -136,7 +111,7 @@ export function checkNoMonsterViolations(text: string): string[] {
   if (!text.toLowerCase().includes(NO_MONSTER_DISCLAIMER)) {
     violations.push('missing mandatory disclaimer line');
   }
-  for (const [pattern, label] of FORBIDDEN_MONSTER_PATTERNS) {
+  for (const [pattern, label] of getForbiddenMonsterPatterns()) {
     if (pattern.test(text)) violations.push(label);
   }
   return violations;
@@ -144,7 +119,7 @@ export function checkNoMonsterViolations(text: string): string[] {
 
 export function checkHomebrewViolations(text: string): string[] {
   const violations: string[] = [];
-  for (const [pattern, label] of HOMEBREW_VIOLATION_PATTERNS) {
+  for (const [pattern, label] of getHomebrewViolationPatterns()) {
     if (pattern.test(text)) violations.push(label);
   }
   return violations;
@@ -158,7 +133,7 @@ export function validateDesignResponse(
 ): boolean {
   const lower = text.toLowerCase();
   if (!lower.trimStart().startsWith('## provisional encounter concept')) return false;
-  if (!DESIGN_REQUIRED_HEADINGS.every(h => lower.includes(h))) return false;
+  if (!getDesignRequiredHeadings().every(h => lower.includes(h))) return false;
   if (!lower.includes('provisional table material')) return false;
   if (noMonsterData && checkNoMonsterViolations(text).length > 0) return false;
   if (!allowHomebrew && checkHomebrewViolations(text).length > 0) return false;
@@ -190,9 +165,9 @@ export function stripViolatingContent(
     }
 
     const hasNoMonsterViolation =
-      noMonsterData && FORBIDDEN_MONSTER_PATTERNS.some(([p]) => p.test(line));
+      noMonsterData && getForbiddenMonsterPatterns().some(([p]) => p.test(line));
     const hasHomebrewViolation =
-      !allowHomebrew && HOMEBREW_VIOLATION_PATTERNS.some(([p]) => p.test(line));
+      !allowHomebrew && getHomebrewViolationPatterns().some(([p]) => p.test(line));
 
     if (hasNoMonsterViolation || hasHomebrewViolation) {
       removed.push(line.trim());

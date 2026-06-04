@@ -14,7 +14,6 @@ import {
   getDesignRequiredHeadings, getResponseContractHeadings,
   clearProposalContractsCacheForTests,
 } from '../src/proposals/proposalContractsLoader.js'
-import { PROPOSAL_FOLDERS, PROMOTE_TARGETS } from '../src/proposals/proposalTypes.js'
 import { buildChapterOutlineMessages } from '../src/resolver.js'
 import type { ProposalFrontmatter, ProposalType } from '../src/proposals/proposalTypes.js'
 import * as creativeModel from '../src/creativeTreatment/creativeModel.js'
@@ -1068,10 +1067,10 @@ describe('proposalContractsLoader — YAML is the source of truth', () => {
     expect(getProposalFolder('state-update')).toBe('state-updates')
   })
 
-  it('PROPOSAL_FOLDERS in proposalTypes.ts is driven by YAML', () => {
-    expect(PROPOSAL_FOLDERS['adversary']).toBe(getProposalFolder('adversary'))
-    expect(PROPOSAL_FOLDERS['npc']).toBe(getProposalFolder('npc'))
-    expect(PROPOSAL_FOLDERS['state-update']).toBe(getProposalFolder('state-update'))
+  it('getProposalFolder returns YAML-driven folder names', () => {
+    expect(getProposalFolder('adversary')).toBe('adversaries')
+    expect(getProposalFolder('npc')).toBe('npcs')
+    expect(getProposalFolder('state-update')).toBe('state-updates')
   })
 
   it('loads promote targets from YAML including null for state-update', () => {
@@ -1080,9 +1079,9 @@ describe('proposalContractsLoader — YAML is the source of truth', () => {
     expect(getPromoteTarget('state-update')).toBeNull()
   })
 
-  it('PROMOTE_TARGETS in proposalTypes.ts is driven by YAML', () => {
-    expect(PROMOTE_TARGETS['adversary']).toBe(getPromoteTarget('adversary'))
-    expect(PROMOTE_TARGETS['state-update']).toBeNull()
+  it('getPromoteTarget returns YAML-driven promote targets', () => {
+    expect(getPromoteTarget('adversary')).toBeTruthy()
+    expect(getPromoteTarget('state-update')).toBeNull()
   })
 
   it('loads NPC required sections from YAML', () => {
@@ -1139,22 +1138,22 @@ describe('proposalContractsLoader — YAML is the source of truth', () => {
 
   it('loads response contract headings for comparison profile from YAML', () => {
     const headings = getResponseContractHeadings('comparison')
-    expect(headings).toContain('## direct canon facts')
-    expect(headings).toContain('## dm interpretation')
-    expect(headings).toContain('## not stated / uncertain')
+    expect(headings).toContain('## Direct canon facts')
+    expect(headings).toContain('## DM interpretation')
+    expect(headings).toContain('## Not stated / uncertain')
   })
 
   it('loads response contract headings for deep_lore profile from YAML', () => {
     const headings = getResponseContractHeadings('deep_lore')
-    expect(headings).toContain('## hidden structure')
-    expect(headings).toContain('## useful table guidance')
+    expect(headings).toContain('## Hidden structure')
+    expect(headings).toContain('## Useful table guidance')
     expect(headings.length).toBe(5)
   })
 
   it('loads response contract headings for rules profile from YAML', () => {
     const headings = getResponseContractHeadings('rules')
-    expect(headings).toContain('## ruling')
-    expect(headings).toContain('## dm call')
+    expect(headings).toContain('## Ruling')
+    expect(headings).toContain('## DM call')
     expect(headings.length).toBe(6)
   })
 })

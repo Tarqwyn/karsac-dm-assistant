@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { REGISTRY_ROOT } from './paths.js'
+import { guardArray } from './loaderUtils.js'
 
 const ROUTER_CONFIG_PATH = `${REGISTRY_ROOT}/router-config.yaml`
 
@@ -60,16 +61,15 @@ export function getAdversaryProposalPattern(): RegExp {
 }
 
 export function getAdversaryTermChecks(): Array<{ regex: RegExp; label: string }> {
-  return (load().adversary_term_checks ?? []).map((c) => ({ regex: new RegExp(c.pattern, 'i'), label: c.label }))
+  return guardArray<TermCheck>(load().adversary_term_checks, 'adversary_term_checks')
+    .map((c) => ({ regex: new RegExp(c.pattern, 'i'), label: c.label }))
 }
 
 export function getPlaceIndicatorTerms(): readonly string[] { return load().place_indicator_terms ?? [] }
 
 export function getExplicitProposalOpeningPatterns(): Array<{ regex: RegExp; proposalType: string }> {
-  return (load().explicit_proposal_opening_patterns ?? []).map((e) => ({
-    regex: new RegExp(e.pattern, 'i'),
-    proposalType: e.proposal_type,
-  }))
+  return guardArray<ExplicitOpeningPattern>(load().explicit_proposal_opening_patterns, 'explicit_proposal_opening_patterns')
+    .map((e) => ({ regex: new RegExp(e.pattern, 'i'), proposalType: e.proposal_type }))
 }
 
 export function getAdversaryPromptSignals(): RegExp {

@@ -44,26 +44,15 @@ export interface ScoredPattern {
   score: number
 }
 
-// ── NPC base summaries ────────────────────────────────────────────────────────
-
-const NPC_BASES: Record<string, string> = getNpcBaseSummariesMap()
-
-// ── Social vs monster query detection ────────────────────────────────────────
-
-// Loaded from corpus/registry/encounter-scoring.yaml
-const SOCIAL_QUERY_PATTERN = getSocialQueryPattern()
-// "non-monster" must NEVER be treated as a monster exception keyword.
-const MONSTER_EXCEPTION_PATTERN = getMonsterExceptionPattern()
-
 /** True when query explicitly requests monsters/combat (as opposed to social encounters). */
 function hasMonsterException(question: string): boolean {
   if (/\bnon-monster\b/i.test(question)) return false // "non-monster" overrides any other signal
-  return MONSTER_EXCEPTION_PATTERN.test(question)
+  return getMonsterExceptionPattern().test(question)
 }
 
 /** True when the query is clearly asking for a social/procedural (non-monster) encounter. */
 function isSocialQuery(question: string): boolean {
-  return SOCIAL_QUERY_PATTERN.test(question)
+  return getSocialQueryPattern().test(question)
 }
 
 /** True when the adversary file is fundamentally a monster, not an NPC social actor. */
@@ -77,14 +66,6 @@ function isMonsterAdversary(fm: Record<string, unknown>): boolean {
   if (String(fm.type ?? '') === 'monster') return true
   return false
 }
-
-// ── Keyword-to-pattern boost map ──────────────────────────────────────────────
-
-// Loaded from corpus/registry/encounter-scoring.yaml
-const PATTERN_BOOSTS: Array<[RegExp, string[]]> = getPatternBoosts()
-const DOCK_ARRIVAL_KEYWORDS = getDockArrivalKeywords()
-const ARRIVAL_EVENT_PATTERN = getArrivalEventPattern()
-const PATTERN_EXCLUSION_GUARDS: Array<[string, RegExp]> = getPatternExclusionGuards()
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,6 +105,8 @@ function scoreAdversary(
   const lq = question.toLowerCase()
   let score = 0
   const reasons: string[] = []
+  const dockKeywords = getDockArrivalKeywords()
+  const arrivalPattern = getArrivalEventPattern()
 
   // Extract the adversary slug from the id
   const id = String(fm.id ?? '')
@@ -207,7 +190,7 @@ function scoreAdversary(
 
   // ── Dock/arrival context boost for social adversaries ─────────────────────
   // Give a flat +4 boost to adversaries with any dock-related campaign_use.
-  if (DOCK_ARRIVAL_KEYWORDS.test(question)) {
+  if (dockKeywords.test(question)) {
     const DOCK_CU = new Set(['dock-pressure', 'valweg-arrival', 'social-obstruction', 'information-extraction'])
     for (const cu of toArray(fm.campaign_use)) {
       if (DOCK_CU.has(cu)) {
@@ -222,7 +205,7 @@ function scoreAdversary(
   // Adversaries tagged false-official or customs get a bonus when the query
   // describes a dock, arrival, or inspection scene — ensuring they rank above
   // generic Valweg-tagged adversaries (e.g. valweg-informants).
-  if (DOCK_ARRIVAL_KEYWORDS.test(question)) {
+  if (dockKeywords.test(question)) {
     const fmTags = toArray(fm.tags)
     if (fmTags.includes('false-official') || fmTags.includes('customs')) {
       score += 5
@@ -240,8 +223,8 @@ function scoreAdversary(
   // location, strongly prefer adversaries designed for arrival-scene obstruction.
   // This prevents generic Valweg-tagged adversaries from beating the arrival-
   // specific false-customs-officers adversary.
-  const isArrivalEvent = ARRIVAL_EVENT_PATTERN.test(question) &&
-    (DOCK_ARRIVAL_KEYWORDS.test(question) || /valweg|torweg|losweg/i.test(question))
+  const isArrivalEvent = arrivalPattern.test(question) &&
+    (dockKeywords.test(question) || /valweg|torweg|losweg/i.test(question))
   if (isArrivalEvent) {
     if (toArray(fm.campaign_use).includes('valweg-arrival')) {
       score += 8
@@ -264,6 +247,8 @@ function scorePattern(
 ): { score: number } {
   const lq = question.toLowerCase()
   let score = 0
+  const patternBoosts = getPatternBoosts()
+  const exclusionGuards = getPatternExclusionGuards()
 
   // Filename keyword match
   const slug = basename(filePath, '.md')
@@ -290,7 +275,7 @@ function scorePattern(
   }
 
   // Keyword-to-pattern boosts: specific query context strongly favours certain patterns
-  for (const [regex, boostedSlugs] of PATTERN_BOOSTS) {
+  for (const [regex, boostedSlugs] of patternBoosts) {
     if (regex.test(question) && boostedSlugs.includes(slug)) {
       score += 6
       break
@@ -299,7 +284,7 @@ function scorePattern(
 
   // Pattern exclusion guards: some patterns require specific keywords to be selected.
   // Without the required keywords, the pattern is irrelevant — hard-exclude it.
-  for (const [guardSlug, requiredKeywords] of PATTERN_EXCLUSION_GUARDS) {
+  for (const [guardSlug, requiredKeywords] of exclusionGuards) {
     if (slug === guardSlug && !requiredKeywords.test(question)) {
       score = 0
       break
@@ -436,6 +421,9 @@ export function validateEncounterDesignContext(
 ): EncounterDesignValidation {
   const adversaryViolations: string[] = []
   const patternViolations: string[] = []
+  const dockKeywords = getDockArrivalKeywords()
+  const arrivalPattern = getArrivalEventPattern()
+  const exclusionGuards = getPatternExclusionGuards()
 
   // Non-monster query must not have monster-typed adversaries
   if (isSocialQuery(question) && !hasMonsterException(question)) {
@@ -449,8 +437,8 @@ export function validateEncounterDesignContext(
   }
 
   // Arrival context: false-customs-officers should be top if present
-  const isArrivalEvent = ARRIVAL_EVENT_PATTERN.test(question) &&
-    (DOCK_ARRIVAL_KEYWORDS.test(question) || /valweg|torweg|losweg/i.test(question))
+  const isArrivalEvent = arrivalPattern.test(question) &&
+    (dockKeywords.test(question) || /valweg|torweg|losweg/i.test(question))
   if (isArrivalEvent && adversaries.length >= 2) {
     const topId = adversaries[0].id
     const hasFalseCustoms = adversaries.some(a => a.id.includes('false-customs'))
@@ -465,7 +453,7 @@ export function validateEncounterDesignContext(
   // Pattern guards
   for (const pat of patterns) {
     const slug = pat.id.split('/').pop() ?? pat.id
-    for (const [guardSlug, requiredKeywords] of PATTERN_EXCLUSION_GUARDS) {
+    for (const [guardSlug, requiredKeywords] of exclusionGuards) {
       if (slug === guardSlug && !requiredKeywords.test(question)) {
         patternViolations.push(
           `pattern "${guardSlug}" selected without required keywords`,
@@ -486,12 +474,13 @@ export function validateEncounterDesignContext(
  * Refs may be in the form "npc-bases/srd-2014/spy" or plain "spy".
  */
 export function getNpcBaseSummaries(mechanicalBases: string[]): Record<string, string> {
+  const npcBases = getNpcBaseSummariesMap()
   const result: Record<string, string> = {}
   for (const ref of mechanicalBases) {
     // Normalise "npc-bases/srd-2014/spy" → "spy"
     const key = ref.split('/').pop()?.toLowerCase() ?? ref.toLowerCase()
-    if (NPC_BASES[key]) {
-      result[ref] = NPC_BASES[key]
+    if (npcBases[key]) {
+      result[ref] = npcBases[key]
     }
   }
   return result

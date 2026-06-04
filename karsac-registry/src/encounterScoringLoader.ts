@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import matter from 'gray-matter'
 import { REGISTRY_ROOT } from './paths.js'
+import { guardArray } from './loaderUtils.js'
 
 const SCORING_PATH = `${REGISTRY_ROOT}/encounter-scoring.yaml`
 
@@ -47,11 +48,13 @@ export function getArrivalEventPattern(): RegExp {
 }
 
 export function getPatternBoosts(): Array<[RegExp, string[]]> {
-  return (load().pattern_boosts ?? []).map((b) => [new RegExp(b.pattern, 'i'), b.boosts])
+  return guardArray<PatternBoost>(load().pattern_boosts, 'pattern_boosts')
+    .map((b) => [new RegExp(b.pattern, 'i'), b.boosts])
 }
 
 export function getPatternExclusionGuards(): Array<[string, RegExp]> {
-  return (load().pattern_exclusion_guards ?? []).map((g) => [g.slug, new RegExp(g.required_pattern, 'i')])
+  return guardArray<ExclusionGuard>(load().pattern_exclusion_guards, 'pattern_exclusion_guards')
+    .map((g) => [g.slug, new RegExp(g.required_pattern, 'i')])
 }
 
 export function clearEncounterScoringCacheForTests(): void {

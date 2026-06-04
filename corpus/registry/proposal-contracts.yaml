@@ -272,24 +272,24 @@ design_required_headings:
 response_contracts:
   comparison:
     required_headings:
-      - "## direct canon facts"
-      - "## differences stated by canon"
-      - "## dm interpretation"
-      - "## not stated / uncertain"
+      - "## Direct canon facts"
+      - "## Differences stated by canon"
+      - "## DM interpretation"
+      - "## Not stated / uncertain"
 
   deep_lore:
     required_headings:
-      - "## direct canon facts"
-      - "## hidden structure"
-      - "## dm interpretation"
-      - "## not stated / uncertain"
-      - "## useful table guidance"
+      - "## Direct canon facts"
+      - "## Hidden structure"
+      - "## DM interpretation"
+      - "## Not stated / uncertain"
+      - "## Useful table guidance"
 
   rules:
     required_headings:
-      - "## ruling"
-      - "## base 5e rule"
-      - "## karsac table rule"
-      - "## at the table"
-      - "## edge cases"
-      - "## dm call"
+      - "## Ruling"
+      - "## Base 5e rule"
+      - "## Karsac table rule"
+      - "## At the table"
+      - "## Edge cases"
+      - "## DM call"
