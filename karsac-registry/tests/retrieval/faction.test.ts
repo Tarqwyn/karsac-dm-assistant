@@ -1,5 +1,6 @@
 /**
  * Layer 2 — Faction retrieval tests.
+ * Three assertions per scenario: Source · Completeness · Fidelity
  * Run with: npm run test:retrieval
  */
 
@@ -8,7 +9,8 @@ import { resolve } from 'path'
 import { runQuery, isOllamaAvailable } from './queryRunner.js'
 import {
   loadCorpus, evaluate, assertAllPass,
-  mustContain, mustNotContain, mustContainAny, needsHumanReview,
+  mustContain, mustNotContain, mustContainAny,
+  sourceWasLoaded, allKeyFactsPresent, needsHumanReview,
 } from './evaluator.js'
 
 const CORPUS_ROOT = resolve(__dirname, '../../../corpus')
@@ -18,63 +20,68 @@ const LOSWEG_COUNCIL = resolve(CORPUS_ROOT, 'collections/karsac-factions/losweg-
 let ollamaAvailable = false
 beforeAll(() => { ollamaAvailable = isOllamaAvailable() })
 
-describe('faction retrieval — epistemic limits respected for dm-only faction', () => {
-  it('House Mathr DM query: Vishara connection and impossible lineage are present', () => {
+describe('faction — dm-only epistemic layer: House Mathr', () => {
+  it('source: house-mathr file loaded · completeness: vishara+lineage+1263 · fidelity: no invented operations', () => {
     if (!ollamaAvailable) { console.warn('Skipping: Ollama not available'); return }
 
-    const { text } = runQuery('What does the DM need to know about House Mathr?')
+    const q = runQuery('What does the DM need to know about House Mathr?')
     const corpus = loadCorpus([HOUSE_MATHR])
 
-    assertAllPass(evaluate(text, corpus, [
-      mustContainAny([/house mathr|mathr/i], 'Response is about House Mathr'),
-      mustContainAny(
-        [/vishara|political vehicle|no antecedent|impossible.*lineage|1263/i],
-        'Response includes DM-layer: Vishara connection and lineage anomaly',
+    assertAllPass(evaluate(q.text, corpus, [
+      // Source
+      sourceWasLoaded('house-mathr', 'House Mathr corpus file was loaded'),
+      // Completeness
+      allKeyFactsPresent(
+        [/vishara/i, /no antecedent|no.*origin|oral history/i, /1263|founded/i, /political vehicle/i],
+        'Response covers: Vishara connection, no-antecedent lineage anomaly, 1263 founding, political role',
       ),
-      mustContainAny(
-        [/no.*origin|antecedent|oral history|structurally impossible/i],
-        'Response reflects the "no antecedent" fact from corpus',
-      ),
-      needsHumanReview('Response does not invent additional Vishara operational detail'),
-    ]).filter(v => v.status === 'FAIL'))
-  })
-
-  it('House Mathr player query: dm-only content is not leaked', () => {
-    if (!ollamaAvailable) { console.warn('Skipping: Ollama not available'); return }
-
-    const { text } = runQuery(
-      'What do the players know about House Mathr at this point in the campaign?',
-      'canon',
-    )
-    const corpus = loadCorpus([HOUSE_MATHR])
-
-    assertAllPass(evaluate(text, corpus, [
-      mustNotContain(
-        /vishara.*primary.*vehicle|vishara.*political|mathr.*vishara.*connection/i,
-        'Response does not leak the DM-only Vishara connection as player-known fact',
-      ),
-      needsHumanReview('Response reflects only what players have observed — not DM-layer facts'),
-    ]).filter(v => v.status === 'FAIL'))
+      // Fidelity
+      mustNotContain(/mathr.*founded.*losweg|mathr.*built.*council/i,
+        'Response does not invent that Mathr founded the council or Lösweg'),
+      needsHumanReview('No invented Vishara operational detail beyond what corpus states'),
+    ], q.loadedEntityIds).filter(v => v.status === 'FAIL'))
   })
 })
 
-describe('faction retrieval — faction relationship correctly described', () => {
-  it('Lösweg inner council relationship to House Mathr is correctly framed', () => {
+describe('faction — player-facing query does not leak dm-only connection', () => {
+  it('source: house-mathr file loaded · completeness: observable facts · fidelity: vishara not leaked', () => {
     if (!ollamaAvailable) { console.warn('Skipping: Ollama not available'); return }
 
-    const { text } = runQuery(
-      'What is House Mathr\'s relationship to the Lösweg inner council?',
-    )
+    const q = runQuery('What do the players know about House Mathr at this point in the campaign?', 'canon')
+    const corpus = loadCorpus([HOUSE_MATHR])
+
+    assertAllPass(evaluate(q.text, corpus, [
+      // Source
+      sourceWasLoaded('house-mathr', 'House Mathr corpus file was loaded'),
+      // Completeness — only player-observable facts should be present
+      mustContainAny([/mathr/i], 'Response is about House Mathr'),
+      // Fidelity
+      mustNotContain(/vishara.*primary.*vehicle|vishara.*political|mathr.*vishara.*connection/i,
+        'DM-only Vishara connection not leaked as player-known fact'),
+      needsHumanReview('Response reflects only what players have observed — no DM-layer'),
+    ], q.loadedEntityIds).filter(v => v.status === 'FAIL'))
+  })
+})
+
+describe('faction — relationship correctly described: Lösweg council', () => {
+  it('source: relevant faction files loaded · completeness: relationship framing · fidelity: no invented alliances', () => {
+    if (!ollamaAvailable) { console.warn('Skipping: Ollama not available'); return }
+
+    const q = runQuery("What is House Mathr's relationship to the Lösweg inner council?")
     const corpus = loadCorpus([HOUSE_MATHR, LOSWEG_COUNCIL])
 
-    assertAllPass(evaluate(text, corpus, [
-      mustContainAny([/council|losweg|lösweg/i], 'Response mentions the Lösweg council'),
-      mustContainAny([/mathr/i], 'Response mentions Mathr in the context of the council'),
-      mustNotContain(
-        /mathr.*founded.*council|mathr.*created.*council/i,
-        'Response does not invent that Mathr founded the council',
+    assertAllPass(evaluate(q.text, corpus, [
+      // Source
+      sourceWasLoaded('mathr', 'A Mathr-related corpus file was loaded'),
+      // Completeness
+      allKeyFactsPresent(
+        [/council|losweg|lösweg/i, /mathr/i],
+        'Response mentions both the council and Mathr in relationship context',
       ),
-      needsHumanReview('Relationship described matches corpus — no invented alliances or operations'),
-    ]).filter(v => v.status === 'FAIL'))
+      // Fidelity
+      mustNotContain(/mathr.*created.*council|mathr.*founded.*council/i,
+        'Response does not invent that Mathr created the council'),
+      needsHumanReview('Relationship framing matches corpus — no invented alliances or operations added'),
+    ], q.loadedEntityIds).filter(v => v.status === 'FAIL'))
   })
 })

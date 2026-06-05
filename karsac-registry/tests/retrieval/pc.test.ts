@@ -1,5 +1,6 @@
 /**
  * Layer 2 — PC retrieval tests.
+ * Three assertions per scenario: Source · Completeness · Fidelity
  * Run with: npm run test:retrieval
  */
 
@@ -8,82 +9,83 @@ import { resolve } from 'path'
 import { runQuery, isOllamaAvailable } from './queryRunner.js'
 import {
   loadCorpus, evaluate, assertAllPass,
-  mustContain, mustNotContain, mustContainAny, needsHumanReview,
+  mustContain, mustNotContain, mustContainAny,
+  sourceWasLoaded, allKeyFactsPresent, needsHumanReview,
 } from './evaluator.js'
 
 const CORPUS_ROOT = resolve(__dirname, '../../../corpus')
-const KORVANN_FILE = resolve(CORPUS_ROOT, 'collections/karsac-pcs/korvann.md')
-const RAGNFRID_FILE = resolve(CORPUS_ROOT, 'collections/karsac-pcs/ragnfrid.md')
+const KORVANN = resolve(CORPUS_ROOT, 'collections/karsac-pcs/korvann.md')
+const RAGNFRID = resolve(CORPUS_ROOT, 'collections/karsac-pcs/ragnfrid.md')
 
 let ollamaAvailable = false
 beforeAll(() => { ollamaAvailable = isOllamaAvailable() })
 
-describe('pc retrieval — arc correctly described from canonical framing', () => {
-  it("Korvann: ten-year rune hunt, bone disc is the original, no invented backstory", () => {
+describe('pc — arc correctly described: Korvann', () => {
+  it('source: korvann file loaded · completeness: rune+caeli+bone-disc+original · fidelity: no Vishara knowledge', () => {
     if (!ollamaAvailable) { console.warn('Skipping: Ollama not available'); return }
 
-    const { text } = runQuery("What is Korvann's arc and what is he seeking?")
-    const corpus = loadCorpus([KORVANN_FILE])
+    const q = runQuery("What is Korvann's arc and what is he seeking?")
+    const corpus = loadCorpus([KORVANN])
 
-    assertAllPass(evaluate(text, corpus, [
-      mustContainAny([/korvann/i], 'Response is about Korvann'),
-      mustContainAny(
-        [/rune|bone disc|ten year|settlement.*destroyed|air ashari/i],
-        'Response reflects the canonical arc framing',
+    assertAllPass(evaluate(q.text, corpus, [
+      // Source
+      sourceWasLoaded('korvann', 'Korvann corpus file was loaded'),
+      // Completeness
+      allKeyFactsPresent(
+        [/rune/i, /ten year|decade/i, /bone disc|bone-disc/i, /original|corrupted.*copies/i],
+        'Response covers: the rune hunt, ten-year duration, bone disc, it is the original',
       ),
-      mustContainAny(
-        [/corrupted.*copies|original|bone disc.*original/i],
-        'Response includes the key reveal: bone disc is the original of what he has been chasing',
-      ),
-      mustNotContain(
-        /korvann.*knows.*vishara|korvann.*understands.*vishara/i,
-        'Response does not state Korvann knows the Vishara connection yet',
-      ),
-      needsHumanReview('Arc framing matches corpus — no invented resolution or invented backstory'),
-      needsHumanReview('Response does not confuse Korvann\'s arc with another PC\'s'),
-    ]).filter(v => v.status === 'FAIL'))
+      // Fidelity
+      mustNotContain(/korvann.*knows.*vishara|korvann.*confirmed.*vishara/i,
+        'Response does not assert Korvann has confirmed knowledge of Vishara'),
+      needsHumanReview('Arc framing matches corpus — no invented resolution or backstory'),
+    ], q.loadedEntityIds).filter(v => v.status === 'FAIL'))
   })
 })
 
-describe('pc retrieval — must_not_know respected', () => {
-  it("Korvann does not yet know the Vishara operational connection", () => {
+describe('pc — must_not_know respected: Korvann epistemic limit', () => {
+  it('source: korvann file loaded · completeness: epistemic limit stated · fidelity: Vishara role not confirmed', () => {
     if (!ollamaAvailable) { console.warn('Skipping: Ollama not available'); return }
 
-    const { text } = runQuery(
-      "What does Korvann know about what destroyed his settlement and why?",
-    )
-    const corpus = loadCorpus([KORVANN_FILE])
+    const q = runQuery("What does Korvann know about what destroyed his settlement and why?")
+    const corpus = loadCorpus([KORVANN])
 
-    assertAllPass(evaluate(text, corpus, [
-      mustContainAny(
-        [/korvann/i],
-        'Response is about Korvann',
+    assertAllPass(evaluate(q.text, corpus, [
+      // Source
+      sourceWasLoaded('korvann', 'Korvann corpus file was loaded'),
+      // Completeness
+      allKeyFactsPresent(
+        [/does not know|doesn.*know|not yet|unclear|open/i],
+        'Response acknowledges the epistemic limit — Korvann does not have the full picture',
       ),
-      mustContainAny(
-        [/does not know|doesn.*know|hasn.*learned|not yet|unclear to him|open question/i],
-        'Response acknowledges epistemic limit — Korvann does not know the full picture',
-      ),
-      mustNotContain(
-        /korvann.*knows.*vishara.*destroyed|vishara.*directly.*told.*korvann/i,
-        'Response does not assert Korvann has confirmed knowledge of Vishara\'s role',
-      ),
-      needsHumanReview('Response respects what Korvann knows vs what the DM knows about his arc'),
-    ]).filter(v => v.status === 'FAIL'))
+      // Fidelity
+      mustNotContain(/korvann.*knows.*vishara.*destroyed|vishara.*told.*korvann/i,
+        'Response does not assert Korvann has confirmed knowledge of Vishara\'s role'),
+      needsHumanReview('Response correctly distinguishes what Korvann knows vs what DM knows'),
+    ], q.loadedEntityIds).filter(v => v.status === 'FAIL'))
   })
+})
 
-  it("Ragnfrid's arc does not bleed into Korvann's arc description", () => {
+describe('pc — arcs not confused across PCs', () => {
+  it('source: korvann file loaded · completeness: korvann-specific facts · fidelity: no ragnfrid arc bleed', () => {
     if (!ollamaAvailable) { console.warn('Skipping: Ollama not available'); return }
 
-    const { text } = runQuery("What is Korvann's personal thread?")
-    const corpus = loadCorpus([KORVANN_FILE, RAGNFRID_FILE])
+    const q = runQuery("What is Korvann's personal thread in the campaign?")
+    const corpus = loadCorpus([KORVANN, RAGNFRID])
 
-    assertAllPass(evaluate(text, corpus, [
+    assertAllPass(evaluate(q.text, corpus, [
+      // Source
+      sourceWasLoaded('korvann', 'Korvann corpus file was loaded'),
+      // Completeness
       mustContainAny([/korvann/i], 'Response is about Korvann'),
-      mustNotContain(
-        /ragnfri.*arc|ragnfri.*thread/i,
-        'Response does not attribute Ragnfrid\'s arc to Korvann',
+      allKeyFactsPresent(
+        [/rune|bone disc/i],
+        'Response reflects Korvann\'s specific thread, not a generic PC arc',
       ),
-      needsHumanReview('PCs are not confused — each arc is attributed correctly'),
-    ]).filter(v => v.status === 'FAIL'))
+      // Fidelity
+      mustNotContain(/ragnfri.*arc|ragnfri.*thread|oral.*history.*ragnfri/i,
+        'Ragnfrid\'s oral-history arc is not attributed to Korvann'),
+      needsHumanReview('PCs are not confused — each arc is attributed to the correct character'),
+    ], q.loadedEntityIds).filter(v => v.status === 'FAIL'))
   })
 })

@@ -16,6 +16,11 @@ export interface CorpusContent {
   files: Record<string, string>
   /** Parsed JSON keyed by absolute path (only for .json files) */
   json: Record<string, unknown>
+  /**
+   * Entity IDs loaded by the pipeline, from queryRunner.loadedEntityIds.
+   * Only populated when the EvalCriterion receives it via a second argument.
+   */
+  loadedEntityIds?: string[]
 }
 
 export type CriterionFn = (
@@ -51,9 +56,13 @@ export function evaluate(
   response: string,
   corpus: CorpusContent,
   criteria: EvalCriterion[],
+  loadedEntityIds?: string[],
 ): RetrievalVerdict[] {
+  const enriched: CorpusContent = loadedEntityIds
+    ? { ...corpus, loadedEntityIds }
+    : corpus
   return criteria.map((c) => {
-    const result = c.evaluate(response, corpus)
+    const result = c.evaluate(response, enriched)
     return { criterion: c.description, ...result }
   })
 }
@@ -216,6 +225,66 @@ export function mustReflectCorpusValue(
         status: 'FAIL',
         finding: `Response does not reflect corpus value: "${expected}"`,
         corpus_line: `${jsonPath}: ${expected}`,
+      }
+    },
+  }
+}
+
+/**
+ * Assert that a specific entity ID or path fragment was loaded by the pipeline.
+ * Checks corpus.loadedEntityIds (populated from stderr parsing in queryRunner).
+ * Fails if the expected source was not loaded; NEEDS_REVIEW if no source data available.
+ */
+export function sourceWasLoaded(entityIdFragment: string, description: string): EvalCriterion {
+  return {
+    id: `source:${entityIdFragment}`,
+    description,
+    evaluate: (_response, corpus) => {
+      const ids = corpus.loadedEntityIds
+      if (!ids || ids.length === 0) {
+        return {
+          status: 'NEEDS_REVIEW',
+          finding: 'No source data available — pipeline stderr not captured or no files loaded',
+        }
+      }
+      const matched = ids.some((id) =>
+        id.toLowerCase().includes(entityIdFragment.toLowerCase()),
+      )
+      if (matched) {
+        return { status: 'PASS', corpus_line: `loaded: ${entityIdFragment}` }
+      }
+      return {
+        status: 'FAIL',
+        finding: `Expected source "${entityIdFragment}" not in loaded files: [${ids.join(', ')}]`,
+      }
+    },
+  }
+}
+
+/**
+ * Assert that ALL of these key facts / phrases appear in the response.
+ * Used for completeness checks: ensures the model reflected all critical corpus facts,
+ * not just one or two.
+ */
+export function allKeyFactsPresent(
+  facts: Array<string | RegExp>,
+  description: string,
+): EvalCriterion {
+  return {
+    id: 'all-key-facts',
+    description,
+    evaluate: (response) => {
+      const missing: string[] = []
+      for (const fact of facts) {
+        const re = typeof fact === 'string'
+          ? new RegExp(fact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+          : fact
+        if (!re.test(response)) missing.push(String(fact))
+      }
+      if (missing.length === 0) return { status: 'PASS' }
+      return {
+        status: 'FAIL',
+        finding: `Missing key facts in response: ${missing.join(' | ')}`,
       }
     },
   }
