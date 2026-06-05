@@ -80,6 +80,10 @@ async function handleChatCompletions(req: IncomingMessage, res: ServerResponse):
     const message = error instanceof Error ? error.message : 'Karsac gateway request failed.'
     if (!res.headersSent) {
       sendError(res, 500, message, 'server_error')
+    } else if (!res.writableEnded) {
+      // Streaming already started — close the SSE stream cleanly to avoid TransferEncodingError
+      res.write('data: [DONE]\n\n')
+      res.end()
     }
   }
 }
@@ -119,6 +123,9 @@ const server = createServer(async (req, res) => {
     const message = error instanceof Error ? error.message : 'Unexpected gateway error.'
     if (!res.headersSent) {
       sendError(res, 500, message, 'server_error')
+    } else if (!res.writableEnded) {
+      res.write('data: [DONE]\n\n')
+      res.end()
     }
   }
 })
