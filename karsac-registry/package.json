@@ -15,7 +15,8 @@
     "karsac:list-proposals": "tsx src/commands/listProposals.ts",
     "karsac:promote-proposal": "tsx src/commands/promoteProposal.ts",
     "test": "vitest run",
-    "test:retrieval": "vitest run --config vitest.retrieval.config.ts"
+    "test:retrieval": "vitest run --config vitest.retrieval.config.ts",
+    "test:scenarios": "vitest run --config vitest.scenarios.config.ts"
   },
   "dependencies": {
     "fast-glob": "^3.3.2",
