@@ -10,7 +10,7 @@ import { resolve } from 'path'
 import matter from 'gray-matter'
 import type { ProposalRepairLog } from '../../src/proposals/proposalTypes.js'
 
-const PROJECT_ROOT = resolve(__dirname, '../../../..')
+const PROJECT_ROOT = resolve(__dirname, '../../..')
 
 export interface ScenarioResult {
   /** Absolute path to the written proposal file */
@@ -34,20 +34,48 @@ export interface ScenarioResult {
 }
 
 /**
+ * Resolve the Windows host IP from the WSL default gateway.
+ * Returns null when not running in WSL or the route isn't found.
+ */
+function getWslWindowsHostIp(): string | null {
+  try {
+    const r = spawnSync('ip', ['route', 'show', 'default'], { encoding: 'utf-8', timeout: 1000 })
+    const m = r.stdout?.match(/default via ([\d.]+)/)
+    return m ? m[1] : null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Check whether Ollama is reachable.
+ * Tries OLLAMA_HOST (or localhost) first; falls back to the WSL Windows host
+ * gateway IP, matching the same retry logic in propose.ts.
  * Scenarios skip (not fail) when Ollama is unavailable.
  */
 export function isOllamaAvailable(): boolean {
-  try {
-    const host = process.env.OLLAMA_HOST ?? 'http://localhost:11434'
-    const result = spawnSync('curl', ['-sf', '--max-time', '2', `${host}/api/tags`], {
-      timeout: 3000,
-      encoding: 'utf-8',
-    })
-    return result.status === 0
-  } catch {
-    return false
+  const host = process.env.OLLAMA_HOST ?? 'http://localhost:11434'
+  const tryUrl = (url: string) => {
+    try {
+      const r = spawnSync('curl', ['-sf', '--max-time', '2', url], {
+        timeout: 3000,
+        encoding: 'utf-8',
+      })
+      return r.status === 0
+    } catch {
+      return false
+    }
   }
+
+  if (tryUrl(`${host}/api/tags`)) return true
+
+  // In WSL, Ollama runs on the Windows host — retry via gateway IP
+  if (host.includes('localhost')) {
+    const winIp = getWslWindowsHostIp()
+    if (winIp && tryUrl(`http://${winIp}:11434/api/tags`)) return true
+  }
+
+  return false
 }
 
 /**
@@ -59,7 +87,8 @@ export function isOllamaAvailable(): boolean {
 function parseProposalPath(stderr: string): string | null {
   const m = stderr.match(/Proposal written(?:\s+with\s+validation\s+failures)?:\s+(.+\.proposed\.md)/i)
   if (!m) return null
-  return resolve(PROJECT_ROOT, m[1].trim())
+  // The path is printed relative to karsac-registry/ (where npm --prefix runs the script).
+  return resolve(PROJECT_ROOT, 'karsac-registry', m[1].trim())
 }
 
 /**

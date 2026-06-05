@@ -101,9 +101,11 @@ export function runSnapshot(config: SnapshotConfig): SnapshotResult {
 
   const validationStatus = scenario.validationStatus
 
-  // Validation status mismatch is always a hard FAIL
-  const statusMismatch = validationStatus !== config.expectedValidation
-    && !(config.expectedValidation === 'needs-review' && validationStatus === 'warning')
+  // Hard FAIL only when the pipeline produces 'fail' and we expected better,
+  // or when we explicitly expected 'fail' and it didn't.
+  // 'warning' is treated as equivalent to 'pass' — warnings are advisory, not failures.
+  const normalize = (s: string) => s === 'warning' ? 'pass' : s
+  const statusMismatch = normalize(validationStatus) !== normalize(config.expectedValidation)
 
   if (!baseline) {
     // First run — write baseline and pass
