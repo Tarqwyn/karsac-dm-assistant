@@ -2,7 +2,6 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { resolve, relative, join, basename, dirname } from 'path'
 import matter from 'gray-matter'
 import { validateProposalFile } from './proposalValidator.js'
-import { PROPOSAL_FOLDERS } from './proposalTypes.js'
 import type { ProposalType } from './proposalTypes.js'
 
 export interface PromoteResult {

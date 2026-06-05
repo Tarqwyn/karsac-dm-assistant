@@ -187,7 +187,7 @@ describe('Pass 3: stub-level place receives explicit prohibition constraint', ()
         corpusNamed: true,
         proposalType: 'place',
         subjectName: 'Valweg',
-        entity: { id: 'places/valweg', type: 'place', title: 'Valweg', path: '', summary: 'Council city in Lösweg.', aliases: [], tags: [], related: {}, doNotConfuseWith: [] },
+        entity: { id: 'places/valweg', type: 'place', title: 'Valweg', path: '', summary: 'Council city in Lösweg.', aliases: [], tags: [], related: {}, doNotConfuseWith: [], collection: '' },
         stubLevel: true,
         coverageLevel: 'stub',
         policy: null,

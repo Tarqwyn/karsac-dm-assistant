@@ -1276,7 +1276,7 @@ describe('validateProposalContent — NPC route_profile and promote_target guard
 const TEMP_VALIDATE_DIR = resolve(TEMP_DIR, 'validate-file-tests')
 
 describe('validateProposalFile', () => {
-  beforeAll(() => mkdirSync(TEMP_VALIDATE_DIR, { recursive: true }))
+  beforeAll(() => { mkdirSync(TEMP_VALIDATE_DIR, { recursive: true }) })
   afterAll(() => rmSync(TEMP_VALIDATE_DIR, { recursive: true, force: true }))
 
   it('warns when filename does not end with .proposed.md', () => {
