@@ -15,8 +15,12 @@
     "karsac:list-proposals": "tsx src/commands/listProposals.ts",
     "karsac:promote-proposal": "tsx src/commands/promoteProposal.ts",
     "test": "vitest run",
+    "test:unit": "vitest run",
     "test:retrieval": "vitest run --config vitest.retrieval.config.ts",
-    "test:scenarios": "vitest run --config vitest.scenarios.config.ts"
+    "test:scenarios": "vitest run --config vitest.scenarios.config.ts",
+    "test:snapshots": "vitest run --config vitest.snapshots.config.ts",
+    "test:pre-merge": "vitest run && vitest run --config vitest.retrieval.config.ts && vitest run --config vitest.scenarios.config.ts",
+    "test:pre-refactor": "vitest run && vitest run --config vitest.retrieval.config.ts && vitest run --config vitest.scenarios.config.ts && vitest run --config vitest.snapshots.config.ts"
   },
   "dependencies": {
     "fast-glob": "^3.3.2",
