@@ -24,6 +24,7 @@ npc:
     - '- Lines to Inhabit must sound like setting speech, not modern or anachronistic dialogue.'
     - '- Use local culture, road duty, settlement pressure, and chapter state as context; do not invent a separate place proposal.'
     - '- Keep can_know and must_not_know grounded in current state context.'
+    - '- CORPUS FIDELITY: When corpus passages are present above, they are AUTHORITATIVE. Do not reduce documented authority (personal/legendary) to ceremonial or figurehead roles. Do not grant knowledge the corpus says this NPC lacks. Do not invent pacts, coercions, or constraints that contradict stated motivations.'
 
 place:
   header:

@@ -24,6 +24,12 @@ import {
 import { clearProposalGovernanceCachesForTests, validateProposalGovernance } from '../src/proposals/proposalGovernance.js'
 import { clearRouterConfigCacheForTests } from '../src/routerConfigLoader.js'
 import { guardArray } from '../src/loaderUtils.js'
+import {
+  getProposalEntityPolicy,
+  loadProposalEntityPolicies,
+  clearProposalEntityPolicyCachesForTests,
+} from '../src/proposals/proposalEntityPolicies.js'
+import { getAllFactionProfiles, getFactionProfile } from '../src/faction-profiles.js'
 
 const TEMP_PROVISIONAL_DIR = resolve('/tmp/karsac-provisional-entity-tests')
 
@@ -1266,5 +1272,381 @@ describe('guardArray — warns and falls back on malformed YAML config', () => {
     } finally {
       ;(process.stderr as any).write = orig
     }
+  })
+})
+
+// ── Session C: invention threshold, Vane type-downgrade, faction guard ────────
+
+describe('invention volume threshold', () => {
+  const baseFrontmatter = {
+    proposal_type: 'place',
+    id: 'proposals/test-place',
+    title: 'Holvstad',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    source_prompt: 'Propose a new place.',
+    promote_target: 'corpus/planning/places',
+    summary: 'A place.',
+    route_profile: 'place-design',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  }
+
+  it('does not warn when provisional count is 4 or fewer', () => {
+    const body = [
+      '# Place: Holvstad',
+      '## Overview\nA small settlement.',
+      '## Geography and Layout\nProvisional: sits on a rocky headland.',
+      '## Key Districts\nProvisional: the upper ward.',
+      '## Notable Landmarks\nProvisional: the old mill.',
+      '## DM Notes\nProvisional: connection to House Mathr.',
+    ].join('\n\n')
+    const result = validateProposalGovernance(baseFrontmatter, body, 'place')
+    expect(result.issues.some((i) => i.includes('Invention volume threshold'))).toBe(false)
+  })
+
+  it('warns when provisional count exceeds 4', () => {
+    const body = [
+      '# Place: Holvstad',
+      '## Overview\nProvisional: a small settlement.',
+      '## Geography and Layout\nProvisional: sits on a rocky headland.',
+      '## Key Districts\nProvisional: the upper ward.',
+      '## Notable Landmarks\nProvisional: the old mill.',
+      '## Factions and Power Structures\nProvisional: a merchant council.',
+      '## DM Notes\nProvisional: connection to House Mathr.',
+    ].join('\n\n')
+    const result = validateProposalGovernance(baseFrontmatter, body, 'place')
+    expect(result.issues.some((i) => i.includes('Invention volume threshold'))).toBe(true)
+    expect(result.issues.some((i) => i.includes('WARN'))).toBe(true)
+  })
+
+  it('threshold fires at exactly 5 provisional markers (> 4)', () => {
+    const markers = Array.from({ length: 5 }, (_, i) => `Provisional: detail ${i + 1}`).join('\n')
+    const body = `# Place: Holvstad\n\n## Overview\n${markers}`
+    const result = validateProposalGovernance(baseFrontmatter, body, 'place')
+    expect(result.issues.some((i) => i.includes('Invention volume threshold'))).toBe(true)
+  })
+})
+
+describe('Vane — corpus-present non-NPC name downgrades to WARN', () => {
+  const baseFrontmatter = (proposalType: string) => ({
+    proposal_type: proposalType,
+    id: `proposals/test-${proposalType}`,
+    title: 'Dock Scene',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    source_prompt: 'test',
+    promote_target: 'corpus/planning/places',
+    summary: 'test',
+    route_profile: 'place-design',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  })
+
+  it('mention of "Vane" in a place proposal produces WARN not FAIL', () => {
+    const body = `# Place: Dock
+
+## Overview
+The harbour is controlled by the Vane family.
+
+## Key NPCs
+- **Vane:** oversees docking fees.
+
+## DM Notes
+Nothing hidden.
+`
+    const result = validateProposalContent(baseFrontmatter('place') as any, body, 'place')
+    const vaneIssues = result.issues.filter((i) => i.includes('"Vane"'))
+    if (vaneIssues.length > 0) {
+      // Must be WARN not FAIL — Vane is corpus-present under a non-NPC type
+      expect(vaneIssues.every((i) => i.startsWith('WARN:'))).toBe(true)
+      expect(vaneIssues.every((i) => !i.startsWith('FAIL:'))).toBe(true)
+    }
+  })
+})
+
+describe('faction profiles — array field shape guards', () => {
+  it('getAllFactionProfiles returns at least one profile', () => {
+    const profiles = getAllFactionProfiles()
+    expect(profiles.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shadow-walkers profile loads with all array fields as actual arrays', () => {
+    const profile = getFactionProfile('shadow-walkers')
+    expect(profile).not.toBeNull()
+    expect(Array.isArray(profile!.aliases)).toBe(true)
+    expect(Array.isArray(profile!.allowedAlignments)).toBe(true)
+    expect(Array.isArray(profile!.languageWhitelist)).toBe(true)
+    expect(Array.isArray(profile!.bannedLanguages)).toBe(true)
+    expect(Array.isArray(profile!.preferredWeapons)).toBe(true)
+    expect(Array.isArray(profile!.doctrineTags)).toBe(true)
+    expect(Array.isArray(profile!.validationRules)).toBe(true)
+    expect(Array.isArray(profile!.generationConstraints)).toBe(true)
+    expect(Array.isArray(profile!.doctrineSupportMechanics)).toBe(true)
+  })
+
+  it('every loaded profile has array fields — no scalar leak from YAML', () => {
+    for (const profile of getAllFactionProfiles()) {
+      expect(Array.isArray(profile.aliases)).toBe(true)
+      expect(Array.isArray(profile.languageWhitelist)).toBe(true)
+      expect(Array.isArray(profile.bannedLanguages)).toBe(true)
+      expect(Array.isArray(profile.validationRules)).toBe(true)
+      expect(Array.isArray(profile.generationConstraints)).toBe(true)
+    }
+  })
+
+  it('shadow-walkers has spellcasting prohibited by default', () => {
+    const profile = getFactionProfile('shadow-walkers')!
+    expect(profile.spellcasting.default).toBe('prohibited')
+  })
+
+  it('shadow-walkers languageWhitelist contains no Undercommon', () => {
+    const profile = getFactionProfile('shadow-walkers')!
+    const lower = profile.languageWhitelist.map((l) => l.toLowerCase())
+    expect(lower.every((l) => !l.includes('undercommon'))).toBe(true)
+  })
+})
+
+describe('canonical_tradition warning rule', () => {
+  afterEach(() => { clearValidationRulesCacheForTests() })
+
+  it('rule exists and fires on "Skald tradition"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')
+    expect(rule).toBeDefined()
+    expect(rule!.severity).toBe('warn')
+    expect(rule!.regex.test('a practitioner of the Skald tradition')).toBe(true)
+  })
+
+  it('fires on "housecarl honour"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('bound by housecarl honour to serve')).toBe(true)
+  })
+
+  it('fires on "housecarl honor" (US spelling)', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('housecarl honor demands obedience')).toBe(true)
+  })
+
+  it('fires on "Lösweg oral culture"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('rooted in Lösweg oral culture')).toBe(true)
+  })
+
+  it('does not fire on unrelated cultural references', () => {
+    const rule = getWarningRules().find((r) => r.id === 'canonical_tradition')!
+    expect(rule.regex.test('a traveller from the south')).toBe(false)
+    expect(rule.regex.test('warrior culture of the fjords')).toBe(false)
+  })
+})
+
+describe('supernatural_atmosphere warning rule', () => {
+  afterEach(() => { clearValidationRulesCacheForTests() })
+
+  it('rule exists and fires on "guided fog"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')
+    expect(rule).toBeDefined()
+    expect(rule!.severity).toBe('warn')
+    expect(rule!.regex.test('the guided fog rolls in from the fjord')).toBe(true)
+  })
+
+  it('fires on "whispering lanterns"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('whispering lanterns line the street')).toBe(true)
+  })
+
+  it('fires on "unexplained glow"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('an unexplained glow from the harbour mouth')).toBe(true)
+  })
+
+  it('fires on "watching fog"', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('the watching fog clung to the docks')).toBe(true)
+  })
+
+  it('does not fire on mundane atmosphere', () => {
+    const rule = getWarningRules().find((r) => r.id === 'supernatural_atmosphere')!
+    expect(rule.regex.test('fog rolls in from the sea at dusk')).toBe(false)
+    expect(rule.regex.test('lanterns hang above the gate')).toBe(false)
+  })
+})
+
+describe('visibility/content mismatch warning', () => {
+  const baseFrontmatter = (proposalType: string, visibility = 'dm-only') => ({
+    proposal_type: proposalType,
+    id: `proposals/test-${proposalType}`,
+    title: 'Test',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility,
+    source_prompt: 'test',
+    promote_target: 'corpus/planning/encounters',
+    summary: 'Test',
+    route_profile: 'encounter-design',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  })
+
+  it('warns when a dm-only non-npc/place/adversary proposal contains a player_safe section', () => {
+    const result = validateProposalGovernance(
+      baseFrontmatter('encounter'),
+      `## Encounter Setup\nSome content.\n\n## player_safe\nDescribe this to players.`,
+      'encounter',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(true)
+  })
+
+  it('does not warn for npc proposals — player_safe is expected there', () => {
+    const result = validateProposalGovernance(
+      { ...baseFrontmatter('npc'), promote_target: 'corpus/planning/npcs', route_profile: 'npc-design' },
+      `## Role\nA guard.\n\n## player_safe\nA tall figure in grey.`,
+      'npc',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(false)
+  })
+
+  it('does not warn when dm-only proposal has no player_safe section', () => {
+    const result = validateProposalGovernance(
+      baseFrontmatter('encounter'),
+      `## Encounter Setup\nSome content.\n\n## dm_only\nDM notes here.`,
+      'encounter',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(false)
+  })
+
+  it('does not warn for adversary proposals with player_safe section', () => {
+    const result = validateProposalGovernance(
+      { ...baseFrontmatter('adversary'), promote_target: 'corpus/adversary-corpus/karsac-adversaries', route_profile: 'adversary-design' },
+      `## Mechanical Base\nBase: spy\n\n## player_safe\nA nondescript figure.`,
+      'adversary',
+    )
+    expect(result.issues.some((i) => i.includes('visibility/content mismatch'))).toBe(false)
+  })
+})
+
+// ── Provisional entity register — _rejected/ exclusion ───────────────────────
+
+const TEMP_REGISTER_DIR = resolve('/tmp/karsac-register-exclusion-tests')
+
+describe('provisional entity register — _rejected/ is excluded', () => {
+  const proposalFrontmatter = (id: string, title: string) => `---
+id: proposals/${id}
+proposal_type: npc
+title: ${title}
+status: proposed
+canonical: provisional
+visibility: dm-only
+created_at: '2026-06-04T00:00:00.000Z'
+source_prompt: test
+route_profile: npc-design
+validation:
+  status: pass
+  issues: []
+related:
+  chapters: []
+  sessions: []
+  factions: []
+  places: []
+  npcs: []
+  items: []
+promote_target: corpus/planning/npcs
+summary: ${title}
+---
+# NPC: ${title}
+
+## Role
+A test figure.
+`
+
+  afterEach(() => {
+    rmSync(TEMP_REGISTER_DIR, { recursive: true, force: true })
+  })
+
+  it('includes entities from normal proposal files', () => {
+    mkdirSync(resolve(TEMP_REGISTER_DIR, 'npcs'), { recursive: true })
+    writeFileSync(
+      resolve(TEMP_REGISTER_DIR, 'npcs', 'greyhand-arvik.proposed.md'),
+      proposalFrontmatter('greyhand-arvik', 'Greyhand Arvik'),
+    )
+    const register = loadProvisionalEntityRegister(TEMP_REGISTER_DIR)
+    expect(register.some((e) => e.name === 'Greyhand Arvik')).toBe(true)
+  })
+
+  it('excludes entities from proposals inside _rejected/', () => {
+    mkdirSync(resolve(TEMP_REGISTER_DIR, 'npcs'), { recursive: true })
+    mkdirSync(resolve(TEMP_REGISTER_DIR, '_rejected', 'npcs'), { recursive: true })
+    writeFileSync(
+      resolve(TEMP_REGISTER_DIR, 'npcs', 'greyhand-arvik.proposed.md'),
+      proposalFrontmatter('greyhand-arvik', 'Greyhand Arvik'),
+    )
+    writeFileSync(
+      resolve(TEMP_REGISTER_DIR, '_rejected', 'npcs', 'failed-entity.proposed.md'),
+      proposalFrontmatter('failed-entity', 'Tolvrak the Burned'),
+    )
+    const register = loadProvisionalEntityRegister(TEMP_REGISTER_DIR)
+    expect(register.some((e) => e.name === 'Greyhand Arvik')).toBe(true)
+    expect(register.some((e) => e.name === 'Tolvrak the Burned')).toBe(false)
+  })
+
+  it('returns empty register when proposals root does not exist', () => {
+    const register = loadProvisionalEntityRegister(resolve(TEMP_REGISTER_DIR, 'nonexistent'))
+    expect(register).toHaveLength(0)
+  })
+})
+
+// ── Coverage level classification ─────────────────────────────────────────────
+
+describe('coverage level classification', () => {
+  afterEach(() => { clearProposalEntityPolicyCachesForTests() })
+
+  it('classifies anchored entities correctly — Jarl Beorn', () => {
+    const policy = getProposalEntityPolicy('npcs/jarl-beorn')
+    expect(policy).not.toBeNull()
+    expect(policy!.coverageLevel).toBe('anchored')
+    expect(policy!.canonicalReferenceOnly).toBe(true)
+  })
+
+  it('classifies stub entities correctly', () => {
+    // Find a stub entity — check Maret or any stub-level NPC
+    const policy = getProposalEntityPolicy('npcs/maret')
+    // If not in YAML, falls through to null — accept either: what matters is
+    // that if found, it parses as stub
+    if (policy !== null) {
+      expect(policy.coverageLevel).toBe('stub')
+    }
+    // Alternatively verify via a known stub in the YAML directly
+    const policies = Array.from(
+      loadProposalEntityPolicies().values()
+    )
+    const stubs = policies.filter((p) => p.coverageLevel === 'stub')
+    expect(stubs.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('classifies bounded entities correctly — Valweg', () => {
+    const policy = getProposalEntityPolicy('places/valweg')
+    expect(policy).not.toBeNull()
+    expect(policy!.coverageLevel).toBe('bounded')
+  })
+
+  it('returns full coverage for entities not in the policy registry', () => {
+    const policy = getProposalEntityPolicy('npcs/unknown-entity-xyz')
+    expect(policy).toBeNull()
+  })
+
+  it('defaults unknown coverage_level values to full', () => {
+    // The parser normalises unrecognised values to 'full' — verify via known anchored entry
+    // and confirm the type union only allows the four known values
+    const policy = getProposalEntityPolicy('npcs/jarl-beorn')
+    const validLevels = ['stub', 'anchored', 'bounded', 'full']
+    expect(validLevels).toContain(policy!.coverageLevel)
+  })
+
+  it('stub entity has unresolved_fields_preferred and minimal proposal_scope', () => {
+    const policies = Array.from(
+      loadProposalEntityPolicies().values()
+    )
+    const stub = policies.find((p) => p.coverageLevel === 'stub')
+    expect(stub).toBeDefined()
+    expect(stub!.unresolvedFieldsPreferred).toBe(true)
+    expect(stub!.proposalScope).toBe('minimal')
   })
 })

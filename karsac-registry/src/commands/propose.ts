@@ -5,6 +5,7 @@ import {
   buildAdversaryDesignMessages,
   buildEncounterDesignMessages,
   buildChapterOutlineMessages,
+  buildItemDesignMessages,
   buildPlaceMessages,
   buildNpcDesignMessages,
 } from '../resolver.js'
@@ -27,7 +28,7 @@ import {
 } from '../proposals/proposalRouting.js'
 import { validateProposalContent } from '../proposals/proposalValidator.js'
 import type { ProposalType, ProposalFrontmatter } from '../proposals/proposalTypes.js'
-import { PROMOTE_TARGETS } from '../proposals/proposalTypes.js'
+import { getPromoteTarget } from '../proposals/proposalContractsLoader.js'
 import { slugify } from '../proposals/slugify.js'
 import { getGatewayBuildInfo } from '../buildInfo.js'
 import { applyCreativeTreatment } from '../creativeTreatment/applyCreativeTreatment.js'
@@ -407,6 +408,7 @@ async function main(): Promise<void> {
   const frontmatterRouteProfile = proposalType === 'place' ? 'place-design'
     : proposalType === 'adversary'  ? 'adversary-design'
     : proposalType === 'encounter'  ? 'encounter-design'
+    : (proposalType === 'item' || proposalType === 'handout' || proposalType === 'clue') ? 'item-design'
     : routeProfile
 
   // Build messages and call model
@@ -525,12 +527,30 @@ async function main(): Promise<void> {
       stateData: { campaignState, worldThreads, npcsState },
       corpusAnchor,
     })
-    messages = buildNpcDesignMessages({ stateData: { campaignState, worldThreads, npcsState } }, generationPrompt)
+    messages = buildNpcDesignMessages(
+      { stateData: { campaignState, worldThreads, npcsState } },
+      generationPrompt,
+      corpusAnchor.exactSnippets.length > 0 ? corpusAnchor.exactSnippets : undefined,
+    )
     model = process.env.NPC_MODEL ?? DEFAULT_MODEL
     temperature = DRAFT_SETTINGS.temperature
     topP = DRAFT_SETTINGS.topP
+  } else if (proposalType === 'item' || proposalType === 'handout' || proposalType === 'clue') {
+    generationPrompt = buildConstrainedProposalPrompt({
+      proposalType,
+      prompt,
+      stateData: { campaignState: null, worldThreads: null, npcsState: null },
+      corpusAnchor,
+    })
+    messages = buildItemDesignMessages(
+      generationPrompt,
+      corpusAnchor.exactSnippets.length > 0 ? corpusAnchor.exactSnippets : undefined,
+    )
+    model = process.env.ITEM_MODEL ?? DEFAULT_MODEL
+    temperature = DRAFT_SETTINGS.temperature
+    topP = DRAFT_SETTINGS.topP
   } else {
-    // chapter-outline and everything else default
+    // chapter-outline, scene, state-update and everything else
     const stateData = loadChapterOutlineContext()
     generationPrompt = buildConstrainedProposalPrompt({
       proposalType,
@@ -565,7 +585,7 @@ async function main(): Promise<void> {
     preferredMechanicalBase: null as string | null,
     canonicalStatus: 'provisional',
     sourcePrompt: prompt,
-    promoteTarget: PROMOTE_TARGETS[proposalType] ?? '',
+    promoteTarget: getPromoteTarget(proposalType) ?? '',
     routeProfile: frontmatterRouteProfile,
   }
   if (proposalType === 'adversary') {
@@ -660,7 +680,7 @@ async function main(): Promise<void> {
     process.stderr.write(`   These are recorded in the proposal validation field.\n`)
   }
 
-  const promoteTarget = PROMOTE_TARGETS[proposalType] ?? ''
+  const promoteTarget = getPromoteTarget(proposalType) ?? ''
   const buildInfo = getGatewayBuildInfo()
   const relatedFactions =
     proposalType === 'adversary' && treatmentLockedConstraints.lockedFaction

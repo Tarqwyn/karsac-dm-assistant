@@ -78,7 +78,13 @@ async function handleChatCompletions(req: IncomingMessage, res: ServerResponse):
     sendJson(res, 200, completion)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Karsac gateway request failed.'
-    sendError(res, 500, message, 'server_error')
+    if (!res.headersSent) {
+      sendError(res, 500, message, 'server_error')
+    } else if (!res.writableEnded) {
+      // Streaming already started — close the SSE stream cleanly to avoid TransferEncodingError
+      res.write('data: [DONE]\n\n')
+      res.end()
+    }
   }
 }
 
@@ -115,7 +121,12 @@ const server = createServer(async (req, res) => {
     sendError(res, 404, 'Not found.', 'not_found_error')
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected gateway error.'
-    sendError(res, 500, message, 'server_error')
+    if (!res.headersSent) {
+      sendError(res, 500, message, 'server_error')
+    } else if (!res.writableEnded) {
+      res.write('data: [DONE]\n\n')
+      res.end()
+    }
   }
 })
 

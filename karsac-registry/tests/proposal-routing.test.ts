@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { mkdirSync, readFileSync, rmSync } from 'fs'
 import { resolve } from 'path'
 import matter from 'gray-matter'
-import { detectProposalExecutionPlan } from '../src/proposals/proposalRouting.js'
+import { detectProposalExecutionPlan, profileForExplicitType } from '../src/proposals/proposalRouting.js'
 import {
   detectCorpusAnchorForProposal,
 } from '../src/proposals/proposalEntityRegistry.js'
@@ -187,7 +187,7 @@ describe('Pass 3: stub-level place receives explicit prohibition constraint', ()
         corpusNamed: true,
         proposalType: 'place',
         subjectName: 'Valweg',
-        entity: { id: 'places/valweg', type: 'place', title: 'Valweg', path: '', summary: 'Council city in Lösweg.', aliases: [], tags: [], related: {}, doNotConfuseWith: [] },
+        entity: { id: 'places/valweg', type: 'place', title: 'Valweg', path: '', summary: 'Council city in Lösweg.', aliases: [], tags: [], related: {}, doNotConfuseWith: [], collection: '' },
         stubLevel: true,
         coverageLevel: 'stub',
         policy: null,
@@ -197,6 +197,124 @@ describe('Pass 3: stub-level place receives explicit prohibition constraint', ()
     expect(prompt).toContain('Do not invent geography, rivers, districts, landmarks')
     expect(prompt).toContain('A correct minimal proposal is preferable to a detailed invented one')
     expect(prompt).not.toContain('Stub level only unless corpus contains sufficient detail')
+  })
+})
+
+// ── detectProposalExecutionPlan — all three branches ─────────────────────────
+
+describe('detectProposalExecutionPlan — explicit --type parameter branch', () => {
+  it('uses explicit type and sets explicitType: true', () => {
+    const plan = detectProposalExecutionPlan('a Shadow Walker operative in the docks', 'adversary')
+    expect(plan.proposalType).toBe('adversary')
+    expect(plan.proposalProfile).toBe('adversary-design')
+    expect(plan.explicitType).toBe(true)
+    expect(plan.routeReason).toBe('explicit --type')
+  })
+
+  it('collects adversary matched terms when explicit type is adversary', () => {
+    const plan = detectProposalExecutionPlan('stat block for a new adversary', 'adversary')
+    expect(plan.adversaryMatchedTerms.length).toBeGreaterThan(0)
+    expect(plan.placeMatchedTerms).toHaveLength(0)
+  })
+
+  it('collects place matched terms when explicit type is place', () => {
+    const plan = detectProposalExecutionPlan('a new market town near the fjord', 'place')
+    expect(plan.proposalType).toBe('place')
+    expect(plan.placeMatchedTerms.length).toBeGreaterThan(0)
+    expect(plan.adversaryMatchedTerms).toHaveLength(0)
+  })
+
+  it('sets no matched terms for non-place non-adversary explicit types', () => {
+    const plan = detectProposalExecutionPlan('a new handout for the party', 'handout')
+    expect(plan.proposalType).toBe('handout')
+    expect(plan.placeMatchedTerms).toHaveLength(0)
+    expect(plan.adversaryMatchedTerms).toHaveLength(0)
+    expect(plan.explicitType).toBe(true)
+  })
+})
+
+describe('detectProposalExecutionPlan — prompt-detected explicit type branch', () => {
+  it('detects "Propose a new NPC" opening and sets explicitType: true', () => {
+    const plan = detectProposalExecutionPlan('Propose a new NPC: a market vendor in Valweg.')
+    expect(plan.proposalType).toBe('npc')
+    expect(plan.explicitType).toBe(true)
+    expect(plan.routeReason).toContain('explicit opening proposal type: npc')
+  })
+
+  it('detects "Propose a new scene" and routes correctly', () => {
+    const plan = detectProposalExecutionPlan('Propose a new scene: the arrival at the docks.')
+    expect(plan.proposalType).toBe('scene')
+    expect(plan.explicitType).toBe(true)
+  })
+
+  it('detects "Propose a new chapter outline" and routes correctly', () => {
+    const plan = detectProposalExecutionPlan('Propose a new chapter outline for chapter 3.')
+    expect(plan.proposalType).toBe('chapter-outline')
+    expect(plan.explicitType).toBe(true)
+  })
+
+  it('captures contextProfile from router even for explicit openers', () => {
+    const plan = detectProposalExecutionPlan('Propose a new NPC: how do saving throws work?')
+    expect(plan.proposalType).toBe('npc')
+    // contextProfile comes from routeQuestion — may differ from proposalProfile
+    expect(plan.contextProfile).toBeDefined()
+  })
+})
+
+describe('detectProposalExecutionPlan — route-based detection branch', () => {
+  it('returns explicitType: false for unstructured prompts', () => {
+    const plan = detectProposalExecutionPlan('design an encounter at the docks')
+    expect(plan.explicitType).toBe(false)
+  })
+
+  it('routes to place when place-indicator terms present and no explicit type', () => {
+    const plan = detectProposalExecutionPlan('a new settlement, market town with a harbour and population of traders')
+    expect(plan.proposalType).toBe('place')
+    expect(plan.proposalProfile).toBe('place-design')
+    expect(plan.placeMatchedTerms.length).toBeGreaterThan(0)
+  })
+
+  it('routes to chapter-outline for prompts containing "chapter outline"', () => {
+    const plan = detectProposalExecutionPlan('a chapter outline covering the road to Valweg')
+    expect(plan.proposalType).toBe('chapter-outline')
+  })
+
+  it('proposalProfile falls back to route profile for non-place non-adversary non-encounter types', () => {
+    const plan = detectProposalExecutionPlan('a chapter outline for the campaign')
+    expect(plan.proposalType).toBe('chapter-outline')
+    // Profile is whatever the router returns — not one of the three specialist profiles
+    expect(['place-design', 'adversary-design', 'encounter-design']).not.toContain(plan.proposalProfile)
+  })
+
+  it('routes to adversary with adversary-design profile when body has adversary signals', () => {
+    const plan = detectProposalExecutionPlan('stat block and traits and actions for a new adversary')
+    expect(plan.proposalType).toBe('adversary')
+    expect(plan.proposalProfile).toBe('adversary-design')
+    expect(plan.explicitType).toBe(false)
+    expect(plan.adversaryMatchedTerms.length).toBeGreaterThan(0)
+  })
+})
+
+describe('profileForExplicitType — profile mapping', () => {
+  it('maps adversary to adversary-design', () => {
+    expect(profileForExplicitType('adversary')).toBe('adversary-design')
+  })
+  it('maps encounter to encounter-design', () => {
+    expect(profileForExplicitType('encounter')).toBe('encounter-design')
+  })
+  it('maps npc to npc-design', () => {
+    expect(profileForExplicitType('npc')).toBe('npc-design')
+  })
+  it('maps place to place-design', () => {
+    expect(profileForExplicitType('place')).toBe('place-design')
+  })
+  it('maps chapter-outline to state', () => {
+    expect(profileForExplicitType('chapter-outline')).toBe('state')
+  })
+  it('maps handout/item/clue to item-design', () => {
+    expect(profileForExplicitType('handout')).toBe('item-design')
+    expect(profileForExplicitType('item')).toBe('item-design')
+    expect(profileForExplicitType('clue')).toBe('item-design')
   })
 })
 

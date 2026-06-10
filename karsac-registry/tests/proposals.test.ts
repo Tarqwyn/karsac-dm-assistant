@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
-import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs'
+import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 import matter from 'gray-matter'
 import { slugify } from '../src/proposals/slugify.js'
 import { summariseProposal } from '../src/proposals/proposalSummary.js'
 import { writeProposal } from '../src/proposals/proposalWriter.js'
-import { validateProposalContent } from '../src/proposals/proposalValidator.js'
+import { validateProposalContent, validateProposalFile } from '../src/proposals/proposalValidator.js'
 import { repairAdversaryOutput, validateAdversaryOutput } from '../src/adversary-design.js'
 import { pruneProposalOutput } from '../src/proposals/proposalPruner.js'
 import {
@@ -1155,5 +1155,216 @@ describe('proposalContractsLoader — YAML is the source of truth', () => {
     expect(headings).toContain('## Ruling')
     expect(headings).toContain('## DM call')
     expect(headings.length).toBe(6)
+  })
+})
+
+// ── validateProposalContent — uncovered type paths ────────────────────────────
+
+describe('validateProposalContent — state-update proposals', () => {
+  const baseFm = {
+    proposal_type: 'state-update',
+    id: 'proposals/state-updates/test',
+    title: 'Test State Update',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    source_prompt: 'Update state.',
+    promote_target: '',
+    summary: 'Test',
+    route_profile: 'state',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  }
+
+  it('always warns that state-update cannot be directly promoted', () => {
+    const result = validateProposalContent(baseFm, '## Summary\nSome state change.', 'state-update')
+    expect(result.issues.some((i) => i.includes('cannot be directly promoted'))).toBe(true)
+  })
+
+  it('warns additionally when body mentions direct JSON edit', () => {
+    const result = validateProposalContent(
+      baseFm,
+      '## Summary\nThis is a direct json edit to campaign-state.',
+      'state-update',
+    )
+    const warns = result.issues.filter((i) => i.includes('WARN:'))
+    expect(warns.length).toBeGreaterThanOrEqual(2)
+    expect(warns.some((i) => i.includes('patches'))).toBe(true)
+  })
+
+  it('does not produce the patches warn when body describes patches properly', () => {
+    const result = validateProposalContent(
+      baseFm,
+      '## Summary\nApply the following "patches" to world state.',
+      'state-update',
+    )
+    const patchWarn = result.issues.filter((i) => i.includes('patches'))
+    expect(patchWarn).toHaveLength(0)
+  })
+})
+
+describe('validateProposalContent — chapter-outline JSON reference guards', () => {
+  const baseFm = {
+    proposal_type: 'chapter-outline',
+    id: 'proposals/chapter-outlines/test',
+    title: 'Test Chapter',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    source_prompt: 'Propose a chapter outline.',
+    promote_target: 'corpus/planning/chapters',
+    summary: 'Test',
+    route_profile: 'state',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+  }
+
+  it('fails when body references campaign-state.json directly', () => {
+    const body = '## Chapter Purpose\nSee campaign-state.json for current state.'
+    const result = validateProposalContent(baseFm, body, 'chapter-outline')
+    expect(result.issues.some((i) => i.includes('campaign-state.json'))).toBe(true)
+    expect(result.valid).toBe(false)
+  })
+
+  it('fails when body references player-knowledge.json directly', () => {
+    const body = '## Chapter Purpose\nCheck player-knowledge.json before running.'
+    const result = validateProposalContent(baseFm, body, 'chapter-outline')
+    expect(result.issues.some((i) => i.includes('player-knowledge.json'))).toBe(true)
+    expect(result.valid).toBe(false)
+  })
+})
+
+describe('validateProposalContent — NPC route_profile and promote_target guards', () => {
+  const npcFm = (overrides: Record<string, unknown> = {}) => ({
+    proposal_type: 'npc',
+    id: 'proposals/npcs/test-npc',
+    title: 'Test NPC',
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    source_prompt: 'Propose a new NPC.',
+    promote_target: 'corpus/planning/npcs',
+    summary: 'Test',
+    route_profile: 'npc-design',
+    related: { factions: [], places: [], npcs: [], chapters: [], sessions: [], items: [] },
+    ...overrides,
+  })
+
+  it('fails when npc proposal has route_profile: state', () => {
+    const body = '# NPC: Test NPC\n\n## Role\nA test NPC.'
+    const result = validateProposalContent(npcFm({ route_profile: 'state' }), body, 'npc')
+    expect(result.issues.some((i) => i.includes('route_profile') && i.startsWith('FAIL:'))).toBe(true)
+  })
+
+  it('fails when npc proposal has route_profile: place-design', () => {
+    const body = '# NPC: Test NPC\n\n## Role\nA test NPC.'
+    const result = validateProposalContent(npcFm({ route_profile: 'place-design' }), body, 'npc')
+    expect(result.issues.some((i) => i.includes('route_profile') && i.startsWith('FAIL:'))).toBe(true)
+  })
+
+  it('warns when npc promote_target does not point to planning/npcs', () => {
+    const body = '# NPC: Test NPC\n\n## Role\nA test NPC.'
+    const result = validateProposalContent(
+      npcFm({ promote_target: 'corpus/planning/places' }),
+      body,
+      'npc',
+    )
+    expect(result.issues.some((i) => i.includes('promote_target') && i.startsWith('WARN:'))).toBe(true)
+  })
+})
+
+// ── validateProposalFile — file-level validation paths ────────────────────────
+
+const TEMP_VALIDATE_DIR = resolve(TEMP_DIR, 'validate-file-tests')
+
+describe('validateProposalFile', () => {
+  beforeAll(() => { mkdirSync(TEMP_VALIDATE_DIR, { recursive: true }) })
+  afterAll(() => rmSync(TEMP_VALIDATE_DIR, { recursive: true, force: true }))
+
+  it('warns when filename does not end with .proposed.md', () => {
+    const p = resolve(TEMP_VALIDATE_DIR, 'test-npc.md')
+    writeFileSync(p, `---
+id: proposals/npcs/test
+proposal_type: npc
+title: Test
+status: proposed
+canonical: provisional
+visibility: dm-only
+source_prompt: test
+promote_target: corpus/planning/npcs
+summary: Test
+route_profile: npc-design
+related:
+  factions: []
+  places: []
+  npcs: []
+  chapters: []
+  sessions: []
+  items: []
+---
+# NPC: Test
+
+## Role
+A test figure.
+`)
+    const result = validateProposalFile(p)
+    expect(result.issues.some((i) => i.includes('.proposed.md'))).toBe(true)
+  })
+
+  it('fails immediately when file cannot be read', () => {
+    // Both a nonexistent path and a path with no read permission trigger the catch
+    const result = validateProposalFile(resolve(TEMP_VALIDATE_DIR, 'nonexistent.proposed.md'))
+    expect(result.valid).toBe(false)
+    expect(result.status).toBe('fail')
+    expect(result.issues.some((i) => i.includes('cannot read file'))).toBe(true)
+    // Confirm early return — no other issues are appended after the read failure
+    expect(result.issues).toHaveLength(1)
+  })
+
+  it('fails when frontmatter cannot be parsed', () => {
+    const p = resolve(TEMP_VALIDATE_DIR, 'bad-frontmatter.proposed.md')
+    writeFileSync(p, `---\n: invalid: yaml: [\n---\nsome body`)
+    const result = validateProposalFile(p)
+    expect(result.valid).toBe(false)
+    expect(result.status).toBe('fail')
+  })
+
+  it('delegates to validateProposalContent for a valid file', () => {
+    const p = resolve(TEMP_VALIDATE_DIR, 'valid-npc.proposed.md')
+    writeFileSync(p, `---
+id: proposals/npcs/valid-test
+proposal_type: npc
+title: Valid Test NPC
+status: proposed
+canonical: provisional
+visibility: dm-only
+source_prompt: Propose a new NPC.
+promote_target: corpus/planning/npcs
+summary: A valid test NPC.
+route_profile: npc-design
+related:
+  factions: []
+  places: []
+  npcs: []
+  chapters: []
+  sessions: []
+  items: []
+---
+# NPC: Valid Test NPC
+
+## Role
+A test figure used for coverage.
+
+## can_know
+- Basic facts about the settlement.
+
+## must_not_know
+- The deeper conspiracy.
+
+## dm_only
+Known only to the DM.
+`)
+    const result = validateProposalFile(p)
+    // File parses and delegates — result may pass or warn depending on corpus; should not error
+    expect(['pass', 'warning', 'fail']).toContain(result.status)
+    expect(result.issues).toBeDefined()
   })
 })

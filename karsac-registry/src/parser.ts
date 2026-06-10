@@ -6,7 +6,9 @@ const STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'at', 'and', 'or', 'to
 
 export function parseFile(absolutePath: string, collectionsRoot: string): Entity | null {
   const raw = readFileSync(absolutePath, { encoding: 'utf-8' });
-  const { data: fm, content } = matter(raw);
+  // Strip leading HTML comments (<!-- ... -->) so gray-matter can find the frontmatter
+  const stripped = raw.replace(/^(\s*<!--[\s\S]*?-->\s*)+/, '')
+  const { data: fm, content } = matter(stripped);
 
   if (!fm.id) return null;
 
