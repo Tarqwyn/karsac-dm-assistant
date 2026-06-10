@@ -61,6 +61,7 @@ function proposalTypesForSubject(proposalType: ProposalType): string[] {
   if (proposalType === 'npc') return ['npc']
   if (proposalType === 'place') return ['place']
   if (proposalType === 'adversary') return ['faction', 'npc', 'place']
+  if (proposalType === 'item' || proposalType === 'handout' || proposalType === 'clue') return ['item', 'concept']
   return ['npc', 'place', 'faction']
 }
 

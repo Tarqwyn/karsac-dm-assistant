@@ -2,24 +2,32 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { resolve, relative, join, basename, dirname } from 'path'
 import matter from 'gray-matter'
 import { validateProposalFile } from './proposalValidator.js'
+import { buildIndex } from '../build-index.js'
 import type { ProposalType } from './proposalTypes.js'
 
 export interface PromoteResult {
   sourcePath: string
   targetPath: string
   success: boolean
+  indexRebuilt: boolean
+  forcedPastValidation: boolean
+  validationIssues: string[]
   error?: string
 }
 
-export function promoteProposal(
+export async function promoteProposal(
   proposalPath: string,
   projectRoot: string,
   overwrite = false,
-): PromoteResult {
+  force = false,
+): Promise<PromoteResult> {
   const result: PromoteResult = {
     sourcePath: proposalPath,
     targetPath: '',
     success: false,
+    indexRebuilt: false,
+    forcedPastValidation: false,
+    validationIssues: [],
   }
 
   // 1. Read and parse
@@ -44,9 +52,13 @@ export function promoteProposal(
 
   // 2. Validate
   const validation = validateProposalFile(proposalPath)
+  result.validationIssues = validation.issues
   if (!validation.valid) {
-    result.error = `Validation failed:\n${validation.issues.join('\n')}`
-    return result
+    if (!force) {
+      result.error = `Validation failed (${validation.issues.filter(i => i.startsWith('FAIL:')).length} hard failure(s)).\nRun with --force to promote anyway after manual review.\n\n${validation.issues.join('\n')}`
+      return result
+    }
+    result.forcedPastValidation = true
   }
 
   // 3. Refuse state-update promotions
@@ -98,6 +110,10 @@ export function promoteProposal(
   }
   const updatedSource = matter.stringify(body, updatedFm)
   writeFileSync(proposalPath, updatedSource, { encoding: 'utf-8' })
+
+  // 9. Rebuild entity index so the promoted entity is immediately findable
+  await buildIndex()
+  result.indexRebuilt = true
 
   result.success = true
   return result

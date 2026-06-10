@@ -45,6 +45,7 @@ export function profileForExplicitType(t: ProposalType): string {
   if (t === 'encounter') return 'encounter-design'
   if (t === 'npc') return 'npc-design'
   if (t === 'place') return 'place-design'
+  if (t === 'item' || t === 'handout' || t === 'clue') return 'item-design'
   if (t === 'chapter-outline') return 'state'
   return 'state'
 }

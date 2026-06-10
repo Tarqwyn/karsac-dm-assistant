@@ -311,8 +311,10 @@ describe('profileForExplicitType — profile mapping', () => {
   it('maps chapter-outline to state', () => {
     expect(profileForExplicitType('chapter-outline')).toBe('state')
   })
-  it('maps unknown types to state', () => {
-    expect(profileForExplicitType('handout')).toBe('state')
+  it('maps handout/item/clue to item-design', () => {
+    expect(profileForExplicitType('handout')).toBe('item-design')
+    expect(profileForExplicitType('item')).toBe('item-design')
+    expect(profileForExplicitType('clue')).toBe('item-design')
   })
 })
 

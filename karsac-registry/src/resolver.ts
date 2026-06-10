@@ -1874,6 +1874,26 @@ export function buildAdversaryDesignMessages(
     ? `KARSAC ADVERSARY CONTEXT:\n${advLines.join('\n')}`
     : '(No matching Karsac adversary corpus context loaded.)'
 
+  const doctrineFidelityBlock = ctx.relatedAdversaries.length > 0
+    ? `DOCTRINE FIDELITY RULE — BINDING (adversary corpus is loaded):
+The tactics, can_know, and must_not_know fields in KARSAC ADVERSARY CONTEXT are BINDING DOCTRINE.
+- Tactics = operational doctrine. Reproduce it faithfully. DO NOT substitute, invert, or replace it.
+- If ANY tactic entry mentions "delay", "information over combat", "not a body count", "social obstruction", "leave a route to compliance", or "compliance" as a goal: the adversary is DELAY-PRIMARY / SOCIAL-PRIMARY. You MUST NOT label or design it as "combat-led" or "combat-primary". Combat is a fallback only.
+- If tactics say "mission completion over engagement" or "observe before striking": combat is SECONDARY. The adversary delays, observes, and retreats rather than fighting to kill.
+- If tactics say "strike quality not slaughter": lethal-capable but disciplined — NOT a non-lethal ideology, NOT a social bureaucrat.
+- must_not_know = absolute restrictions. Do NOT portray this adversary as possessing that knowledge anywhere in the proposal.
+- can_know = the ceiling of this adversary's knowledge. Do NOT exceed it.
+- The proposal's can_know and must_not_know sections MUST match the corpus entries above.
+
+ADVERSARY IDENTITY RULE — BINDING (named adversary group in prompt):
+If the user prompt names a specific Karsac adversary group (e.g. "Shadow Walker", "Mathr road agent") AND that group appears in KARSAC ADVERSARY CONTEXT above:
+- The generated adversary MUST be a variant, member, or operational arm of that named group.
+- Do NOT create an unrelated new adversary type (e.g. a generic "dockworker" or "toll inspector") and assign it the named group's corpus. The adversary's faction, operational signature, and core tactics MUST match the named group.
+- Surface cover (dockworker disguise, road warden guise) is flavour only — the underlying adversary is still a member of the named group with that group's doctrine intact.
+
+`
+    : ''
+
   // ── System message ──────────────────────────────────────────────────────────
   const system = `${constraintBlock}You are Karsac Adversary Designer.
 
@@ -2091,7 +2111,9 @@ ${stateSummary}
 
 ${baseBlock}
 
-${advBlock}`
+${advBlock}
+
+${doctrineFidelityBlock}`
 
   // ── Variant / modular detection ───────────────────────────────────────────
   // If the prompt asks for modular options (choose X out of Y, never identical,
@@ -2784,6 +2806,7 @@ export interface NpcDesignCtx {
 export function buildNpcDesignMessages(
   ctx: NpcDesignCtx,
   question: string,
+  corpusSnippets?: string[],
 ): Array<{ role: string; content: string }> {
   const div = '─'.repeat(60)
   const cs = (ctx.stateData.campaignState as any) ?? {}
@@ -2796,6 +2819,23 @@ export function buildNpcDesignMessages(
   const activeNpcs: any[] = (ns.npcs ?? []).slice(0, 6)
   if (activeNpcs.length > 0) stateLines.push(`Active NPCs: ${activeNpcs.map((npc: any) => npc.name).join(', ')}`)
   const stateSummary = stateLines.length > 0 ? stateLines.join('\n') : '(no campaign state loaded)'
+
+  const corpusBlock = corpusSnippets && corpusSnippets.length > 0
+    ? `\nCORPUS ANCHOR FIDELITY — ACTIVE
+${div}
+This NPC is named in existing corpus. The passages below are AUTHORITATIVE canon.
+You MUST conform to them. Violations are generation failures.
+
+PROHIBITED (regardless of what seems narratively useful):
+- Do NOT reduce documented authority (personal, legendary, direct command) to ceremonial or figurehead status.
+- Do NOT add knowledge this NPC does not possess according to corpus (e.g. if corpus says they do NOT know what something is, they must not know).
+- Do NOT invent loyalties, pacts, coercions, or constraints that contradict stated motivations.
+- Do NOT contradict any characterization, relationship, or fact stated in the passages below.
+
+Authoritative corpus passages:
+${corpusSnippets.map(s => `  ${s}`).join('\n')}
+${div}`
+    : ''
 
   const system = `You are Karsac NPC Designer.
 
@@ -2812,7 +2852,7 @@ NPC DESIGN RULES:
 - player_safe must contain only what players can observe or plausibly infer.
 - dm_only must contain the hidden truth, pressure, loyalties, or constraints.
 - Return Markdown using the exact headings below and in the same order.
-
+${corpusBlock}
 CAMPAIGN STATE:
 ${div}
 ${stateSummary}
@@ -2879,6 +2919,67 @@ related:
 summary: "<One sentence: who this NPC is and why they matter>"
 ---
 \`\`\``
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ]
+}
+
+export function buildItemDesignMessages(
+  question: string,
+  corpusSnippets?: string[],
+): Array<{ role: string; content: string }> {
+  const div = '─'.repeat(60)
+
+  const corpusBlock = corpusSnippets && corpusSnippets.length > 0
+    ? `\nCORPUS ANCHOR FIDELITY — ACTIVE
+${div}
+The following corpus passages are AUTHORITATIVE. Your proposal MUST conform to them.
+DO NOT contradict any characterization, practice, or constraint stated below.
+If the corpus describes a tradition as ORAL (carried in memory, spoken, not written), the item or handout MUST reflect that — do NOT create written tracking systems, tallies, or written records for an oral tradition.
+
+Authoritative corpus passages:
+${corpusSnippets.map(s => `  ${s}`).join('\n')}
+${div}\n`
+    : ''
+
+  const system = `You are Karsac Item Designer.
+
+You create provisional item, handout, and clue proposal documents for Karsac.
+
+ITEM DESIGN RULES:
+- Physical description must use ONLY details present in or directly implied by the corpus anchor text. Do not invent materials, magical properties, warmth, runes, glowing effects, or supernatural qualities unless the corpus explicitly states them.
+- If the corpus says the item is bronze, it is bronze. Do not change material, size, shape, or finish.
+- Narrative significance explains what the item reveals, proves, or enables in the fiction — keep it grounded.
+- player_safe contains only what a player can observe by handling or examining the item.
+- dm_only contains the hidden significance, what finding it proves, and when to reveal it.
+- Do not invent factions, NPCs, or locations not present in the corpus anchor text.
+- Keep all invented details clearly marked Provisional.
+${corpusBlock}
+Return Markdown using EXACTLY these headings IN THIS ORDER.`
+
+  const user = `Generate an item proposal for:
+"${question}"
+
+Use EXACTLY these headings IN THIS ORDER. Do not rename, skip, or reorder them.
+
+# Item: [Item name]
+
+## Physical Description
+[Exact physical properties: material, size, shape, markings. Stay strictly within what the corpus states.]
+
+## Narrative Significance
+[What this item reveals, proves, or enables. Its role in the session or chapter.]
+
+## player_safe
+[Only observable facts: what it looks like, feels like, what any player can determine by handling it.]
+
+## dm_only
+[Hidden significance: what it actually means, who made it, what finding it proves, when to use it.]
+
+## How Players Encounter It
+[One or two sentences on the circumstances of discovery.]`
 
   return [
     { role: 'system', content: system },

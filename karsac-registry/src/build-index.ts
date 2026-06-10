@@ -5,7 +5,7 @@ import { parseFile, extractSections } from './parser.js';
 import type { EntityMap, AliasMap, RelationshipMap, SectionMap } from './types.js';
 import { COLLECTIONS_ROOT, INDEX_DIR } from './paths.js';
 
-async function buildIndex(): Promise<void> {
+export async function buildIndex(): Promise<void> {
   console.log(`Scanning: ${COLLECTIONS_ROOT}`);
 
   const files = await fg('**/*.md', {
@@ -42,12 +42,15 @@ async function buildIndex(): Promise<void> {
 
     entities[entity.id] = entity;
 
-    // Register all aliases → entity id
+    // Register all aliases → entity id (both raw-lowercase and normalized forms)
     for (const alias of entity.aliases) {
-      const key = alias.toLowerCase();
-      if (!aliases[key]) aliases[key] = [];
-      if (!aliases[key].includes(entity.id)) {
-        aliases[key].push(entity.id);
+      const raw = alias.toLowerCase()
+      const norm = alias.normalize('NFD').replace(/\p{Diacritic}+/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+      for (const key of new Set([raw, norm])) {
+        if (!aliases[key]) aliases[key] = [];
+        if (!aliases[key].includes(entity.id)) {
+          aliases[key].push(entity.id);
+        }
       }
     }
 
