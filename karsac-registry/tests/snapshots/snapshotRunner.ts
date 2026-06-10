@@ -18,12 +18,14 @@
  */
 
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs'
-import { resolve, dirname } from 'path'
+import { resolve } from 'path'
 import { runScenario, isOllamaAvailable } from '../scenarios/proposalRunner.js'
 import { evaluateSnapshot, getInventedFindings } from './snapshotEvaluator.js'
 import type { InventedFinding } from './snapshotEvaluator.js'
+import { runQualityCheck } from './llmQualityEvaluator.js'
+import type { QualityResult } from './llmQualityEvaluator.js'
 
-const PROJECT_ROOT = resolve(__dirname, '../../../..')
+const PROJECT_ROOT = resolve(__dirname, '../../..')
 const BASELINES_DIR = resolve(__dirname, 'baselines')
 
 export interface SnapshotConfig {
@@ -34,7 +36,7 @@ export interface SnapshotConfig {
   /** Optional --type override */
   type?: string
   /** Expected pipeline validation outcome */
-  expectedValidation: 'pass' | 'needs-review' | 'fail'
+  expectedValidation: 'pass' | 'warning' | 'needs-review' | 'fail'
   /** Corpus files cross-referenced (relative to project root). Empty for new entities. */
   corpusFiles: string[]
   /** Max extra invented claims allowed over baseline. Default: 2 or 10% baseline, whichever higher. */
@@ -63,6 +65,8 @@ export interface SnapshotResult {
   result: 'PASS' | 'FAIL' | 'NEEDS-REVIEW'
   note?: string
   durationMs: number
+  /** LLM quality gate result — only present when ANTHROPIC_API_KEY is set and corpus is non-empty */
+  quality?: QualityResult
 }
 
 function baselinePath(id: string): string {
@@ -87,7 +91,7 @@ function effectiveTolerance(config: SnapshotConfig, baselineInvented: number): n
   return Math.max(2, Math.ceil(baselineInvented * 0.1))
 }
 
-export function runSnapshot(config: SnapshotConfig): SnapshotResult {
+export async function runSnapshot(config: SnapshotConfig): Promise<SnapshotResult> {
   const start = Date.now()
 
   const scenario = runScenario(config.prompt, { type: config.type, timeout: 240_000 })
@@ -96,6 +100,9 @@ export function runSnapshot(config: SnapshotConfig): SnapshotResult {
 
   const evaluation = evaluateSnapshot(scenario.body, absoluteCorpusFiles)
   const inventedFindings = getInventedFindings(evaluation)
+
+  // LLM quality gate — contradiction detection, runs alongside heuristic regression
+  const quality = await runQualityCheck(scenario.body, absoluteCorpusFiles)
 
   const baseline = loadBaseline(config.id)
 
@@ -132,6 +139,7 @@ export function runSnapshot(config: SnapshotConfig): SnapshotResult {
         ? `Validation status mismatch: expected ${config.expectedValidation}, got ${validationStatus}`
         : `Baseline written (${evaluation.inventedCount} invented). Eyeball before committing.`,
       durationMs: Date.now() - start,
+      quality,
     }
   }
 
@@ -166,6 +174,7 @@ export function runSnapshot(config: SnapshotConfig): SnapshotResult {
     result,
     note: notes.length ? notes.join('; ') : undefined,
     durationMs: Date.now() - start,
+    quality,
   }
 }
 
