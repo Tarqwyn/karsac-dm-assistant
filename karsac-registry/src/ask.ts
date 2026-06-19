@@ -5,7 +5,7 @@ import { routeQuestion } from './router.js';
 import type { RouteResult } from './router.js';
 import { execSync } from 'child_process';
 import type { AliasMap, EntityMap } from './types.js';
-import { INDEX_DIR, DEBUG_DIR, COLLECTIONS_ROOT, RULES_DATA_DIR, STATE_ROOT, ADVERSARY_CORPUS_ROOT, ENCOUNTER_PATTERNS_ROOT } from './paths.js';
+import { INDEX_DIR, DEBUG_DIR, COLLECTIONS_ROOT, PLANNING_ROOT, RULES_DATA_DIR, STATE_ROOT, ADVERSARY_CORPUS_ROOT, ENCOUNTER_PATTERNS_ROOT } from './paths.js';
 import {
   resolveQuestion, resolveRulesQuestion, loadCanonFile,
   buildMessages, buildProseMessages, buildRulesMessages, buildDesignMessages,
@@ -16,6 +16,7 @@ import {
   type CanonFile, type FactPacket, type ScoredMatch, type StructuredEntry,
   type StateContextData, type EncounterDesignCtx,
 } from './resolver.js';
+import { filterEntityIndexByReadMode } from './corpusPaths.js';
 import {
   loadScoredAdversaries, loadScoredPatterns, getNpcBaseSummaries,
   type ScoredAdversary, type ScoredPattern,
@@ -111,6 +112,7 @@ function parseArgs(): {
   question: string;
   profileName: string | null;
   explicitMode: ProseMode | null;
+  readMode: 'live' | 'planning';
   maxRelated: number;
   maxRelatedExplicit: boolean;
   debugRelated: boolean;
@@ -122,6 +124,7 @@ function parseArgs(): {
   const filtered: string[] = [];
   let profileName: string | null = null; // null = not explicitly provided
   let modeName: string | null = null;
+  let readMode: 'live' | 'planning' = 'live';
   let maxRelated = DEEP_LORE_MAX_RELATED;
   let maxRelatedExplicit = false;
   let debugRelated = false;
@@ -134,6 +137,13 @@ function parseArgs(): {
       profileName = args[++i];
     } else if (args[i] === '--mode' && i + 1 < args.length) {
       modeName = args[++i];
+    } else if (args[i] === '--read-mode' && i + 1 < args.length) {
+      const value = args[++i];
+      if (value !== 'live' && value !== 'planning') {
+        console.error(`Unknown read mode: "${value}". Use live or planning.`);
+        process.exit(1);
+      }
+      readMode = value;
     } else if (args[i] === '--max-related' && i + 1 < args.length) {
       const n = parseInt(args[++i], 10);
       if (isNaN(n) || n < 0) {
@@ -164,6 +174,7 @@ function parseArgs(): {
     question: filtered.join(' ').trim(),
     profileName,
     explicitMode: modeName as ProseMode | null,
+    readMode,
     maxRelated,
     maxRelatedExplicit,
     debugRelated,
@@ -773,6 +784,7 @@ function loadRulesRelatedContext(
   matches: ScoredMatch[],
   entities: EntityMap,
   collectionsRoot: string,
+  planningRoot?: string,
 ): CanonFile[] {
   const primaryIds = new Set(matches.map(m => m.entity.id));
   const seen = new Set<string>(primaryIds);
@@ -786,7 +798,7 @@ function loadRulesRelatedContext(
       const relEntity = entities[id];
       if (!relEntity) continue;
       try {
-        related.push(loadCanonFile(relEntity, entities, collectionsRoot));
+        related.push(loadCanonFile(relEntity, entities, collectionsRoot, planningRoot));
       } catch { /* file missing on disk */ }
       if (related.length >= RULES_MAX_RELATED) return related;
     }
@@ -1492,9 +1504,9 @@ function loadAdversaryDesignContext(question: string): AdversaryDesignContext & 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  const { question, profileName: explicitProfileName, explicitMode, maxRelated, maxRelatedExplicit, debugRelated, strategy, savePrompt, allowHomebrew } = parseArgs();
+  const { question, profileName: explicitProfileName, explicitMode, readMode, maxRelated, maxRelatedExplicit, debugRelated, strategy, savePrompt, allowHomebrew } = parseArgs();
   if (!question) {
-    console.error('Usage: npm run karsac:ask -- "<question>" [--profile <name>] [--mode player|dm]');
+    console.error('Usage: npm run karsac:ask -- "<question>" [--profile <name>] [--mode player|dm] [--read-mode live|planning]');
     console.error('Example: npm run karsac:ask -- "Tell me about Brynja"');
     console.error(`Profiles:  ${Object.keys(PROFILES).join(', ')}  (auto-routed when omitted)`);
     process.exit(1);
@@ -1522,6 +1534,9 @@ async function main(): Promise<void> {
 
   const aliases = loadJSON<AliasMap>('aliases.json');
   const entities = loadJSON<EntityMap>('entities.json');
+  const corpusView = filterEntityIndexByReadMode(entities, aliases, readMode);
+  const visibleAliases = corpusView.aliases;
+  const visibleEntities = corpusView.entities;
 
   // ── design: own retrieval path — does not require entity resolution ──────────
   if (profile.name === 'design') {
@@ -1781,8 +1796,8 @@ async function main(): Promise<void> {
   process.stderr.write(`Resolving: "${question}"\n`);
 
   const { resolved, unresolved } = profile.name === 'rules'
-    ? resolveRulesQuestion(question, aliases, entities)
-    : resolveQuestion(question, aliases, entities);
+    ? resolveRulesQuestion(question, visibleAliases, visibleEntities)
+    : resolveQuestion(question, visibleAliases, visibleEntities);
 
   if (resolved.length === 0 && unresolved.length === 0) {
     console.error(`\nNo known entity found in: "${question}"`);
@@ -1820,8 +1835,8 @@ async function main(): Promise<void> {
 
   // ── rules: rules-exact-plus-related ─────────────────────────────────────────
   if (profile.name === 'rules') {
-    const primaryCanons = matches.map(m => loadCanonFile(m.entity, entities, COLLECTIONS_ROOT));
-    const relatedCanons = loadRulesRelatedContext(matches, entities, COLLECTIONS_ROOT);
+    const primaryCanons = matches.map(m => loadCanonFile(m.entity, entities, COLLECTIONS_ROOT, PLANNING_ROOT));
+    const relatedCanons = loadRulesRelatedContext(matches, entities, COLLECTIONS_ROOT, PLANNING_ROOT);
     const allCanons = [...primaryCanons, ...relatedCanons];
 
     // Structured data: conditions, abilities, etc.
@@ -1880,7 +1895,7 @@ async function main(): Promise<void> {
     const priority = getExpansionPriority(question, matches);
 
     const ctx = loadDeepLoreContext(
-      matches, entities, aliases, COLLECTIONS_ROOT, question, priority, effectiveMaxRelated, debugRelated,
+      matches, visibleEntities, visibleAliases, COLLECTIONS_ROOT, question, priority, effectiveMaxRelated, debugRelated,
     );
     const allCanons = [...ctx.primaryCanons, ...ctx.expandedCanons];
 
@@ -1949,7 +1964,7 @@ async function main(): Promise<void> {
   }
 
   // ── canon / prose: exact-file or extract-then-compare ───────────────────────
-  const rawCanons = matches.map(m => loadCanonFile(m.entity, entities, COLLECTIONS_ROOT));
+  const rawCanons = matches.map(m => loadCanonFile(m.entity, entities, COLLECTIONS_ROOT, PLANNING_ROOT));
 
   if (rawCanons.length === 1) {
     process.stderr.write(`→ Loaded: ${rawCanons[0].path}\n`);

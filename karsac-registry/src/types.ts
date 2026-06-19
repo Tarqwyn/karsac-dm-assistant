@@ -1,6 +1,7 @@
 export interface Entity {
   id: string;
   type: string;
+  source?: 'collections' | 'planning';
   ruleset?: string;
   entityType?: string;
   entityId?: string;

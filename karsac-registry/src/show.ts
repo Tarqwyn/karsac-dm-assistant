@@ -2,7 +2,8 @@ import { resolve } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import type { EntityMap } from './types.js';
 import { normalizeRelatedId } from './resolver.js';
-import { INDEX_DIR, COLLECTIONS_ROOT } from './paths.js';
+import { INDEX_DIR, COLLECTIONS_ROOT, PLANNING_ROOT } from './paths.js';
+import { resolveCorpusRuntimePath } from './corpusPaths.js';
 
 function loadJSON<T>(name: string): T {
   const p = resolve(INDEX_DIR, name);
@@ -56,8 +57,10 @@ function main(): void {
 }
 
 function showEntity(entity: { path: string; id: string }): void {
-  const relPath = entity.path.replace(/^openwebui-runtime-collections\//, '');
-  const absPath = resolve(COLLECTIONS_ROOT, relPath);
+  const absPath = resolveCorpusRuntimePath(entity.path, {
+    collections: COLLECTIONS_ROOT,
+    planning: PLANNING_ROOT,
+  });
 
   if (!existsSync(absPath)) {
     console.error(`File not found on disk: ${absPath}`);

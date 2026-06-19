@@ -1,3 +1,20 @@
+## Longer Term Vision — Generic Worldbuilding Tool
+
+The engine is already world-agnostic. The proposal pipeline, validator, pruner, governance layer, lifecycle, REST API, UI, and tracker contain no Karsac-specific knowledge. All world-specific content lives in data:
+
+- **Corpus** (`corpus/collections/`, `corpus/planning/`) — replace with a different world's lore
+- **Registry YAML** (`corpus/registry/` — entity policies, factions, proposal contracts) — replace with a different world's rules
+- **Map geometry** (`KarsacMapMaker/data.js`) — swap for a different world's geography
+- **Campaign state** (`corpus/state/`) — seed with a different campaign
+
+"Install a new world" = new corpus + new registry YAML + new map geometry + new state seed. Engine, API, UI, and tracker are unchanged.
+
+**One thing to protect now:** proposal contracts and entity validators currently assume some Karsac-specific section names (e.g. `## What They Want`, `## What They Hide` in NPC schema, specific proposal types). These need to stay world-configurable — defined in registry YAML, not hardcoded in TypeScript — so they don't become a migration cost later. Every time a new schema section or proposal type is added, it should go in data, not code.
+
+**Design principle to enforce:** if a rule is world-specific, it belongs in `corpus/registry/`. If it's in TypeScript, it's universal.
+
+---
+
 ## Big Brain Stuff
 
 So now we have a corpus.. what I want to be able to do is create and edit that corpus in a number of different ways
