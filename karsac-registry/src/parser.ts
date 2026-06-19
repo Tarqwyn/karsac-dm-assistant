@@ -1,10 +1,14 @@
 import matter from 'gray-matter';
 import { readFileSync } from 'fs';
 import type { Entity, Section } from './types.js';
+import {
+  parseCorpusSourceFromAbsolutePath,
+  runtimePathForAbsolutePath,
+} from './corpusPaths.js';
 
 const STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'at', 'and', 'or', 'to']);
 
-export function parseFile(absolutePath: string, collectionsRoot: string): Entity | null {
+export function parseFile(absolutePath: string, collectionsRoot: string, planningRoot?: string): Entity | null {
   const raw = readFileSync(absolutePath, { encoding: 'utf-8' });
   // Strip leading HTML comments (<!-- ... -->) so gray-matter can find the frontmatter
   const stripped = raw.replace(/^(\s*<!--[\s\S]*?-->\s*)+/, '')
@@ -14,9 +18,8 @@ export function parseFile(absolutePath: string, collectionsRoot: string): Entity
 
   const title = extractH1(content) ?? String(fm.id);
   const collection = extractCollection(absolutePath);
-  const relativePath = absolutePath.startsWith(collectionsRoot + '/')
-    ? 'openwebui-runtime-collections/' + absolutePath.slice(collectionsRoot.length + 1)
-    : absolutePath;
+  const source = parseCorpusSourceFromAbsolutePath(absolutePath, collectionsRoot, planningRoot);
+  const relativePath = runtimePathForAbsolutePath(absolutePath, collectionsRoot, planningRoot);
 
   const retrievalSummary = extractBodyField(content, 'Retrieval Summary') ?? undefined;
   const canonFileId = extractBodyFieldCode(content, 'Canon File ID') ?? undefined;
@@ -73,6 +76,7 @@ export function parseFile(absolutePath: string, collectionsRoot: string): Entity
   return {
     id: String(fm.id),
     type: fm.type ? String(fm.type) : 'unknown',
+    source: source ?? undefined,
     ruleset: fm.ruleset ? String(fm.ruleset) : undefined,
     entityType: fm.entity_type ? String(fm.entity_type) : undefined,
     entityId: fm.entity_id ? String(fm.entity_id) : undefined,

@@ -3,6 +3,8 @@ import { resolve } from 'path';
 import type { AliasMap, EntityMap, Entity } from './types.js';
 import { scoreMatches, isBestMatch } from './scorer.js';
 import type { ScoredMatch, MatchReason } from './scorer.js';
+import { resolveCorpusRuntimePath } from './corpusPaths.js';
+import { PLANNING_ROOT } from './paths.js';
 import {
   getCreativeTreatmentContractFromData,
   getProposalRequiredSections,
@@ -222,6 +224,7 @@ export function loadCanonFile(
   entity: Entity,
   entities: EntityMap,
   collectionsRoot: string,
+  planningRoot?: string,
 ): CanonFile {
   // Follow entity-card → primary detail file
   let resolved = entity;
@@ -230,8 +233,10 @@ export function loadCanonFile(
     if (canon) resolved = canon;
   }
 
-  const relPath = resolved.path.replace(/^openwebui-runtime-collections\//, '');
-  const absPath = resolve(collectionsRoot, relPath);
+  const absPath = resolveCorpusRuntimePath(resolved.path, {
+    collections: collectionsRoot,
+    planning: planningRoot ?? PLANNING_ROOT,
+  });
 
   if (!existsSync(absPath)) {
     throw new Error(`Canon file not found on disk: ${absPath}  (entity: ${resolved.id})`);

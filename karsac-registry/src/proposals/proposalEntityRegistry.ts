@@ -1,11 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from 'fs'
 import { resolve } from 'path'
 import matter from 'gray-matter'
-import { COLLECTIONS_ROOT, INDEX_DIR, PROPOSALS_ROOT } from '../paths.js'
+import { COLLECTIONS_ROOT, INDEX_DIR, PLANNING_ROOT, PROPOSALS_ROOT } from '../paths.js'
 import type { AliasMap, Entity, EntityMap } from '../types.js'
 import type { ProposalType } from './proposalTypes.js'
 import type { CorpusCoverageLevel, ProposalEntityPolicy } from './proposalEntityPolicies.js'
 import { getProposalEntityPolicy, clearProposalEntityPolicyCachesForTests } from './proposalEntityPolicies.js'
+import { resolveCorpusRuntimePath } from '../corpusPaths.js'
 
 export interface ProposalCorpusAnchor {
   corpusNamed: boolean
@@ -76,8 +77,10 @@ function canonicalNameMatches(entity: Entity, phrase: string): boolean {
 }
 
 function resolveCollectionPath(entity: Entity): string | null {
-  const relative = entity.path.replace(/^openwebui-runtime-collections\//, '')
-  const path = resolve(COLLECTIONS_ROOT, relative)
+  const path = resolveCorpusRuntimePath(entity.path, {
+    collections: COLLECTIONS_ROOT,
+    planning: PLANNING_ROOT,
+  })
   return existsSync(path) ? path : null
 }
 

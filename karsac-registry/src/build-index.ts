@@ -3,18 +3,19 @@ import { mkdirSync, writeFileSync } from 'fs';
 import fg from 'fast-glob';
 import { parseFile, extractSections } from './parser.js';
 import type { EntityMap, AliasMap, RelationshipMap, SectionMap } from './types.js';
-import { COLLECTIONS_ROOT, INDEX_DIR } from './paths.js';
+import { COLLECTIONS_ROOT, INDEX_DIR, PLANNING_ROOT } from './paths.js';
+import { stripCorpusRuntimePrefix, entityVisibleInReadMode } from './corpusPaths.js';
+
+type ScanRoot = {
+  root: string;
+  source: 'collections' | 'planning';
+};
 
 export async function buildIndex(): Promise<void> {
-  console.log(`Scanning: ${COLLECTIONS_ROOT}`);
-
-  const files = await fg('**/*.md', {
-    cwd: COLLECTIONS_ROOT,
-    absolute: true,
-    dot: false,
-  });
-
-  console.log(`Found ${files.length} Markdown files`);
+  const scans: ScanRoot[] = [
+    { root: COLLECTIONS_ROOT, source: 'collections' },
+    { root: PLANNING_ROOT, source: 'planning' },
+  ];
 
   const entities: EntityMap = {};
   const aliases: AliasMap = {};
@@ -24,48 +25,70 @@ export async function buildIndex(): Promise<void> {
   let parsed = 0;
   let skipped = 0;
 
-  for (const filePath of files.sort()) {
-    const entity = parseFile(filePath, COLLECTIONS_ROOT);
-    if (!entity) {
-      skipped++;
-      continue;
-    }
+  for (const scan of scans) {
+    console.log(`Scanning: ${scan.root}`);
 
-    const existing = entities[entity.id];
-    if (existing) {
-      // Keep the more detailed file (entity cards are secondary; prefer canon files)
-      if (entity.type === 'entity-card' && existing.type !== 'entity-card') {
+    const files = await fg('**/*.md', {
+      cwd: scan.root,
+      absolute: true,
+      dot: false,
+    });
+
+    console.log(`Found ${files.length} Markdown files`);
+
+    for (const filePath of files.sort()) {
+      const entity = parseFile(filePath, COLLECTIONS_ROOT, PLANNING_ROOT);
+      if (!entity) {
         skipped++;
         continue;
       }
-    }
 
-    entities[entity.id] = entity;
+      const existing = entities[entity.id];
+      if (existing) {
+        const existingVisible = entityVisibleInReadMode(existing, stripCorpusRuntimePrefix(existing.path).source, 'live');
+        const candidateVisible = entityVisibleInReadMode(entity, stripCorpusRuntimePrefix(entity.path).source, 'live');
 
-    // Register all aliases → entity id (both raw-lowercase and normalized forms)
-    for (const alias of entity.aliases) {
-      const raw = alias.toLowerCase()
-      const norm = alias.normalize('NFD').replace(/\p{Diacritic}+/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-      for (const key of new Set([raw, norm])) {
-        if (!aliases[key]) aliases[key] = [];
-        if (!aliases[key].includes(entity.id)) {
-          aliases[key].push(entity.id);
+        if (existingVisible && !candidateVisible) {
+          skipped++;
+          continue;
+        }
+
+        if (existing.type === 'entity-card' && entity.type !== 'entity-card') {
+          // Keep the more detailed file (entity cards are secondary; prefer canon files)
+          if (existingVisible || !candidateVisible) {
+            skipped++;
+            continue;
+          }
         }
       }
-    }
 
-    // Relationships
-    if (Object.keys(entity.related).length > 0) {
-      relationships[entity.id] = entity.related;
-    }
+      entities[entity.id] = entity;
 
-    // Sections
-    const fileSections = extractSections(filePath);
-    if (fileSections.length > 0) {
-      sections[entity.id] = fileSections;
-    }
+      // Register all aliases → entity id (both raw-lowercase and normalized forms)
+      for (const alias of entity.aliases) {
+        const raw = alias.toLowerCase()
+        const norm = alias.normalize('NFD').replace(/\p{Diacritic}+/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+        for (const key of new Set([raw, norm])) {
+          if (!aliases[key]) aliases[key] = [];
+          if (!aliases[key].includes(entity.id)) {
+            aliases[key].push(entity.id);
+          }
+        }
+      }
 
-    parsed++;
+      // Relationships
+      if (Object.keys(entity.related).length > 0) {
+        relationships[entity.id] = entity.related;
+      }
+
+      // Sections
+      const fileSections = extractSections(filePath);
+      if (fileSections.length > 0) {
+        sections[entity.id] = fileSections;
+      }
+
+      parsed++;
+    }
   }
 
   mkdirSync(INDEX_DIR, { recursive: true });

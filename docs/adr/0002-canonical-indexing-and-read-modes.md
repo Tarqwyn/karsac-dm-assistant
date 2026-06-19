@@ -29,34 +29,38 @@ These two requirements pointed to the same solution: a single corpus with explic
 - `corpus/collections/` remains as the legacy hand-authored canon layer. It continues to be indexed as-is. It does not grow — new content enters only via proposals and promotion. Over time, hand-authored content in `collections/` may migrate to `planning/` via the proposal pipeline, but this is not a prerequisite.
 - No content is duplicated between trees. One artifact, one location.
 
-### Canonical status
+### Canonical status and live-mode gate
 
-The `canonical` frontmatter field becomes a real read-time gate:
+The live/planning read gate is **source tree**, not canonical value. This reflects the empirical corpus state: many live-readable entities in `corpus/collections/` carry `canonical: provisional`, so using that value as a visibility gate would incorrectly hide them.
 
-| Value | Meaning | Indexed? | Visible in live mode? |
+The actual rules implemented:
+
+| Source | `canonical` value | Visible in live mode? | Visible in planning mode? |
 |---|---|---|---|
-| `true` | Blessed canon — part of the active world | Yes | Yes |
-| `provisional` | Promoted but not yet blessed — planned or pending review | Yes (tagged) | No (planning mode only) |
-| absent / other | Legacy or unclassified | Yes (treated as `true` for collections/) | Yes |
+| `collections` | any | Yes — collections is always live-visible | Yes |
+| `planning` | `true` | Yes — explicitly blessed | Yes |
+| `planning` | `provisional` or absent | No — hidden until blessed | Yes |
+
+The `canonical` field's role: it gates visibility for **planning-tree entities only**. Setting `canonical: true` on a planning entity is the explicit blessing action that makes it appear in live mode. For collections entities it is metadata only — it does not affect visibility.
 
 ### Read modes
 
 | Mode | What it reads | Default? |
 |---|---|---|
-| `live` | `canonical: true` entries from both trees + current chapter state from `corpus/state/` | Yes — all assistant and tracker reads |
-| `planning` | All indexed entries including `canonical: provisional` + chapter-scoped future material | Explicit opt-in — UI planning view, far-ahead authoring |
+| `live` | All `collections` entities + `planning` entities with `canonical: true` + current chapter state | Yes — all assistant and tracker reads |
+| `planning` | All indexed entities from both trees + chapter-scoped future material | Explicit opt-in — UI planning view, far-ahead authoring |
 
 ### `buildIndex` change
 
-`buildIndex` scans both `COLLECTIONS_ROOT` (`corpus/collections/`) and `PLANNING_ROOT` (`corpus/planning/`). Entries from `planning/` are tagged with their `canonical` value so the query layer can filter by mode. Entries from `collections/` without a `canonical` field are treated as `true` (backwards-compatible).
+`buildIndex` scans both `COLLECTIONS_ROOT` (`corpus/collections/`) and `PLANNING_ROOT` (`corpus/planning/`). Each entity is tagged with its source tree (`collections` or `planning`) so the query layer can apply the source-based gate at read time.
 
 ---
 
 ## Consequences
 
 - **Fixes Critical Seam #1** from the audit: promoted content becomes visible to retrieval.
-- **Fixes Critical Seam #2**: `canonical` is now a read-time gate, not just metadata.
-- Far-ahead planning is safe: a promoted Chapter 4 NPC with `canonical: provisional` is in the index but invisible to live play by default.
+- **Fixes Critical Seam #2**: source tree is now a real read-time gate. `canonical` gates visibility within the planning tree specifically.
+- Far-ahead planning is safe: a promoted Chapter 4 NPC in `corpus/planning/` is in the index but invisible to live play by default. Setting `canonical: true` is the explicit action that blesses it into live mode.
 - The DM can explicitly switch to planning mode to work on future material without it leaking into active session context.
 - `corpus/collections/` requires no migration work before the seam is fixed — it continues to work as-is.
 - `buildIndex` needs a `PLANNING_ROOT` scan path added (env-overridable, consistent with existing `paths.ts` pattern).
