@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/chapters/chapter-progress.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "currentCheckpoint",
+        "checkpoints",
+        "coverage"
+      ],
+      "properties": {
+        "currentCheckpoint": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterCheckpoint"
+        },
+        "checkpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterCheckpoint"
+          }
+        },
+        "coverage": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterCoverage"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/design/campaign-structure-adversary.json",
+  "allOf": [
+    { "$ref": "https://karsac.local/schemas/design/campaign-structure-global-entity.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "adversary" },
+        "threat": { "$ref": "https://karsac.local/schemas/design/campaign-structure.json#/$defs/nonEmptyString" },
+        "status": { "$ref": "https://karsac.local/schemas/design/campaign-structure.json#/$defs/nonEmptyString" },
+        "factionIds": {
+          "type": "array",
+          "items": { "$ref": "https://karsac.local/schemas/design/campaign-structure.json#/$defs/nonEmptyString" }
+        }
+      }
+    }
+  ]
+}

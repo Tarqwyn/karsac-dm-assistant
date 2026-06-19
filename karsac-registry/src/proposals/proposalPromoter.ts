@@ -4,6 +4,8 @@ import matter from 'gray-matter'
 import { validateProposalFile } from './proposalValidator.js'
 import { buildIndex } from '../build-index.js'
 import type { ProposalType } from './proposalTypes.js'
+import { validateDesignObject } from '../designSchemaValidator.js'
+import { buildChapterSeedFromOutline } from '../state/chapterSeedFromOutline.js'
 
 export interface PromoteResult {
   sourcePath: string
@@ -110,6 +112,33 @@ export async function promoteProposal(
   }
   const updatedSource = matter.stringify(body, updatedFm)
   writeFileSync(proposalPath, updatedSource, { encoding: 'utf-8' })
+
+  if (fm.proposal_type === 'chapter-outline' && fm.structured_outline) {
+    const outlineValidation = validateDesignObject('campaign-structure-chapter-outline.json', fm.structured_outline)
+    if (!outlineValidation.valid) {
+      result.error = `Invalid structured outline in frontmatter: ${outlineValidation.issues.join('; ')}`
+      return result
+    }
+
+    const relatedChapterIds = Array.isArray((fm.related as Record<string, unknown>)?.chapters)
+      ? ((fm.related as Record<string, unknown>).chapters as unknown[])
+      : []
+    const chapterId = String(
+      relatedChapterIds.find((value) => typeof value === 'string' && value.trim())
+      ?? (fm.structured_outline as Record<string, unknown>).id
+      ?? '',
+    ).trim()
+    if (chapterId) {
+      const seed = buildChapterSeedFromOutline(
+        fm.structured_outline as any,
+        (fm.related as Record<string, unknown>) as any,
+        projectRoot,
+      )
+      const seedPath = resolve(projectRoot, 'corpus', 'state', 'chapters', chapterId, 'seed.json')
+      mkdirSync(dirname(seedPath), { recursive: true })
+      writeFileSync(seedPath, `${JSON.stringify(seed, null, 2)}\n`, { encoding: 'utf-8' })
+    }
+  }
 
   // 9. Rebuild entity index so the promoted entity is immediately findable
   await buildIndex()

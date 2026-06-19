@@ -1,0 +1,660 @@
+{
+  "beats": [
+    {
+      "id": "scene-1-beat",
+      "label": "The Greyback's Departure (or Brynja's Last Room)",
+      "scene": "scene-1",
+      "desc": "Establish the uneasy atmosphere of leaving Törweg and receiving the note naming Mathr. Aboard the Greyback, heading north, with the name \"Mathr\" weighing heavily. (Or, departing Brynja's home, feeling watched.)"
+    },
+    {
+      "id": "scene-2-beat",
+      "label": "The Ferryman’s Tale",
+      "scene": "scene-2",
+      "desc": "Introduce a seemingly harmless encounter that reveals the subtle control exerted by Mathr’s influence. Continuing north, with a reinforced sense of the pervasive influence of Mathr."
+    },
+    {
+      "id": "scene-3-beat",
+      "label": "The Roadside Inn",
+      "scene": "scene-3",
+      "desc": "Provide a chance for rest and information gathering, but with the risk of being overheard or manipulated. Leaving the inn with a sense of being watched and a lingering suspicion about the innkeeper’s motives."
+    },
+    {
+      "id": "scene-4-beat",
+      "label": "The Market Inspection",
+      "scene": "scene-4",
+      "desc": "reinforce the growing sense of Vishara's influence, and subtly hint at Mathr’s longevity while creating a tense social encounter. This encounter forces the party to confront the consequences of their actions and highlights the increasing scrutiny they are under. The party is quickly cleared and gains access to Duvash, learning his message"
+    },
+    {
+      "id": "scene-5-beat",
+      "label": "The Echo of Witness",
+      "scene": "scene-5",
+      "desc": "Ragnfridd's Skaldic identity is tested, highlighting the corruption of truth traditions. Leaving the village with a deeper understanding of how truth can be manipulated and suppressed through tradition."
+    },
+    {
+      "id": "scene-6-beat",
+      "label": "Mountain Ambush",
+      "scene": "scene-6",
+      "desc": "To directly advance the \"Pryzi key — gone east\" hot thread by forcing a confrontation with Shadow-Walkers attempting to retrieve the Pryzi manifest and bone disc from the party. This encounter also introduces a tangible threat related to the Pryzi vault and hints at the wider scope of Vishara's influence. The party are reminded this is bigger than just Lösweg"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene-1",
+      "label": "1 · The Greyback's Departure (or Brynja's Last Room)",
+      "kind": "opening",
+      "order": 10,
+      "meta": "Chapter chapters/the-weight-of-witness · Törweg Harbour (or Brynja’s home)",
+      "title": "The Greyback's Departure (or Brynja's Last Room)",
+      "summary": "Establish the uneasy atmosphere of leaving Törweg and receiving the note naming Mathr. Aboard the Greyback, heading north, with the name \"Mathr\" weighing heavily. (Or, departing Brynja's home, feeling watched.)",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "scene-1-beat"
+      ],
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "The Greyback's Departure (or Brynja's Last Room)"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> Törweg Harbour (or Brynja’s home)<br><strong>Purpose:</strong> Establish the uneasy atmosphere of leaving Törweg and receiving the note naming Mathr.<br><strong>Pressure:</strong> The unsettling normalcy of the departure; the lack of overt obstruction."
+        },
+        {
+          "type": "list",
+          "heading": "Choices",
+          "style": "bullet",
+          "itemsHtml": [
+            "Depart quietly, investigate the Truthspeaker’s actions, attempt to gather more information in Törweg."
+          ]
+        },
+        {
+          "type": "list",
+          "heading": "Clues",
+          "style": "bullet",
+          "itemsHtml": [
+            "Observing subtle signs of surveillance or unusual behaviour amongst the townspeople."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Failure",
+          "bodyHtml": "Being subtly warned off by a seemingly innocuous individual, losing the opportunity to gather more information."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit State",
+          "bodyHtml": "Aboard the Greyback, heading north, with the name &quot;Mathr&quot; weighing heavily. (Or, departing Brynja&#39;s home, feeling watched.)"
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "scene-1-beat",
+              "label": "The Greyback's Departure (or Brynja's Last Room)"
+            }
+          ]
+        }
+      ],
+      "notesMd": null
+    },
+    {
+      "id": "scene-2",
+      "label": "2 · The Ferryman’s Tale",
+      "kind": "scene",
+      "order": 20,
+      "meta": "Chapter chapters/the-weight-of-witness · A river ferry crossing on the route to Valweg.",
+      "title": "The Ferryman’s Tale",
+      "summary": "Introduce a seemingly harmless encounter that reveals the subtle control exerted by Mathr’s influence. Continuing north, with a reinforced sense of the pervasive influence of Mathr.",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "scene-2-beat"
+      ],
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "The Ferryman’s Tale"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> A river ferry crossing on the route to Valweg.<br><strong>Purpose:</strong> Introduce a seemingly harmless encounter that reveals the subtle control exerted by Mathr’s influence.<br><strong>Pressure:</strong> The ferryman’s evasive answers and veiled warnings about “trouble” and “respecting authority.”"
+        },
+        {
+          "type": "list",
+          "heading": "Choices",
+          "style": "bullet",
+          "itemsHtml": [
+            "Press the ferryman for information, attempt to subtly probe his knowledge of Mathr, ignore his warnings and proceed."
+          ]
+        },
+        {
+          "type": "list",
+          "heading": "Clues",
+          "style": "bullet",
+          "itemsHtml": [
+            "The ferryman’s discomfort and carefully chosen words, hints of local fear and obedience."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Failure",
+          "bodyHtml": "Offending the ferryman, delaying their progress, attracting unwanted attention."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit State",
+          "bodyHtml": "Continuing north, with a reinforced sense of the pervasive influence of Mathr."
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "scene-2-beat",
+              "label": "The Ferryman’s Tale"
+            }
+          ]
+        }
+      ],
+      "notesMd": null
+    },
+    {
+      "id": "scene-3",
+      "label": "3 · The Roadside Inn",
+      "kind": "scene",
+      "order": 30,
+      "meta": "Chapter chapters/the-weight-of-witness · A small, isolated inn along the road to Valweg.",
+      "title": "The Roadside Inn",
+      "summary": "Provide a chance for rest and information gathering, but with the risk of being overheard or manipulated. Leaving the inn with a sense of being watched and a lingering suspicion about the innkeeper’s motives.",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "scene-3-beat"
+      ],
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "The Roadside Inn"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> A small, isolated inn along the road to Valweg.<br><strong>Purpose:</strong> Provide a chance for rest and information gathering, but with the risk of being overheard or manipulated.<br><strong>Pressure:</strong> The innkeeper’s overly friendly demeanor and probing questions about their purpose."
+        },
+        {
+          "type": "list",
+          "heading": "Choices",
+          "style": "bullet",
+          "itemsHtml": [
+            "Be forthcoming with information, be guarded and evasive, attempt to gather information from other patrons."
+          ]
+        },
+        {
+          "type": "list",
+          "heading": "Clues",
+          "style": "bullet",
+          "itemsHtml": [
+            "Overheard conversations hinting at Mathr’s power and influence, subtle signs of surveillance."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Failure",
+          "bodyHtml": "Being subtly manipulated into revealing information, attracting unwanted attention from local authorities."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit State",
+          "bodyHtml": "Leaving the inn with a sense of being watched and a lingering suspicion about the innkeeper’s motives."
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "scene-3-beat",
+              "label": "The Roadside Inn"
+            }
+          ]
+        }
+      ],
+      "notesMd": null
+    },
+    {
+      "id": "scene-4",
+      "label": "4 · The Market Inspection",
+      "kind": "scene",
+      "order": 40,
+      "meta": "Chapter chapters/the-weight-of-witness · Akrafjall",
+      "title": "The Market Inspection",
+      "summary": "reinforce the growing sense of Vishara's influence, and subtly hint at Mathr’s longevity while creating a tense social encounter. This encounter forces the party to confront the consequences of their actions and highlights the increasing scrutiny they are under. The party is quickly cleared and gains access to Duvash, learning his message",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "scene-4-beat"
+      ],
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "The Market Inspection"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> Akrafjall<br><strong>Purpose:</strong> reinforce the growing sense of Vishara&#39;s influence, and subtly hint at Mathr’s longevity while creating a tense social encounter. This encounter forces the party to confront the consequences of their actions and highlights the increasing scrutiny they are under.<br><strong>Pressure:</strong> Guard Captain Brynn wants to delay the party’s access to Duvash, subtly probe their cargo for anything unusual, and assess their overall demeanor. He&#39;s acting under pressure from an unknown source (Vane) to keep a close eye on activity in the market. He’s not looking for outright contraband, but for signs of disruption or illicit connections."
+        },
+        {
+          "type": "list",
+          "heading": "Choices",
+          "style": "bullet",
+          "itemsHtml": [
+            "Comply, Challenge, Bribe, Split Group, Distract, Follow"
+          ]
+        },
+        {
+          "type": "list",
+          "heading": "Clues",
+          "style": "bullet",
+          "itemsHtml": [
+            "The seal on the document is the Mathr sigil, The questions are too specific for a routine inspection, They are not interested in the ordinary cargo."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Failure",
+          "bodyHtml": "The party is detained, delaying their progress and potentially alerting Vane to their interest in Duvash."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit State",
+          "bodyHtml": "The party is quickly cleared and gains access to Duvash, learning his message"
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "scene-4-beat",
+              "label": "The Market Inspection"
+            }
+          ]
+        }
+      ],
+      "notesMd": null
+    },
+    {
+      "id": "scene-5",
+      "label": "5 · The Echo of Witness",
+      "kind": "scene",
+      "order": 50,
+      "meta": "Chapter chapters/the-weight-of-witness · A small village known for its traditional Skaldic practices.",
+      "title": "The Echo of Witness",
+      "summary": "Ragnfridd's Skaldic identity is tested, highlighting the corruption of truth traditions. Leaving the village with a deeper understanding of how truth can be manipulated and suppressed through tradition.",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "scene-5-beat"
+      ],
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "The Echo of Witness"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> A small village known for its traditional Skaldic practices.<br><strong>Purpose:</strong> Ragnfridd&#39;s Skaldic identity is tested, highlighting the corruption of truth traditions.<br><strong>Pressure:</strong> The village’s reverence for tradition clashes with the party&#39;s pursuit of truth, creating a sense of dissonance."
+        },
+        {
+          "type": "list",
+          "heading": "Choices",
+          "style": "bullet",
+          "itemsHtml": [
+            "Engage with the village Skalds, challenge their traditional narratives, seek guidance from the village elder."
+          ]
+        },
+        {
+          "type": "list",
+          "heading": "Clues",
+          "style": "bullet",
+          "itemsHtml": [
+            "Discrepancies between the official Skaldic accounts and the villagers&#39; whispered fears, a sense of suppressed dissent."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Failure",
+          "bodyHtml": "Offending the village Skalds, alienating the villagers, losing the opportunity to gain valuable insights."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit State",
+          "bodyHtml": "Leaving the village with a deeper understanding of how truth can be manipulated and suppressed through tradition."
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "scene-5-beat",
+              "label": "The Echo of Witness"
+            }
+          ]
+        }
+      ],
+      "notesMd": null
+    },
+    {
+      "id": "scene-6",
+      "label": "6 · Mountain Ambush",
+      "kind": "closing",
+      "order": 60,
+      "meta": "Chapter chapters/the-weight-of-witness · Just south of Valweg",
+      "title": "Mountain Ambush",
+      "summary": "To directly advance the \"Pryzi key — gone east\" hot thread by forcing a confrontation with Shadow-Walkers attempting to retrieve the Pryzi manifest and bone disc from the party. This encounter also introduces a tangible threat related to the Pryzi vault and hints at the wider scope of Vishara's influence. The party are reminded this is bigger than just Lösweg",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "scene-6-beat"
+      ],
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "Mountain Ambush"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> Just south of Valweg<br><strong>Purpose:</strong> To directly advance the &quot;Pryzi key — gone east&quot; hot thread by forcing a confrontation with Shadow-Walkers attempting to retrieve the Pryzi manifest and bone disc from the party. This encounter also introduces a tangible threat related to the Pryzi vault and hints at the wider scope of Vishara&#39;s influence.<br><strong>Pressure:</strong> Threat and Combat."
+        },
+        {
+          "type": "list",
+          "heading": "Choices",
+          "style": "bullet",
+          "itemsHtml": [
+            "Fight or Run."
+          ]
+        },
+        {
+          "type": "list",
+          "heading": "Clues",
+          "style": "bullet",
+          "itemsHtml": [
+            "A coded message, another bone disc."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Failure",
+          "bodyHtml": "Loss of the manifest and bone disc, possible casualties"
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit State",
+          "bodyHtml": "The party are reminded this is bigger than just Lösweg"
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "scene-6-beat",
+              "label": "Mountain Ambush"
+            }
+          ]
+        }
+      ],
+      "notesMd": null
+    },
+    {
+      "id": "scene-reference",
+      "label": "Reference",
+      "kind": "reference",
+      "order": 65,
+      "meta": "Chapter chapters/the-weight-of-witness · Reference",
+      "title": "Reference",
+      "summary": "Related proposals and entities that frame this chapter.",
+      "facts": [],
+      "handouts": [],
+      "beats": [],
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "Reference"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "Use these links to keep the chapter outline aligned with supporting proposals and chapter-level dependencies."
+        },
+        {
+          "type": "path-cards",
+          "heading": "Related Entities",
+          "items": [
+            {
+              "label": "Brynja Thorgrimsdotter",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>brynja-thorgrimsdotter</code>"
+            },
+            {
+              "label": "Aldric Vane",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>aldric-vane</code>"
+            },
+            {
+              "label": "Jarl Beorn",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>jarl-beorn</code>"
+            },
+            {
+              "label": "Jarl Mathr",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>jarl-mathr</code>"
+            },
+            {
+              "label": "The Truthspeaker",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>the-truthspeaker</code>"
+            },
+            {
+              "label": "Pell Duvash",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>pell-duvash</code>"
+            },
+            {
+              "label": "Brix",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>brix</code>"
+            },
+            {
+              "label": "Floki",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>floki</code>"
+            },
+            {
+              "label": "Kohlmar",
+              "tone": "low",
+              "bodyHtml": "<code>npc</code> <code>kohlmar</code>"
+            },
+            {
+              "label": "Captain Brynn Stonehand",
+              "tone": "high",
+              "bodyHtml": "<code>adversary</code> <code>captain-brynn-stonehand</code>"
+            },
+            {
+              "label": "Elara Vyn",
+              "tone": "high",
+              "bodyHtml": "<code>adversary</code> <code>elara-vyn</code>"
+            },
+            {
+              "label": "The Ledger Keeper",
+              "tone": "high",
+              "bodyHtml": "<code>adversary</code> <code>the-ledger-keeper</code>"
+            },
+            {
+              "label": "Shadow Walkers",
+              "tone": "high",
+              "bodyHtml": "<code>adversary</code> <code>shadow-walkers</code>"
+            },
+            {
+              "label": "Brynjas Ledger",
+              "tone": "low",
+              "bodyHtml": "<code>item</code> <code>brynjas-ledger</code>"
+            },
+            {
+              "label": "Folded Name Mathr",
+              "tone": "low",
+              "bodyHtml": "<code>item</code> <code>folded-name-mathr</code>"
+            },
+            {
+              "label": "Mathr Token",
+              "tone": "low",
+              "bodyHtml": "<code>item</code> <code>mathr-token</code>"
+            },
+            {
+              "label": "Aldric Letter",
+              "tone": "low",
+              "bodyHtml": "<code>item</code> <code>aldric-letter</code>"
+            },
+            {
+              "label": "The Bone Disc",
+              "tone": "low",
+              "bodyHtml": "<code>item</code> <code>the-bone-disc</code>"
+            },
+            {
+              "label": "The Scroll Case",
+              "tone": "low",
+              "bodyHtml": "<code>item</code> <code>the-scroll-case</code>"
+            },
+            {
+              "label": "Torweg",
+              "tone": "low",
+              "bodyHtml": "<code>place</code> <code>torweg</code>"
+            },
+            {
+              "label": "Brynjas Hall",
+              "tone": "low",
+              "bodyHtml": "<code>place</code> <code>torweg/brynjas-hall</code>"
+            },
+            {
+              "label": "Saltbone Inn",
+              "tone": "low",
+              "bodyHtml": "<code>place</code> <code>torweg/saltbone-inn</code>"
+            },
+            {
+              "label": "South Dock",
+              "tone": "low",
+              "bodyHtml": "<code>place</code> <code>torweg/south-dock</code>"
+            },
+            {
+              "label": "Valweg",
+              "tone": "low",
+              "bodyHtml": "<code>place</code> <code>valweg</code>"
+            },
+            {
+              "label": "Losweg",
+              "tone": "low",
+              "bodyHtml": "<code>place</code> <code>losweg</code>"
+            },
+            {
+              "label": "Shadow Walkers",
+              "tone": "low",
+              "bodyHtml": "<code>faction</code> <code>shadow-walkers</code>"
+            },
+            {
+              "label": "House Mathr",
+              "tone": "low",
+              "bodyHtml": "<code>faction</code> <code>house-mathr</code>"
+            },
+            {
+              "label": "House Vane Mathr",
+              "tone": "low",
+              "bodyHtml": "<code>faction</code> <code>house-vane-mathr</code>"
+            },
+            {
+              "label": "Torweg Council",
+              "tone": "low",
+              "bodyHtml": "<code>faction</code> <code>torweg-council</code>"
+            },
+            {
+              "label": "Skalds",
+              "tone": "low",
+              "bodyHtml": "<code>faction</code> <code>skalds</code>"
+            },
+            {
+              "label": "Torweg Arrival",
+              "tone": "low",
+              "bodyHtml": "<code>event</code> <code>torweg-arrival</code>"
+            },
+            {
+              "label": "Brynjas Briefing",
+              "tone": "low",
+              "bodyHtml": "<code>event</code> <code>brynjas-briefing</code>"
+            },
+            {
+              "label": "South Dock Confrontation",
+              "tone": "low",
+              "bodyHtml": "<code>event</code> <code>south-dock-confrontation</code>"
+            },
+            {
+              "label": "Duvash Attack",
+              "tone": "low",
+              "bodyHtml": "<code>event</code> <code>duvash-attack</code>"
+            },
+            {
+              "label": "Brix Ashfen Influence",
+              "tone": "low",
+              "bodyHtml": "<code>thread</code> <code>brix-ashfen-influence</code>"
+            },
+            {
+              "label": "Aeorian Note Ashvein",
+              "tone": "low",
+              "bodyHtml": "<code>thread</code> <code>aeorian-note-ashvein</code>"
+            },
+            {
+              "label": "Duvash Extract",
+              "tone": "low",
+              "bodyHtml": "<code>thread</code> <code>duvash-extract</code>"
+            },
+            {
+              "label": "Brynja Record",
+              "tone": "low",
+              "bodyHtml": "<code>thread</code> <code>brynja-record</code>"
+            },
+            {
+              "label": "Vane Token Mathr",
+              "tone": "low",
+              "bodyHtml": "<code>thread</code> <code>vane-token-mathr</code>"
+            },
+            {
+              "label": "Operation Mathr",
+              "tone": "low",
+              "bodyHtml": "<code>thread</code> <code>operation-mathr</code>"
+            },
+            {
+              "label": "Pryzi Key Gone East",
+              "tone": "low",
+              "bodyHtml": "<code>thread</code> <code>pryzi-key-gone-east</code>"
+            }
+          ]
+        }
+      ],
+      "notesMd": "Auto-generated from chapter outline related metadata."
+    }
+  ]
+}

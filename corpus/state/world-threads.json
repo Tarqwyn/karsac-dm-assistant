@@ -42,7 +42,8 @@
           "id": "yngondi-named",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "pryzi-key-gone",
@@ -66,7 +67,8 @@
           "id": "six-artefacts",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "manifest-locked",
@@ -85,7 +87,8 @@
       ],
       "pokeWhen": "When the party passes through a settlement with scholars, archivists, or people who look educated. 'We have a document in Veyr we cannot fully read — does anyone here know the language?'",
       "closesWhen": "Party finds a fluent Veyr reader in Karsac who can translate the full manifest.",
-      "autoTriggers": []
+      "autoTriggers": [],
+      "statusSource": "derived"
     },
     {
       "id": "what-was-stolen",
@@ -101,7 +104,8 @@
       ],
       "pokeWhen": "Any time before Scene 2 ends — Serris is available. 'You've been holding these items for the courier network. What exactly did they take, and where was that key going?'",
       "closesWhen": "Party has the full picture of the key, the vault, and the Lösweg captain who delivered both to Serris.",
-      "autoTriggers": []
+      "autoTriggers": [],
+      "statusSource": "derived"
     },
     {
       "id": "coded-message-incoming",
@@ -121,7 +125,8 @@
       ],
       "pokeWhen": "When the party returns toward Halvash, or when Serris mentions the courier hasn't arrived yet. This lands in a future session — keep simmering until then.",
       "closesWhen": "Message decoded and Serris understands the instruction — though 'the Cleric' will still be a mystery to him.",
-      "autoTriggers": []
+      "autoTriggers": [],
+      "statusSource": "derived"
     },
     {
       "id": "deepwhale-followed",
@@ -129,7 +134,7 @@
       "type": "world",
       "origin": "ch1",
       "defaultStatus": "dormant",
-      "currentStatus": "dormant",
+      "currentStatus": "simmering",
       "summary": "A Deepwhale followed the Windmere both crossings of the Glasswake. It recognised something aboard the ship. Not hunger — interest.",
       "players": [
         "xyrrath"
@@ -143,7 +148,8 @@
           "id": "deepwhale",
           "setStatus": "simmering"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "vishara-maw-torweg",
@@ -151,7 +157,7 @@
       "type": "world",
       "origin": "ch2",
       "defaultStatus": "dormant",
-      "currentStatus": "dormant",
+      "currentStatus": "hot",
       "summary": "The Maw is an embedded Yantravaq presence in Torweg, coordinating Vishara's slow influence. Not a single entity but an organisation — they smell. When the party first hears of Ashfen, they are glimpsing its edge.",
       "players": [],
       "npcs": [
@@ -177,7 +183,8 @@
           "id": "maw-smell",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "brix-ashfen-influence",
@@ -185,7 +192,7 @@
       "type": "world",
       "origin": "ch2",
       "defaultStatus": "simmering",
-      "currentStatus": "simmering",
+      "currentStatus": "hot",
       "summary": "Brix has watched Tor Ashfen change since he went back to Torweg. Asks different questions, doesn't remember old jokes. Not possessed — reoriented. This is the first visible evidence of Vishara working at scale on real people.",
       "players": [],
       "npcs": [
@@ -200,7 +207,8 @@
           "id": "ashfen-questions",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "duvash-extract",
@@ -208,7 +216,7 @@
       "type": "world",
       "origin": "ch2",
       "defaultStatus": "simmering",
-      "currentStatus": "simmering",
+      "currentStatus": "hot",
       "summary": "Duvash is a merchant in Torweg's upper market. He has been receiving consignments of old objects moving north toward Yngondi. Erik's note told him to 'stay and tell the truth to whoever comes.' Vane's people want him dead.",
       "players": [],
       "npcs": [
@@ -229,7 +237,8 @@
           "id": "duvash-attacked",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "mathr-arithmetic",
@@ -237,7 +246,7 @@
       "type": "world",
       "origin": "ch2",
       "defaultStatus": "simmering",
-      "currentStatus": "simmering",
+      "currentStatus": "hot",
       "summary": "Mathr has served on the Lösweg council for sixty years and does not appear to have aged. Vane has been in his service for fifteen years following his father who served before him. Nobody has done the arithmetic.",
       "players": [],
       "npcs": [
@@ -257,7 +266,8 @@
           "id": "mathr-arithmetic",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "vane-token-mathr",
@@ -291,7 +301,8 @@
           "id": "vane-realises",
           "setStatus": "closed"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "operation-mathr",
@@ -299,7 +310,7 @@
       "type": "world",
       "origin": "ch2",
       "defaultStatus": "dormant",
-      "currentStatus": "dormant",
+      "currentStatus": "simmering",
       "summary": "To bring down Mathr's influence without destroying Lösweg requires a complete case: the token, the arithmetic, the Shadow-Walker arrangement, Beorn's trust. Each fact the party discovers is a brick in the wall.",
       "players": [],
       "npcs": [
@@ -321,7 +332,8 @@
           "id": "vane-elevated",
           "setStatus": "simmering"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "brynja-record",
@@ -329,7 +341,7 @@
       "type": "world",
       "origin": "ch2",
       "defaultStatus": "dormant",
-      "currentStatus": "dormant",
+      "currentStatus": "hot",
       "summary": "Brynja is an archivist in Torweg whose records contain the document that traces where Jarl Mathr's family came from. Nobody has connected this to Serris's flagged 'family with no origin story' yet. The party doesn't know Brynja exists.",
       "players": [],
       "npcs": [
@@ -354,7 +366,8 @@
           "id": "brynja-artefact",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "aeorian-note-ashvein",
@@ -362,7 +375,7 @@
       "type": "world",
       "origin": "ch2",
       "defaultStatus": "dormant",
-      "currentStatus": "dormant",
+      "currentStatus": "hot",
       "summary": "A note found in the Torweg scenes references Aeorian materials and mentions Ashvein — the black volcanic glass-metal mined only beneath Halvash. Xyrrath's phial is made of Ashvein. He was already standing over the source and didn't know.",
       "players": [
         "xyrrath"
@@ -386,7 +399,8 @@
           "id": "ashvein-recognised",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "korvann-rune-disc",
@@ -412,7 +426,8 @@
           "id": "carver-spiral",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "ragnfridd-tradition-shadow",
@@ -438,7 +453,8 @@
           "id": "yngondi-named",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "xyrrath-phial-ashvein",
@@ -465,7 +481,8 @@
           "id": "H12",
           "setStatus": "simmering"
         }
-      ]
+      ],
+      "statusSource": "derived"
     },
     {
       "id": "rowan-crow-karsac",
@@ -473,7 +490,7 @@
       "type": "player",
       "origin": "ch1",
       "defaultStatus": "simmering",
-      "currentStatus": "simmering",
+      "currentStatus": "hot",
       "summary": "The Crow has appeared to Rowan since boyhood, to him alone. Karsac is where the debt begins to be paid. His ancestor Rowahn is in the history books of Khôràna. Rowan does not know the name Rowahn, does not know they share it, does not know his ancestor died here.",
       "players": [
         "rowan"
@@ -489,7 +506,8 @@
           "id": "crow-archives",
           "setStatus": "hot"
         }
-      ]
+      ],
+      "statusSource": "derived"
     }
   ]
 }

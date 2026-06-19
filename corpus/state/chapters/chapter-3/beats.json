@@ -1,0 +1,76 @@
+{
+  "id": "chapter-3-beats",
+  "type": "chapter-beats",
+  "campaign": "karsac",
+  "chapterId": "chapter-3",
+  "source": "chapter-state migration seed",
+  "importStatus": "seeded",
+  "beats": [
+    {
+      "id": "scene-1-beat",
+      "label": "The Greyback's Departure (or Brynja's Last Room)",
+      "scene": "scene-1",
+      "desc": "Establish the uneasy atmosphere of leaving Törweg and receiving the note naming Mathr. Aboard the Greyback, heading north, with the name \"Mathr\" weighing heavily. (Or, departing Brynja's home, feeling watched.)",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-3",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "scene-2-beat",
+      "label": "The Ferryman’s Tale",
+      "scene": "scene-2",
+      "desc": "Introduce a seemingly harmless encounter that reveals the subtle control exerted by Mathr’s influence. Continuing north, with a reinforced sense of the pervasive influence of Mathr.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-3",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "scene-3-beat",
+      "label": "The Roadside Inn",
+      "scene": "scene-3",
+      "desc": "Provide a chance for rest and information gathering, but with the risk of being overheard or manipulated. Leaving the inn with a sense of being watched and a lingering suspicion about the innkeeper’s motives.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-3",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "scene-4-beat",
+      "label": "The Market Inspection",
+      "scene": "scene-4",
+      "desc": "reinforce the growing sense of Vishara's influence, and subtly hint at Mathr’s longevity while creating a tense social encounter. This encounter forces the party to confront the consequences of their actions and highlights the increasing scrutiny they are under. The party is quickly cleared and gains access to Duvash, learning his message",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-3",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "scene-5-beat",
+      "label": "The Echo of Witness",
+      "scene": "scene-5",
+      "desc": "Ragnfridd's Skaldic identity is tested, highlighting the corruption of truth traditions. Leaving the village with a deeper understanding of how truth can be manipulated and suppressed through tradition.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-3",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "scene-6-beat",
+      "label": "Mountain Ambush",
+      "scene": "scene-6",
+      "desc": "To directly advance the \"Pryzi key — gone east\" hot thread by forcing a confrontation with Shadow-Walkers attempting to retrieve the Pryzi manifest and bone disc from the party. This encounter also introduces a tangible threat related to the Pryzi vault and hints at the wider scope of Vishara's influence. The party are reminded this is bigger than just Lösweg",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-3",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    }
+  ]
+}

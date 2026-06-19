@@ -308,6 +308,18 @@ function validateRegistryReferences(index: RegistryIndex, frontmatter: Record<st
     ...(((frontmatter.related as any)?.places as string[] | undefined) ?? []),
     ...((((corpusFrontmatter.related as any)?.places as string[] | undefined) ?? [])),
   ]
+  const relatedNpcs = [
+    ...(((frontmatter.related as any)?.npcs as string[] | undefined) ?? []),
+    ...((((corpusFrontmatter.related as any)?.npcs as string[] | undefined) ?? [])),
+  ]
+  const relatedItems = [
+    ...(((frontmatter.related as any)?.items as string[] | undefined) ?? []),
+    ...((((corpusFrontmatter.related as any)?.items as string[] | undefined) ?? [])),
+  ]
+  const relatedEvents = [
+    ...(((frontmatter.related as any)?.events as string[] | undefined) ?? []),
+    ...((((corpusFrontmatter.related as any)?.events as string[] | undefined) ?? [])),
+  ]
 
   for (const faction of relatedFactions) {
     if (findEntityByAlias(index, faction, 'faction')) continue
@@ -326,6 +338,36 @@ function validateRegistryReferences(index: RegistryIndex, frontmatter: Record<st
       issues.push(`FAIL: Place registry mismatch: "${place}" is not canonical. Did you mean "${closest.title}"?`)
     } else {
       issues.push(`FAIL: Place registry mismatch: "${place}" is not present in the place registry.`)
+    }
+  }
+
+  for (const npc of relatedNpcs) {
+    if (findEntityByAlias(index, npc, 'npc')) continue
+    const closest = findClosestEntity(index, npc, 'npc')
+    if (closest) {
+      issues.push(`FAIL: NPC registry mismatch: "${npc}" is not canonical. Did you mean "${closest.title}"?`)
+    } else {
+      issues.push(`FAIL: NPC registry mismatch: "${npc}" is not present in the NPC registry.`)
+    }
+  }
+
+  for (const item of relatedItems) {
+    if (findEntityByAlias(index, item, 'item')) continue
+    const closest = findClosestEntity(index, item, 'item')
+    if (closest) {
+      issues.push(`FAIL: Item registry mismatch: "${item}" is not canonical. Did you mean "${closest.title}"?`)
+    } else {
+      issues.push(`FAIL: Item registry mismatch: "${item}" is not present in the item registry.`)
+    }
+  }
+
+  for (const event of relatedEvents) {
+    if (findEntityByAlias(index, event, 'event')) continue
+    const closest = findClosestEntity(index, event, 'event')
+    if (closest) {
+      issues.push(`FAIL: Event registry mismatch: "${event}" is not canonical. Did you mean "${closest.title}"?`)
+    } else {
+      issues.push(`FAIL: Event registry mismatch: "${event}" is not present in the event registry.`)
     }
   }
 }

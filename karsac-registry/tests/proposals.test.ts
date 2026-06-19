@@ -14,6 +14,7 @@ import {
   getDesignRequiredHeadings, getResponseContractHeadings,
   clearProposalContractsCacheForTests,
 } from '../src/proposals/proposalContractsLoader.js'
+import { getChapterOutlineConstraintLines, clearGenerationConstraintsCacheForTests } from '../src/proposals/generationConstraintsLoader.js'
 import { buildChapterOutlineMessages } from '../src/resolver.js'
 import type { ProposalFrontmatter, ProposalType } from '../src/proposals/proposalTypes.js'
 import * as creativeModel from '../src/creativeTreatment/creativeModel.js'
@@ -74,9 +75,32 @@ The clock is ticking — 3 sessions until the ritual.
 Mathr agents: watching from the docks.
 
 ## Scene Spine
-1. Gate scene — guards ask questions.
-2. Market scene — contact is nervous.
-3. Warehouse scene — ambush or negotiation.
+### Scene 1 — Gate Inspection
+- Purpose: Introduce suspicion at the city gates.
+- Location: The outer gate.
+- Pressure: Guards are asking too many questions.
+- Choices: Answer honestly, bluff, or delay.
+- Clues: The guards know the party's names.
+- Failure: The party is delayed and watched.
+- Exit State: The party enters under scrutiny.
+
+### Scene 2 — Market Contact
+- Purpose: Show the cost of being watched.
+- Location: The market.
+- Pressure: A contact is nervous.
+- Choices: Press the contact, back off, or use language carefully.
+- Clues: A black pin appears on a local official.
+- Failure: The contact vanishes.
+- Exit State: The party has a partial lead.
+
+### Scene 3 — Warehouse Pressure
+- Purpose: Force a decision.
+- Location: A warehouse near the docks.
+- Pressure: Mathr's enforcers close in.
+- Choices: Negotiate, flee, or confront.
+- Clues: Cargo records point north.
+- Failure: The enforcers seize evidence.
+- Exit State: The party leaves with a clear next move.
 
 ## Optional Scenes
 If the party splits, one group finds a clue at the inn.
@@ -351,6 +375,12 @@ describe('buildChapterOutlineMessages', () => {
     expect(msgs[0].content).toContain('Chapter Planner')
   })
 
+  it('system contains chapter-outline seed-ready guidance', () => {
+    const msgs = buildChapterOutlineMessages(emptyCtx, 'Plan chapter 3')
+    expect(msgs[0].content).toContain('chapter seed data')
+    expect(msgs[0].content).toContain('support scenes, thread scenes')
+  })
+
   it('system contains "proposals only"', () => {
     const msgs = buildChapterOutlineMessages(emptyCtx, 'Plan chapter 3')
     expect(msgs[0].content).toContain('proposals only')
@@ -365,19 +395,8 @@ describe('buildChapterOutlineMessages', () => {
     const msgs = buildChapterOutlineMessages(emptyCtx, 'Plan chapter 3')
     const user = msgs[1].content
     const headings = [
-      '## Chapter Purpose',
-      '## Starting State',
-      '## Player Knowledge',
-      '## DM Truth',
-      '## Core Pressure',
-      '## Active Factions and NPCs',
-      '## Scene Spine',
-      '## Optional Scenes',
-      '## Clues and Reveals',
-      '## Adversaries and Obstacles',
-      '## Fail-Forward Paths',
-      '## End Conditions',
-      '## Suggested State Updates After Play',
+      ...getProposalRequiredSections('chapter-outline'),
+      ...(getCreativeTreatmentContractFromData('chapter-outline')?.requiredSections ?? []),
     ]
     for (const h of headings) {
       expect(user).toContain(h)
@@ -392,6 +411,14 @@ describe('buildChapterOutlineMessages', () => {
   it('user message contains "suggestions only"', () => {
     const msgs = buildChapterOutlineMessages(emptyCtx, 'Plan chapter 3')
     expect(msgs[1].content).toContain('suggestions only')
+  })
+
+  it('user message contains seed-ready Scene Spine field labels', () => {
+    const msgs = buildChapterOutlineMessages(emptyCtx, 'Plan chapter 3')
+    const user = msgs[1].content
+    for (const field of ['Purpose:', 'Location:', 'Pressure:', 'Choices:', 'Clues:', 'Failure:', 'Exit State:']) {
+      expect(user).toContain(field)
+    }
   })
 })
 
@@ -1098,6 +1125,13 @@ describe('proposalContractsLoader — YAML is the source of truth', () => {
     expect(sections).toContain('## Chapter Purpose')
     expect(sections).toContain('## Scene Spine')
     expect(sections).toContain('## Suggested State Updates After Play')
+  })
+
+  it('loads chapter-outline generation constraints from YAML', () => {
+    clearGenerationConstraintsCacheForTests()
+    const lines = getChapterOutlineConstraintLines()
+    expect(lines.join('\n')).toContain('chapter seed data')
+    expect(lines.join('\n')).toContain('seed-ready scene record')
   })
 
   it('loads place suggested sections from YAML', () => {

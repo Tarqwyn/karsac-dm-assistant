@@ -34,6 +34,15 @@ place:
     - '- Keep atmosphere grounded; do not imply supernatural agency without corpus support.'
     - '- Separate established prompt facts from provisional additions clearly.'
 
+chapter_outline:
+  header:
+    - 'PRE-GENERATION CHAPTER OUTLINE CONSTRAINTS'
+    - '- This outline will later be converted into chapter seed data.'
+    - '- Write it so each scene can become a seed-ready scene record without invention.'
+    - '- Keep scene entries concrete: purpose, location, pressure, choices, clues, failure consequence, and exit state.'
+    - '- Distinguish support scenes, thread scenes, and chapter-level pressure beats explicitly.'
+    - '- Suggested state updates are suggestions only; keep them clearly separate from what has happened.'
+
 corpus_anchor:
   base:
     - 'CORPUS-ANCHOR CONSTRAINT'

@@ -22,6 +22,7 @@ interface CorpusAnchorSection {
 interface GenerationConstraintsFile {
   adversary?: ConstraintSection
   encounter?: ConstraintSection
+  chapter_outline?: ConstraintSection
   npc?: ConstraintSection
   place?: ConstraintSection
   corpus_anchor?: CorpusAnchorSection
@@ -54,6 +55,10 @@ export function getNpcConstraintLines(): string[] {
 
 export function getPlaceConstraintLines(): string[] {
   return guardArray<string>(load().place?.header, 'place.header')
+}
+
+export function getChapterOutlineConstraintLines(): string[] {
+  return guardArray<string>(load().chapter_outline?.header, 'chapter_outline.header')
 }
 
 export function getCorpusAnchorBaseLines(entityType: string): string[] {

@@ -22,6 +22,10 @@ import { renderChapterProposal } from './renderers/renderChapterProposal.js'
 import { renderEncounterProposal } from './renderers/renderEncounterProposal.js'
 import { renderNpcProposal } from './renderers/renderNpcProposal.js'
 import { renderPlaceProposal } from './renderers/renderPlaceProposal.js'
+import {
+  getCreativeTreatmentContractFromData,
+  getProposalRequiredSections,
+} from './proposalContractsLoader.js'
 
 const ASSISTANT_ROOT = resolve(PROJECT_ROOT, '..')
 
@@ -379,15 +383,8 @@ function getRenderableSections(proposalType: string): string[] {
       ]
     case 'chapter-outline':
       return [
-        'Chapter Purpose',
-        'Starting State',
-        'Starting Emotional State',
-        'Core Pressure',
-        'Repeated Motif',
-        'Scene Spine',
-        'Midpoint Turn',
-        'End Conditions',
-        'What This Chapter Changes',
+        ...getProposalRequiredSections('chapter-outline').map(section => section.replace(/^##\s*/, '')),
+        ...(getCreativeTreatmentContractFromData('chapter-outline')?.requiredSections ?? []).map(section => section.replace(/^##\s*/, '')),
       ]
     default:
       return []

@@ -1,0 +1,164 @@
+{
+  "id": "chapter-2-beats",
+  "type": "chapter-beats",
+  "campaign": "karsac",
+  "chapterId": "chapter-2",
+  "source": "chapter-state migration seed",
+  "importStatus": "seeded",
+  "beats": [
+    {
+      "id": "ambient-quieting",
+      "label": "Dropped The Quieting",
+      "scene": "ambient",
+      "desc": "The two fishermen agreed pleasantly on every point.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "ambient-forgetting",
+      "label": "Dropped The Forgetting",
+      "scene": "ambient",
+      "desc": "The older woman could not remember who the lowered flag was for.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "ambient-smoothing",
+      "label": "Dropped The Smoothing",
+      "scene": "ambient",
+      "desc": "The apprentice could not hold the Carver face in memory.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "seed-mathr-brix",
+      "label": "Landed the Brix Mathr seed",
+      "scene": "ambient",
+      "desc": "Brix mentioned Mathr in ordinary freight context.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "seed-mathr-brynja",
+      "label": "Landed the Brynja Mathr seed",
+      "scene": "ambient",
+      "desc": "Brynja noted that Mathr family records simply begin.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "ashvein-brynja-hypothesis",
+      "label": "Brynja planted the hypothesis",
+      "scene": "ashvein",
+      "desc": "Brynja named her own clarity as anomalous while carrying the stone.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "ashvein-serris-named",
+      "label": "Serris named Ashvein",
+      "scene": "ashvein",
+      "desc": "Serris identified Ashvein in the older records.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "ashvein-xyrrath-connection",
+      "label": "A player connected the phial",
+      "scene": "ashvein",
+      "desc": "The party linked Xyrrathh phial to the Ashvein protection pattern.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "ashvein-vane-negative-proof",
+      "label": "Vane landed as negative proof",
+      "scene": "ashvein",
+      "desc": "The party recognised Vane as the man left unprotected.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "ashvein-pin-question",
+      "label": "The black pin question is live",
+      "scene": "ashvein",
+      "desc": "The Truthspeaker pin became a standing question rather than an answer.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "maw-network-revealed",
+      "label": "The Maw network geometry landed",
+      "scene": "maw-handout",
+      "desc": "The party understood that the Maw was the hub of a deliberate network.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "maw-korvann-beat",
+      "label": "Korvann saw the original pattern",
+      "scene": "maw-handout",
+      "desc": "Korvann recognised the original geometry behind the bone disc fragment.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "maw-handout-ready",
+      "label": "Maw handout generated",
+      "scene": "maw-handout",
+      "desc": "The player-facing handout is prepared for table use.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    },
+    {
+      "id": "maw-handout-posted",
+      "label": "Maw handout used at table",
+      "scene": "maw-handout",
+      "desc": "The Maw network handout was delivered in play.",
+      "completed": false,
+      "type": "chapter-beat",
+      "chapter": "chapter-2",
+      "source": "chapter-state migration seed",
+      "importStatus": "seeded"
+    }
+  ]
+}

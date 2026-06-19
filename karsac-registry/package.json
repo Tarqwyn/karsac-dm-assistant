@@ -9,6 +9,7 @@
     "karsac:show": "tsx src/show.ts",
     "karsac:ask": "tsx src/ask.ts",
     "gateway": "node --import tsx src/gateway/server.ts",
+    "karsac:materialize-chapter-state": "node --import tsx src/commands/materializeChapterState.ts",
     "karsac:propose": "node --import tsx src/commands/propose.ts",
     "karsac:summarise-proposal": "node --import tsx src/commands/summariseProposal.ts",
     "karsac:validate-proposals": "tsx src/commands/validateProposals.ts",

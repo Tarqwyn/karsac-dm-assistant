@@ -253,6 +253,12 @@ describe('detectProposalExecutionPlan — prompt-detected explicit type branch',
     expect(plan.explicitType).toBe(true)
   })
 
+  it('detects "Propose a new chapter-outline" and routes correctly', () => {
+    const plan = detectProposalExecutionPlan('Propose a new chapter-outline for chapter 3.')
+    expect(plan.proposalType).toBe('chapter-outline')
+    expect(plan.explicitType).toBe(true)
+  })
+
   it('captures contextProfile from router even for explicit openers', () => {
     const plan = detectProposalExecutionPlan('Propose a new NPC: how do saving throws work?')
     expect(plan.proposalType).toBe('npc')
@@ -276,6 +282,11 @@ describe('detectProposalExecutionPlan — route-based detection branch', () => {
 
   it('routes to chapter-outline for prompts containing "chapter outline"', () => {
     const plan = detectProposalExecutionPlan('a chapter outline covering the road to Valweg')
+    expect(plan.proposalType).toBe('chapter-outline')
+  })
+
+  it('keeps chapter-outline ahead of place nouns in the same prompt', () => {
+    const plan = detectProposalExecutionPlan('propose a new chapter-outline for chapter 3 about Valweg, the road north, and the city gates')
     expect(plan.proposalType).toBe('chapter-outline')
   })
 

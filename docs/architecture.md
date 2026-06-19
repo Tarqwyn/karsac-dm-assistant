@@ -17,8 +17,8 @@ User prompt
   → Router (profile detection, explicit type override)
   → Corpus anchor detection (entity registry lookup, snippet extraction)
   → Constraint builder (corpus anchor + entity policy + faction profile + chapter state)
-  → Draft generation (local model via Ollama)
-  → Creative treatment pass (qwen3:14b — doctrine, cultural identity, story beat polish)
+  → Draft generation (any LLM — local via Ollama in dev, edge API when deployed)
+  → Creative treatment pass (any LLM — doctrine, cultural identity, story beat polish)
   → Pruner (remove forbidden/out-of-scope sections, sentence-level forbidden pattern strip)
   → Validator (structural + governance + anchor content)
   → Repair log assembly
@@ -72,11 +72,19 @@ Three layers run on the pruned output:
 
 ### Creative treatment (`src/creativeTreatment/`)
 
-Optional second-pass model call (qwen3:14b by default) that adds doctrine, cultural identity, story beat, and prose polish. Runs before pruning and validation. Editable sections only — locked structural sections (stat block, mechanical base) are not touched.
+Optional second-pass model call that adds doctrine, cultural identity, story beat, and prose polish. Runs before pruning and validation. Editable sections only — locked structural sections (stat block, mechanical base) are not touched. Model is configurable — local (qwen3:14b via Ollama) in development, edge API when deployed.
 
-### Gateway (`src/gateway/`)
+### API (`src/gateway/`)
 
-OpenAI-compatible REST API (`/v1/chat/completions`, `/v1/models`) for Open WebUI integration. Routes chat messages through the full proposal pipeline.
+The primary interface is a purpose-built REST API at `/api/v1/` (see ADR-0003). The Karsac UI talks to this directly.
+
+An OpenAI-compatible adapter (`/compat/v1/chat/completions`, `/compat/v1/models`) wraps the REST API for Open WebUI integration. It is secondary — if chat is wanted, a thin wrapper sits around the REST API, not the other way round.
+
+The adapter routes chat messages to one of three handlers:
+
+- **Propose** — detected from natural language ("propose a new NPC…"); runs the full proposal pipeline.
+- **Promote** — detected from "promote `<name>`"; resolves the proposal, runs the promoter, blocked-by-default (validation failures refuse without `--force`).
+- **Ask** — all other queries; routed by profile through the retrieval layer.
 
 ---
 
@@ -84,15 +92,31 @@ OpenAI-compatible REST API (`/v1/chat/completions`, `/v1/models`) for Open WebUI
 
 ```
 corpus/
-  collections/         — canon Markdown files (NPCs, places, factions, items, events)
-  adversary-corpus/    — adversary design source material
-  encounter-patterns/  — encounter pattern library
+  collections/         — legacy hand-authored canon (NPCs, places, factions, items, events)
+                         indexed by buildIndex; does not grow — new content enters via proposals
+  planning/            — promoted content (AI-generated or hand-authored via proposal pipeline)
+                         indexed by buildIndex, filtered by canonical status (see ADR-0002)
+  adversary-corpus/    — adversary design source; read live by ask.ts (not indexed)
+  encounter-patterns/  — encounter pattern library; read live by ask.ts (not indexed)
   rules-data/          — structured D&D 5e SRD data
-  proposals/           — generated provisional proposals (not canon until promoted)
-  planning/            — promoted planning material
-  registry/            — YAML policy files
-  state/               — campaign state JSON
+  proposals/           — provisional proposals awaiting review and promotion
+  registry/            — YAML policy files (entity, faction, proposal contracts)
+  state/               — materialised campaign state JSON; written by materialiser + state service
 ```
+
+### Canonical status and read modes (ADR-0002)
+
+The `canonical` frontmatter field is a read-time gate, not just a label:
+
+| Value | Meaning | Visible in live mode | Visible in planning mode |
+|---|---|---|---|
+| `true` | Blessed canon — active world | Yes | Yes |
+| `provisional` | Promoted but not yet blessed | No | Yes |
+| absent | Legacy collections content | Yes (treated as `true`) | Yes |
+
+**Live mode** (default for all chat and tracker reads) — surfaces only `canonical: true` content and the current chapter state. Far-ahead planning content (`canonical: provisional`) is in the index but invisible.
+
+**Planning mode** (explicit opt-in via UI) — includes provisional content so the DM can work on future chapters without leaking them into active session context.
 
 ---
 
@@ -114,3 +138,16 @@ Lower layers are repaired, pruned, or rejected when they conflict with higher la
 RAG gives the model a context window and trusts it to stay in bounds. This pipeline does not trust the model to stay in bounds. It defines the bounds deterministically, checks the output against them, and repairs or rejects what falls outside.
 
 The model's job is wording and synthesis. The pipeline's job is everything else.
+
+---
+
+## Related documents
+
+| Document | Purpose |
+|---|---|
+| [architecture-diagram.md](architecture-diagram.md) | Mermaid diagrams: full system, lifecycle flow, canonical indexing, governance precedence |
+| [adr/0001-lifecycle-state-contract.md](adr/0001-lifecycle-state-contract.md) | Agreed 5-stage lifecycle: proposed → reviewed → promoted → materialised → tracked |
+| [adr/0002-canonical-indexing-and-read-modes.md](adr/0002-canonical-indexing-and-read-modes.md) | Canonical indexing in place; live vs planning read modes |
+| [adr/0003-rest-api-as-primary-interface.md](adr/0003-rest-api-as-primary-interface.md) | REST API is primary; OpenAI-compat gateway is a secondary adapter |
+| [lifecycle-state-rfc.md](lifecycle-state-rfc.md) | RFC that produced the lifecycle contract (discussion record) |
+| [lifecycle-audit.md](lifecycle-audit.md) | Read/write audit: where each stage currently lives, what reads it, severed seams |

@@ -34,6 +34,12 @@
         "currentLocation": {
           "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
         },
+        "lockedChapters": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
         "clock": {
           "type": "object",
           "required": [
@@ -71,8 +77,8 @@
                 },
                 "critical": {
                   "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
-                }
-              },
+        }
+      },
               "additionalProperties": false
             },
             "meaning": {

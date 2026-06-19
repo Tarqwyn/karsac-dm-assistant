@@ -21,18 +21,19 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "id",
-              "name",
-              "type",
-              "origin",
-              "defaultStatus",
-              "currentStatus",
-              "summary",
-              "players",
-              "npcs",
-              "pokeWhen",
-              "closesWhen",
+              "required": [
+                "id",
+                "name",
+                "type",
+                "origin",
+                "defaultStatus",
+                "currentStatus",
+                "statusSource",
+                "summary",
+                "players",
+                "npcs",
+                "pokeWhen",
+                "closesWhen",
               "autoTriggers"
             ],
             "properties": {
@@ -53,6 +54,10 @@
               },
               "currentStatus": {
                 "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/threadStatus"
+              },
+              "statusSource": {
+                "type": "string",
+                "enum": ["derived", "manual"]
               },
               "summary": {
                 "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"

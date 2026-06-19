@@ -23,6 +23,17 @@ const DIRECTORY_TARGETS = [
   ["triggers", "triggers/session-triggers.json"]
 ];
 
+const CHAPTER_FILE_SCHEMAS = [
+  ["progress.json", "chapters/chapter-progress.json"],
+  ["facts.json", "chapters/chapter-facts.json"],
+  ["handouts.json", "chapters/chapter-handouts.json"],
+  ["beats.json", "chapters/chapter-beats.json"],
+  ["triggers.json", "chapters/chapter-triggers.json"],
+  ["radar.json", "chapters/chapter-radar.json"],
+  ["seed.json", "chapters/chapter-seed.json"],
+  ["scenes.json", "chapters/chapter-scenes.json"]
+];
+
 function loadJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -31,6 +42,20 @@ function collectJsonFiles(dirPath) {
   return fs.readdirSync(dirPath, { withFileTypes: true })
     .filter(entry => entry.isFile() && entry.name.endsWith(".json"))
     .map(entry => path.join(dirPath, entry.name))
+    .sort();
+}
+
+function collectChapterJsonFiles(dirPath) {
+  if (!fs.existsSync(dirPath)) return [];
+
+  return fs.readdirSync(dirPath, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .flatMap(entry => {
+      const chapterDir = path.join(dirPath, entry.name);
+      return fs.readdirSync(chapterDir, { withFileTypes: true })
+        .filter(child => child.isFile() && child.name.endsWith(".json"))
+        .map(child => path.join(chapterDir, child.name));
+    })
     .sort();
 }
 
@@ -101,6 +126,34 @@ function main() {
         console.error(formatErrors(validate.errors));
         console.error("");
       }
+    }
+  }
+
+  const chapterFiles = collectChapterJsonFiles(path.join(STATE_ROOT, "chapters"));
+  const chapterValidators = new Map(
+    CHAPTER_FILE_SCHEMAS.map(([filename, schemaFile]) => [
+      filename,
+      getValidator(ajv, path.join(SCHEMAS_ROOT, schemaFile))
+    ])
+  );
+
+  for (const dataPath of chapterFiles) {
+    const validate = chapterValidators.get(path.basename(dataPath));
+    if (!validate) {
+      failures += 1;
+      console.error(`Schema validation failed: ${path.relative(ROOT, dataPath)}`);
+      console.error(`No schema mapping configured for chapter state file "${path.basename(dataPath)}".`);
+      console.error("");
+      continue;
+    }
+
+    const data = loadJson(dataPath);
+    validated += 1;
+    if (!validate(data)) {
+      failures += 1;
+      console.error(`Schema validation failed: ${path.relative(ROOT, dataPath)}`);
+      console.error(formatErrors(validate.errors));
+      console.error("");
     }
   }
 

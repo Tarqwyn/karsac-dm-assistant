@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/chapters/chapter-radar.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "radar"
+      ],
+      "properties": {
+        "radar": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterRadarEntry"
+          }
+        }
+      }
+    }
+  ]
+}

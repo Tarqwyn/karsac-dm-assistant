@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/design/campaign-structure-chapter-outline.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "id",
+    "title",
+    "chapterPurpose",
+    "startingState",
+    "playerKnowledge",
+    "corePressure",
+    "startingEmotionalState",
+    "centralPressure",
+    "repeatedMotif",
+    "midpointTurn",
+    "endState",
+    "whatThisChapterChanges",
+    "sceneSpine"
+  ],
+  "properties": {
+    "id": { "$ref": "#/$defs/nonEmptyString" },
+    "title": { "$ref": "#/$defs/nonEmptyString" },
+    "chapterPurpose": { "$ref": "#/$defs/nonEmptyString" },
+    "startingState": { "$ref": "#/$defs/nonEmptyString" },
+    "playerKnowledge": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "corePressure": { "$ref": "#/$defs/nonEmptyString" },
+    "startingEmotionalState": { "$ref": "#/$defs/nonEmptyString" },
+    "centralPressure": { "$ref": "#/$defs/nonEmptyString" },
+    "repeatedMotif": { "$ref": "#/$defs/nonEmptyString" },
+    "midpointTurn": { "$ref": "#/$defs/nonEmptyString" },
+    "endState": { "$ref": "#/$defs/nonEmptyString" },
+    "whatThisChapterChanges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "sceneSpine": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/chapterOutlineScene" }
+    },
+    "suggestedStateUpdatesAfterPlay": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "themeTags": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "notes": { "$ref": "#/$defs/nonEmptyString" }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "chapterOutlineScene": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "id",
+        "name",
+        "purpose",
+        "location",
+        "pressure",
+        "choices",
+        "clues",
+        "failure",
+        "exitState"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "purpose": { "$ref": "#/$defs/nonEmptyString" },
+        "location": { "$ref": "#/$defs/nonEmptyString" },
+        "pressure": { "$ref": "#/$defs/nonEmptyString" },
+        "choices": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "clues": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "failure": { "$ref": "#/$defs/nonEmptyString" },
+        "exitState": { "$ref": "#/$defs/nonEmptyString" },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    }
+  }
+}

@@ -1,0 +1,1356 @@
+{
+  "id": "chapter-2-scenes",
+  "type": "chapter-scenes",
+  "campaign": "karsac",
+  "chapterId": "chapter-2",
+  "source": "chapter-state migration seed",
+  "importStatus": "seeded",
+  "scenes": [
+    {
+      "id": "scene5",
+      "label": "5 · The Threads",
+      "kind": "hub",
+      "order": 50,
+      "meta": "Scene 5 · Törweg · The Investigation",
+      "title": "The Threads",
+      "summary": "Four threads run in parallel. Clock is live. The Saltbone Inn. The south dock approach.",
+      "facts": [
+        "black-pin"
+      ],
+      "handouts": [],
+      "beats": [],
+      "blocks": [
+        {
+          "type": "clock",
+          "title": "Törweg Clock — live during Scene 5",
+          "help": "Click as the players trigger the advance conditions below. Silent. Never announced.",
+          "controls": [
+            1,
+            2,
+            -1
+          ]
+        },
+        {
+          "type": "choke-point",
+          "label": "🧵 Choke Point 2 of 2",
+          "title": "Following the Threads",
+          "summary": "Once at Brynja's hall, the players may bounce off the threads, stay too long, or charge the south dock prematurely."
+        },
+        {
+          "type": "list",
+          "heading": "Signs they are drifting",
+          "style": "bullet",
+          "itemsHtml": [
+            "Long table silence after Brynja's debrief",
+            "Players gravitating to &quot;let's just confront Vane now&quot;",
+            "Nobody splitting up or moving on a hook",
+            "Sitting in Brynja's hall asking more questions in circles"
+          ]
+        },
+        {
+          "type": "sequence",
+          "heading": "Escalation",
+          "items": [
+            {
+              "label": "1 · Per-PC",
+              "bodyHtml": "Brynja's tailored hooks — fire as she sends them out."
+            },
+            {
+              "label": "2 · The Crow",
+              "bodyHtml": "If Rowan needs a nudge, the Crow lifts from the archives roof, circles once, and resettles. Visible only to him."
+            },
+            {
+              "label": "3 · Ambient",
+              "bodyHtml": "Use the clock-tier ambient cues as background. A door closes too quickly. The fisherman is still on his stitch."
+            },
+            {
+              "label": "4 · Brynja",
+              "bodyHtml": "&quot;I have a council to attend at midday. The four of you will not be answered by the four walls of this hall. Walk. Listen. Come back to me when you have heard something.&quot;"
+            },
+            {
+              "label": "5 · Sygna",
+              "bodyHtml": "Sygna asks quietly about her sister in Eskvör. A small personal stake. If a player has been kind to her, this lands hard."
+            },
+            {
+              "label": "6 · The dock",
+              "bodyHtml": "If they charge the south dock without intel: clock leaps to High. They reach Scene 6 with no numbers, no Brix, no Duvash. The mic-drop still lands, but Vane's wound is shallower. <strong>Let them — but tell them with description that they are entering blind.</strong>"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Brynja's tailored hooks"
+        },
+        {
+          "type": "lines",
+          "who": "Brynja · sending them out",
+          "hint": "two sentences each. Quality + location + person + approach. Do not explain.",
+          "lines": [
+            {
+              "cue": "To Korvann",
+              "textHtml": "&quot;The hunter. Saltbone Inn this evening. Ask for Brix. First mate of the Coldfront. He has been drinking alone. He will not say it to a stranger who arrives loudly. Sit with him.&quot;"
+            },
+            {
+              "cue": "To Rowan",
+              "textHtml": "&quot;The watcher. Pell Duvash. Upper market trading house. He has been afraid for a month. He is waiting for someone to ask him what he has been carrying.&quot;"
+            },
+            {
+              "cue": "To Xyrrathh",
+              "textHtml": "&quot;The one with the weight on him. If you want to see what opened in the mountains, the path leaves from the east edge of town. Two hours up. I would not go alone.&quot;"
+            },
+            {
+              "cue": "To Ragnfrid (Lösweg, no translation)",
+              "textHtml": "&quot;Brother. The cooperage on the upper market. There is a man at the back bench who went up to the Maw three weeks ago. He carves. Your tradition will hear what he is doing before he can tell you.&quot;"
+            },
+            {
+              "cue": "To Urdid (if present)",
+              "textHtml": "&quot;The dwarf. The Greyback is moored. The cargo is aboard. Floki trusts no one with it. If you have a mind to sit with it, he will not refuse. You will feel what the others walk past.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "scene-links",
+          "heading": "The Four Threads",
+          "items": [
+            {
+              "sceneId": "thread-a",
+              "title": "A · Brix and the Coldfront",
+              "summary": "First mate working through a bottle at the Saltbone Inn every evening. Patience, not pressure.",
+              "label": "open thread A →"
+            },
+            {
+              "sceneId": "thread-b",
+              "title": "B · The Maw",
+              "summary": "Two hours up into the Stormwatch foothills. The Aeorian note. The Threshold-Bound Echo.",
+              "label": "open thread B →"
+            },
+            {
+              "sceneId": "thread-c",
+              "title": "C · Pell Duvash",
+              "summary": "Merchant intermediary. Been told to stay and tell the truth. Assassins arrive 10–15 minutes in.",
+              "label": "open thread C →"
+            },
+            {
+              "sceneId": "thread-d",
+              "title": "D · The Records",
+              "summary": "Council archives. Mathr's family appearing sixty years ago, fully formed, no antecedent.",
+              "label": "open thread D →"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "The Saltbone Inn"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "Information lives here. <strong>Clock +1 simply for being here.</strong>"
+        },
+        {
+          "type": "list",
+          "style": "bullet",
+          "itemsHtml": [
+            "Vane has been Housecarl-Captain 15 years, his father before him",
+            "A coastal vessel at the south dock began loading before dawn",
+            "The captain is not from Törweg",
+            "Locals wary of asking Vane questions but not afraid — he is one of theirs, pays his round, remembers names"
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only",
+          "bodyHtml": "The man in the long dark coat with the black pin is at the Saltbone, far table, drinking nothing. If a player approaches directly: polite, brief, gives a name that is not his, excuses himself. Clock +1 for this exchange."
+        },
+        {
+          "type": "heading",
+          "text": "Ambient Interruptions"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "Use one or two between scenes, never as clues and never as new threads."
+        },
+        {
+          "type": "link",
+          "label": "Open the ambient beats reference →",
+          "target": "scene",
+          "href": "ambient"
+        },
+        {
+          "type": "path-cards",
+          "heading": "South Dock Approach",
+          "items": [
+            {
+              "tone": "low",
+              "label": "Happy Path (low clock)",
+              "bodyHtml": "No watchers. Players can observe freely. Vane visible, supervising. Can count housecarls, assess timeline, plan approach."
+            },
+            {
+              "tone": "high",
+              "label": "Sad Path (high clock)",
+              "bodyHtml": "Watchers on the approaches. Cannot get close without being seen. Enter Scene 6 without numbers or layout."
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "label": null,
+          "actions": [
+            {
+              "kind": "fact",
+              "id": "black-pin",
+              "label": "The man with the black pin"
+            }
+          ]
+        }
+      ],
+      "notesMd": "Structured hub scene for the chapter-2 investigation flow."
+    },
+    {
+      "id": "thread-a",
+      "label": "A · Brix and the Coldfront",
+      "kind": "thread",
+      "order": 61,
+      "meta": "Scene 5 · Thread A · Saltbone Inn",
+      "title": "Brix and the Coldfront",
+      "summary": "Patience, not pressure. He needs to be heard before he can tell you what he saw.",
+      "facts": [
+        "ashfen-questions",
+        "ashfen-arrest"
+      ],
+      "handouts": [],
+      "beats": [
+        "seed-mathr-brix"
+      ],
+      "blocks": [
+        {
+          "type": "clock",
+          "title": "Clock — Saltbone Inn",
+          "help": "+1 simply for being in the inn · +1 for public questions about Vane · +1 if anyone approaches the black-pin man",
+          "controls": [
+            1,
+            2,
+            -1
+          ]
+        },
+        {
+          "type": "npc-card",
+          "id": "ta-brix",
+          "name": "Brix",
+          "role": "First Mate · the Coldfront",
+          "rows": [
+            {
+              "label": "Who",
+              "textHtml": "Mid-forties. Short, deliberate, weathered. Sailed with Tor Ashfen twelve years. Working through a bottle every evening at the Saltbone."
+            },
+            {
+              "label": "Sound",
+              "textHtml": "Quiet. Slow. After three drinks the precision slips and something underneath comes up."
+            },
+            {
+              "label": "Want",
+              "textHtml": "To know what happened to Ashfen. To stop feeling complicit by inaction."
+            },
+            {
+              "label": "Hides",
+              "textHtml": "Afraid they were complicit by inaction. It is in every silence."
+            }
+          ]
+        },
+        {
+          "type": "lines",
+          "who": "Brix · early in the conversation",
+          "hint": "slow, looking at the glass; not yet at the meat",
+          "lines": [
+            {
+              "textHtml": "&quot;You're not from here. Sit. I'm not going anywhere.&quot;"
+            },
+            {
+              "textHtml": "&quot;Ashfen was my captain. Was. I should say is. The council have not declared him anything yet.&quot;"
+            },
+            {
+              "textHtml": "&quot;The orders came from Valweg. Mathr's house. That's not unusual. Half the freight through Törweg goes through Mathr's house.&quot;"
+            },
+            {
+              "textHtml": "&quot;He came back from Halvash three weeks ago asking different questions. Interested in different things.&quot;"
+            },
+            {
+              "textHtml": "&quot;He was gentler than he had been before. That was what frightened me most.&quot;"
+            },
+            {
+              "textHtml": "&quot;They were polite when they took him. That should not have been allowed.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "lines",
+          "who": "Brix · after the players have sat with him",
+          "hint": "DC 12 Insight or kind RP unlocks this; or three drinks of patience",
+          "lines": [
+            {
+              "textHtml": "&quot;The day they took him he had been at the warehouse on the south dock. Two of them came for him. One was Aldric's man. I knew the face. The other I had never seen. The other had a BLACK pin at his throat. I had never seen the metal before.&quot;"
+            },
+            {
+              "textHtml": "&quot;Ashfen didn't fight. He didn't argue. He turned and walked with them. I have replayed that walk in my head every night since. He did not look back. He never did not look back.&quot;"
+            },
+            {
+              "cue": "If asked where they took him",
+              "textHtml": "&quot;I don't know. Up. North. Out of Törweg. I followed for half a mile and lost them. I have not had a clean night since.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only",
+          "bodyHtml": "Brix is the first source to physically describe the black-pin man and place him in the company of Aldric's housecarl. This is corroborating evidence that the Truthspeaker's authority pre-dates Scene 6."
+        },
+        {
+          "type": "actions",
+          "label": "Mark what landed",
+          "actions": [
+            {
+              "kind": "fact",
+              "id": "ashfen-questions",
+              "label": "Ashfen returned asking different questions"
+            },
+            {
+              "kind": "fact",
+              "id": "ashfen-arrest",
+              "label": "Black-pin man took Ashfen"
+            },
+            {
+              "kind": "beat",
+              "id": "seed-mathr-brix",
+              "label": "Brix dropped Mathr's name as ordinary freight context"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "label": "← back to Scene 5",
+          "target": "scene",
+          "href": "scene5"
+        }
+      ],
+      "notesMd": "Thread A support scene for the Saltbone Inn lead."
+    },
+    {
+      "id": "thread-c",
+      "label": "C · Pell Duvash",
+      "kind": "thread",
+      "order": 63,
+      "meta": "Scene 5 · Thread C · Upper Market",
+      "title": "Pell Duvash",
+      "summary": "A man who has been waiting for somebody to ask. Assassins arrive 10–15 minutes in.",
+      "facts": [
+        "duvash-three-letters",
+        "kohlmar",
+        "duvash-attacked"
+      ],
+      "handouts": [],
+      "beats": [],
+      "blocks": [
+        {
+          "type": "clock",
+          "title": "Clock — Duvash's trading house",
+          "help": "+1 if approached in a group · +2 if a fight starts and bodies aren't moved",
+          "controls": [
+            1,
+            2,
+            -1
+          ]
+        },
+        {
+          "type": "npc-card",
+          "id": "tc-duvash",
+          "name": "Pell Duvash",
+          "role": "Merchant · Upper Market",
+          "rows": [
+            {
+              "label": "Who",
+              "textHtml": "Mid-fifties. Soft hands. Quiet eyes. Intermediary for three transactions of very old objects moving south. Did not know what he was handling at first. Does now."
+            },
+            {
+              "label": "Sound",
+              "textHtml": "Past softening. Sounds like a man who has been awake for too long."
+            },
+            {
+              "label": "Want",
+              "textHtml": "To tell someone what he has been carrying. To survive."
+            },
+            {
+              "label": "Hides",
+              "textHtml": "The note that told him to stay. He keeps it in a drawer."
+            }
+          ]
+        },
+        {
+          "type": "lines",
+          "who": "Duvash · opening",
+          "hint": "relieved, not surprised",
+          "lines": [
+            {
+              "textHtml": "&quot;Sit. Please. I have been waiting for someone who would actually listen.&quot;"
+            },
+            {
+              "textHtml": "&quot;There was a note. Stay, and tell the truth to whoever comes. I have been waiting.&quot;"
+            },
+            {
+              "textHtml": "&quot;I do not know who left it. The handwriting was not Aldric's. I know it was here when I came down in the morning. The lock was not broken.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "lines",
+          "who": "Duvash · after sitting",
+          "hint": "finally laying it down",
+          "lines": [
+            {
+              "textHtml": "&quot;Three transactions. The first two letters were Aldric's writing. The third —&quot; (looks up) &quot;— the third was not. The seal was right. The signature was right. The instruction was too direct. Vane has been careful for fifteen years. The last instruction was not careful. Someone else wrote it.&quot;"
+            },
+            {
+              "textHtml": "&quot;The captain collecting was a Bruithwr man called Kohlmar. Quiet. Wore his money on his hands. He counted the crates twice and asked no questions.&quot;"
+            },
+            {
+              "cue": "If shown the cargo list",
+              "textHtml": "&quot;Six of these passed through my warehouse. The seventh I never saw. The note said seven were coming. Six arrived. I did not ask. I should have asked.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "The Assassins · Pre-Initiative"
+        },
+        {
+          "type": "table",
+          "columns": [
+            "Sense",
+            "What they perceive"
+          ],
+          "rows": [
+            {
+              "cellsHtml": [
+                "Sound",
+                "The back of the building has been quiet. It is suddenly less quiet."
+              ]
+            },
+            {
+              "cellsHtml": [
+                "Sight",
+                "Two figures at the back of the room. They did not come through the front."
+              ]
+            },
+            {
+              "cellsHtml": [
+                "Duvash",
+                "Has gone very still. He is not surprised."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "banner",
+          "variant": "initiative",
+          "text": "Roll for Initiative · reveal both assassin tokens · Duvash between them and the players"
+        },
+        {
+          "type": "lines",
+          "who": "Duvash · after the fight, if alive",
+          "hint": "trembling, decided",
+          "lines": [
+            {
+              "textHtml": "&quot;Get me out of Törweg. I have given you what I have. I will go wherever you go next. I will not stay here another night.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "label": "Mark what landed",
+          "actions": [
+            {
+              "kind": "fact",
+              "id": "duvash-three-letters",
+              "label": "The third letter is in a different hand"
+            },
+            {
+              "kind": "fact",
+              "id": "kohlmar",
+              "label": "Kohlmar named (Bruithwr)"
+            },
+            {
+              "kind": "fact",
+              "id": "duvash-attacked",
+              "label": "Assassins came for Duvash"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "label": "← back to Scene 5",
+          "target": "scene",
+          "href": "scene5"
+        }
+      ],
+      "notesMd": "Thread C pressure-cooker scene for Duvash."
+    },
+    {
+      "id": "thread-d",
+      "label": "D · The Records",
+      "kind": "thread",
+      "order": 64,
+      "meta": "Scene 5 · Thread D · Council Archives",
+      "title": "The Records - Mathr's Family",
+      "summary": "Sixty years ago, fully formed, no antecedent. The arithmetic Vane has never done.",
+      "facts": [
+        "mathr-no-antecedent",
+        "vane-elevated",
+        "mathr-arithmetic"
+      ],
+      "handouts": [
+        "H11"
+      ],
+      "beats": [
+        "seed-mathr-brynja"
+      ],
+      "blocks": [
+        {
+          "type": "clock",
+          "title": "Clock — the archives are public",
+          "help": "+1 for asking the clerk for family records by name · 0 for general browsing",
+          "controls": [
+            1,
+            -1
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "The Clerk"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "Mid-thirties. Quiet. Reads everything that crosses his desk. Has noticed nothing officially. Has noticed everything personally. <em>He will help if asked politely.</em>"
+        },
+        {
+          "type": "lines",
+          "who": "The Clerk",
+          "hint": "helpful in the way of a man who has been waiting to be asked",
+          "lines": [
+            {
+              "textHtml": "&quot;Family records are organised by name. Sixty years on the open shelf. Older is in the back room and I need a council reason.&quot;"
+            },
+            {
+              "cue": "If asked about the Mathr family",
+              "textHtml": "&quot;Strange you should ask. (small pause) The shelf is short.&quot;"
+            },
+            {
+              "cue": "If asked about the Vanes",
+              "textHtml": "&quot;Three generations of housecarl. Father, son, son. Properly antecedented. Fisher family from a valley three days south. The instrument elevating them is also on the shelf.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "What They Find"
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only · Two records",
+          "bodyHtml": "<strong>(1) MATHR'S FAMILY.</strong> Appears sixty years ago, fully formed. Already wealthy. Already on the inner council. NO antecedent in any oral history before that date.<br><br><strong>(2) VANE'S FAMILY.</strong> Appears as housecarl service at the same time. Properly antecedented. Lösweg fishing family from a valley three days south. ELEVATED to housecarl status sixty years ago in a single instrument signed by Mathr's grandfather. Three generations. Hereditary."
+        },
+        {
+          "type": "read-aloud",
+          "speaker": "Serris",
+          "bodyHtml": "&quot;Mathr's family has no antecedent. Vane's family has antecedent, but their elevation is contemporaneous with Mathr's family's appearance. The Vanes are real. Mathr's family are not. This is not how Lösweg families work.&quot;"
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only · The Arithmetic",
+          "bodyHtml": "Mathr appears in records sixty years ago as a man in his forties. He does not appear to have aged. Vane's father served Mathr for thirty years until his death; Aldric has served fifteen more. <strong>Forty-five years of Vane service and Mathr looks the same.</strong> Vane has never done this arithmetic. If raised in Scene 6 directly, the dissonance is visible."
+        },
+        {
+          "type": "lines",
+          "who": "Brynja · almost to herself",
+          "hint": "if she is present, or when the records are brought back to her",
+          "lines": [
+            {
+              "textHtml": "&quot;I have tried to find the year his family came to Valweg. The records don't have one. They just... begin.&quot;"
+            },
+            {
+              "cue": "If pushed",
+              "textHtml": "&quot;Sixty years ago. Before that — nothing. No antecedent. No lineage. In Lösweg, that is not how things work.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "label": "Handout",
+          "actions": [
+            {
+              "kind": "handout",
+              "id": "H11",
+              "label": "Mathr Family Tree"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "label": "Mark what landed",
+          "actions": [
+            {
+              "kind": "fact",
+              "id": "mathr-no-antecedent",
+              "label": "Mathr's family has no antecedent"
+            },
+            {
+              "kind": "fact",
+              "id": "vane-elevated",
+              "label": "Vanes elevated by Mathr's grandfather"
+            },
+            {
+              "kind": "fact",
+              "id": "mathr-arithmetic",
+              "label": "The Mathr arithmetic"
+            },
+            {
+              "kind": "beat",
+              "id": "seed-mathr-brynja",
+              "label": "Brynja landed the missing-origin Mathr seed"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "label": "← back to Scene 5",
+          "target": "scene",
+          "href": "scene5"
+        }
+      ],
+      "notesMd": "Thread D archive scene for the missing-origin records."
+    },
+    {
+      "id": "ambient",
+      "label": "5a · Ambient Beats",
+      "kind": "support",
+      "order": 51,
+      "meta": "Scene 5a · Between Scenes · Ambient Use",
+      "title": "Ambient Beats & Mathr Seeds",
+      "summary": "Short interruptions. No clue delivery, no follow-up, no explanation. The wrongness is the scene.",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "ambient-quieting",
+        "ambient-forgetting",
+        "ambient-smoothing",
+        "seed-mathr-brix",
+        "seed-mathr-brynja"
+      ],
+      "blocks": [
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Use Rules",
+          "bodyHtml": "These are 30-60 second interruptions dropped between scenes. The NPC ends the scene on their own terms, never comments on their own symptom, and leaves no follow-up thread behind. Hold the silence for three seconds after they go, then hard-cut to the next scene."
+        },
+        {
+          "type": "heading",
+          "text": "Fixation Prevention"
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Ragnfrid",
+          "bodyHtml": "He can name the wrongness and move the party on without explaining it: &quot;My grandmother had a word for that. We should keep walking.&quot; &quot;In the old verse, that's the shape of a place that's forgetting itself.&quot; &quot;Don't ask him again. There's nothing there to find.&quot;"
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Hard Cut",
+          "bodyHtml": "After the NPC leaves, do not wait for resolution. Let the feeling sit, then open the next scene immediately."
+        },
+        {
+          "type": "heading",
+          "text": "The Quieting"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> Saltbone Inn edge-scene, or passing the harbourmaster's tower."
+        },
+        {
+          "type": "lines",
+          "who": "Two fishermen at a table",
+          "hint": "argument cadence, total agreement",
+          "lines": [
+            {
+              "textHtml": "&quot;Aye, you were right about the northern water.&quot;"
+            },
+            {
+              "textHtml": "&quot;No, no. You were right to stay off the shoal line. That's exactly it.&quot;"
+            },
+            {
+              "textHtml": "&quot;Of course. Of course.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Wrongness",
+          "bodyHtml": "Löswegiann men do not agree about fishing routes. They gesture like they are arguing, pause like they are arguing, and agree on every point pleasantly. Neither notices."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit",
+          "bodyHtml": "One stands, says he has to get back before the light goes. The other says of course, of course. They part with nothing unresolved."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "If players intervene",
+          "bodyHtml": "Friendly, mildly confused, no useful information. They agree with whatever the players suggest, then leave."
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "ambient-quieting",
+              "label": "Dropped The Quieting"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "The Forgetting"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> The road between locations, or the cooperage exterior."
+        },
+        {
+          "type": "lines",
+          "who": "Older woman with rope in her hands",
+          "hint": "mildly puzzled, never distressed",
+          "lines": [
+            {
+              "textHtml": "&quot;The flag's at half, yes. Means somebody's gone.&quot;"
+            },
+            {
+              "textHtml": "&quot;I knew them. I did. I just...&quot;"
+            },
+            {
+              "textHtml": "&quot;No. That isn't right either.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Wrongness",
+          "bodyHtml": "She knows Floki's name. She knows what half-mast means. She cannot remember who died or why the flag is lowered. This is not senility. The knowledge is simply absent."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit",
+          "bodyHtml": "She shrugs, says it'll come to her, and goes back to the rope. It will not come to her."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "If players press for a name",
+          "bodyHtml": "She gives one, stops, doubts it, gives another, says she is probably tired, and leaves."
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "ambient-forgetting",
+              "label": "Dropped The Forgetting"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "The Smoothing"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "<strong>Location:</strong> The cooperage, with the Spiral Carver already in play."
+        },
+        {
+          "type": "lines",
+          "who": "Young apprentice",
+          "hint": "clear on the work, blank on the face",
+          "lines": [
+            {
+              "textHtml": "&quot;He's been at that same spiral for an hour.&quot;"
+            },
+            {
+              "textHtml": "&quot;No, I know his hands. I know the knife. I know the bench.&quot;"
+            },
+            {
+              "textHtml": "&quot;His face? I don't know. I looked at him.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Wrongness",
+          "bodyHtml": "The apprentice can describe exactly what the Carver is doing and how long he has been doing it. He cannot describe the Carver's face. He does not find that strange."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "Exit",
+          "bodyHtml": "Someone inside calls his name. He goes immediately, even mid-sentence."
+        },
+        {
+          "type": "callout",
+          "variant": "conditional",
+          "label": "If players look at the Carver",
+          "bodyHtml": "They can see his face while looking at it. If they look away and try to describe it, the description is gone. Do not announce this."
+        },
+        {
+          "type": "actions",
+          "label": "Track the beat",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "ambient-smoothing",
+              "label": "Dropped The Smoothing"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Mathr Name-Seeding"
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Purpose",
+          "bodyHtml": "Say the name twice more in ordinary contexts before the token lands. No reveal language. Let the players do the assembly."
+        },
+        {
+          "type": "lines",
+          "who": "Brix at the Saltbone",
+          "hint": "unremarked, then move on",
+          "lines": [
+            {
+              "textHtml": "&quot;The orders came from Valweg. Mathr's house. That's not unusual. Half the freight through Törweg goes through Mathr's house.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "label": "Track the seed",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "seed-mathr-brix",
+              "label": "Landed the Brix Mathr seed"
+            }
+          ]
+        },
+        {
+          "type": "lines",
+          "who": "Brynja, almost to herself",
+          "hint": "late, quiet, not a revelation",
+          "lines": [
+            {
+              "textHtml": "&quot;I have tried to find the year his family came to Valweg. The records don't have one. They just... begin.&quot;"
+            },
+            {
+              "cue": "If pushed",
+              "textHtml": "&quot;Sixty years ago. Before that — nothing. No antecedent. No lineage. In Lösweg, that is not how things work.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "label": "Track the seed",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "seed-mathr-brynja",
+              "label": "Landed the Brynja Mathr seed"
+            }
+          ]
+        }
+      ],
+      "notesMd": "Structured support scene migrated from the static Session 5a reference."
+    },
+    {
+      "id": "ashvein",
+      "label": "5b · Ashvein Logic",
+      "kind": "support",
+      "order": 52,
+      "meta": "Scene 5b · Session Logic · Hidden Principle",
+      "title": "Ashvein Protection",
+      "summary": "Do not reveal this as a speech. Let the players assemble it from Brynja, Serris, the pin, the phial, and Vane.",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "ashvein-brynja-hypothesis",
+        "ashvein-serris-named",
+        "ashvein-xyrrath-connection",
+        "ashvein-vane-negative-proof",
+        "ashvein-pin-question"
+      ],
+      "blocks": [
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Principle",
+          "bodyHtml": "Ashvein is Dhurvaq's material: the Holding. Boundaries, persistence, containers, thresholds, and things keeping their shape. Vishara's Smoothing is its direct opposition. In Törweg, anyone carrying Ashvein has been protected without knowing it."
+        },
+        {
+          "type": "list",
+          "heading": "Assembly Order",
+          "style": "numbered",
+          "itemsHtml": [
+            "<strong>Brynja.</strong> Plants the hypothesis: she does not forget, everyone around her does, and she has held the stone for two years.",
+            "<strong>Player leap.</strong> Most likely Xyrrathh. Do not force it. Once the hypothesis is live, let the players compare what they are carrying.",
+            "<strong>Serris.</strong> Names Ashvein and gives only the older-records frame: things that hold, bind, or persist.",
+            "<strong>Vane.</strong> Negative proof. Good man, loyal man, no Ashvein, meaning removed from inside the act he carried out.",
+            "<strong>The pin.</strong> Question only. Why does Beorn's agent carry Ashvein in Mathr's territory? Leave this for Valweg."
+          ]
+        },
+        {
+          "type": "list",
+          "heading": "What They Should Know By Session End",
+          "style": "bullet",
+          "itemsHtml": [
+            "Something in Törweg is erasing specific memory and selfhood.",
+            "The Ashvein objects in the party have been protecting them without their knowledge.",
+            "The repeated material across the party is not coincidence.",
+            "Vane was not protected, and he was a good man.",
+            "The stakes are no longer artefact theft alone. Something is being unmade."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Brynja's Stone",
+          "bodyHtml": "Hypothesis only. Personal observation, no theory."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Truthspeaker's Pin",
+          "bodyHtml": "Question only. If asked directly, he touches it once and moves on."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Xyrrathh's Phial",
+          "bodyHtml": "Most concentrated Ashvein object in the party. Let the player notice; do not prompt."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Korvann's Bowstring",
+          "bodyHtml": "Level-up reveal: spun with Ashvein. Quiet discovery, not a speech."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Rowan's Sword",
+          "bodyHtml": "Reveal only after the Törweg arc resolves and the mechanic is understood."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Ragnfrid's Oath-Ring",
+          "bodyHtml": "Second layer only: the skald against forgetting was already carrying protection against erasure."
+        },
+        {
+          "type": "actions",
+          "label": "Track the assembly",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "ashvein-brynja-hypothesis",
+              "label": "Brynja planted the hypothesis"
+            },
+            {
+              "kind": "beat",
+              "id": "ashvein-serris-named",
+              "label": "Serris named Ashvein"
+            },
+            {
+              "kind": "beat",
+              "id": "ashvein-xyrrath-connection",
+              "label": "A player connected the phial"
+            },
+            {
+              "kind": "beat",
+              "id": "ashvein-vane-negative-proof",
+              "label": "Vane landed as negative proof"
+            },
+            {
+              "kind": "beat",
+              "id": "ashvein-pin-question",
+              "label": "The black pin question is live"
+            }
+          ]
+        }
+      ],
+      "notesMd": "Structured support scene for the hidden Ashvein logic."
+    },
+    {
+      "id": "maw-handout",
+      "label": "5c · Maw Handout",
+      "kind": "support",
+      "order": 53,
+      "meta": "Scene 5c · Maw Support · Clue + Handout",
+      "title": "The Maw Network Handout",
+      "summary": "The Maw scene and the player handout are one beat. The chamber reveals function; the handout lets the table keep looking at it.",
+      "facts": [],
+      "handouts": [],
+      "beats": [
+        "maw-network-revealed",
+        "maw-korvann-beat",
+        "maw-handout-ready",
+        "maw-handout-posted"
+      ],
+      "blocks": [
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "Scene Target",
+          "bodyHtml": "The players should understand that the artefacts were placed in a deliberate geometry across Lösweg, that removing them breaks something real, and that Törweg is worst-hit because the Maw is the anchor point. Do not explain Erik, the scroll case, or the full cosmology here."
+        },
+        {
+          "type": "list",
+          "heading": "Player-Facing Handout Must Show",
+          "style": "bullet",
+          "itemsHtml": [
+            "A central hub with twelve radiating positions.",
+            "A mix of filled and empty sockets that is immediately legible.",
+            "Geographic carvings beside positions: mountain profile, river fork, coastline, settlement outline, and other distinct landscape marks.",
+            "No labels, no named settlements, no theory text."
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Format",
+          "bodyHtml": "Single parchment-style page. Title optional and minimal. The handout should read like a copied plate from the chamber floor, not a scholarly explanation."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Layout",
+          "bodyHtml": "Use a borderless grid to fake a radial plate: central hub in the middle cell, socket marks around it, landmark glyphs paired to each socket. Filled sockets should use solid marks; empty ones should use hollows or brackets."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Text Discipline",
+          "bodyHtml": "No Mathr, no Erik, no Ashvein, no Dhurvaq, no scroll case. The handout is evidence, not commentary."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "At Table",
+          "bodyHtml": "Give the handout only once they are physically in the chamber and the pattern is described. Without scene context it becomes noise."
+        },
+        {
+          "type": "actions",
+          "label": "Track the Maw clue",
+          "actions": [
+            {
+              "kind": "beat",
+              "id": "maw-network-revealed",
+              "label": "The Maw network geometry landed"
+            },
+            {
+              "kind": "beat",
+              "id": "maw-korvann-beat",
+              "label": "Korvann saw the original pattern"
+            },
+            {
+              "kind": "beat",
+              "id": "maw-handout-ready",
+              "label": "Maw handout generated"
+            },
+            {
+              "kind": "beat",
+              "id": "maw-handout-posted",
+              "label": "Maw handout used at table"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "label": "Generator file: maw-network-handout-docx.js",
+          "target": "file",
+          "href": "maw-network-handout-docx.js"
+        }
+      ],
+      "notesMd": "Structured support scene for the Maw clue and handout support."
+    },
+    {
+      "id": "thread-b",
+      "label": "B · The Maw",
+      "kind": "thread",
+      "order": 62,
+      "meta": "Scene 5 · Thread B · Stormwatch Foothills",
+      "title": "The Maw",
+      "summary": "Two hours up. Fresh tooling. The Aeorian note. The Threshold-Bound Echo.",
+      "facts": [
+        "maw-tooling",
+        "aeorian-note",
+        "carver-spiral"
+      ],
+      "handouts": [
+        "H12"
+      ],
+      "beats": [
+        "maw-network-revealed",
+        "maw-korvann-beat",
+        "ashvein-serris-named",
+        "ashvein-xyrrath-connection"
+      ],
+      "blocks": [
+        {
+          "type": "clock",
+          "title": "Clock — the Maw is outside Vane's view",
+          "help": "Clock does not advance up here. Cost is time — they lose half a day to get up and back.",
+          "controls": [
+            1,
+            -1
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Approach"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "Two hours up a goat-path from the east edge of town. Stone tilts upward. Scrub thins out. The wind has a flat sound that does not echo properly. The path ends at a fracture in the rock — narrow, about the height of two people, sloping down into the mountain."
+        },
+        {
+          "type": "heading",
+          "text": "The Chamber Geometry"
+        },
+        {
+          "type": "read-aloud",
+          "bodyHtml": "&quot;Past the fracture, the chamber opens. The floor is carved. Not decoration. A deliberate pattern, radiating from a central point in twelve marked lines like spokes from a hub. Some positions still hold objects. Some are empty in the way only a removed thing can leave empty: a worn hollow, a stain, a shape the stone has been waiting around for a very long time.&quot;"
+        },
+        {
+          "type": "read-aloud",
+          "bodyHtml": "&quot;Beside each position, a different carved landmark: a mountain profile, a river split, a hooked coastline, a cluster of rooflines, other pieces of country worked into the stone. No labels. Just geography.&quot;"
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only · What the Maw tells them",
+          "bodyHtml": "The Maw is the hub of a much older network. Twelve artefacts were fixed in deliberate positions radiating outward across Lösweg. Removing them breaks what the arrangement was maintaining. Törweg is worst-hit because the Maw is the anchor point and it has been stripped hardest. Do not explain Erik, the scroll case, or recoverability yet."
+        },
+        {
+          "type": "callout",
+          "variant": "private-prompt",
+          "label": "To Korvann's player",
+          "bodyHtml": "The pattern on the floor. You have seen part of this before."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Ragnfrid / Floki",
+          "bodyHtml": "If either names the landscape carvings aloud, the floor stops reading as abstract geometry and starts reading as Lösweg itself."
+        },
+        {
+          "type": "link",
+          "label": "Open the Maw handout build notes →",
+          "target": "scene",
+          "href": "maw-handout"
+        },
+        {
+          "type": "heading",
+          "text": "Three Discoveries Inside"
+        },
+        {
+          "type": "read-aloud",
+          "bodyHtml": "&quot;The shaft tilts down into the rock perhaps thirty feet. The walls are scored with the same pattern but deeper, and in places fresh. An iron sconce has been driven into the rock at chest height. The metal is new. The fittings are not Lösweg work.&quot;"
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only · Vane's Work",
+          "bodyHtml": "The sconce is Vane's housecarls' work, recent, on Mathr's orders. They took what could be taken. <strong>The Aeorian note they missed.</strong>"
+        },
+        {
+          "type": "read-aloud",
+          "speaker": "The Aeorian Note · handout H12",
+          "bodyHtml": "&quot;It is not a weapon. It is a condition. Available to be woken or to be held.&quot;"
+        },
+        {
+          "type": "actions",
+          "label": "Handout",
+          "actions": [
+            {
+              "kind": "handout",
+              "id": "H12",
+              "label": "Aeorian Note"
+            }
+          ]
+        },
+        {
+          "type": "read-aloud",
+          "speaker": "Serris, reading",
+          "bodyHtml": "&quot;This is the same hand as the scroll case margin. The same hand. After two thousand years.&quot;"
+        },
+        {
+          "type": "lines",
+          "who": "Serris · if the party compares the word to the pin or the phial",
+          "hint": "confirmation, not cosmology",
+          "lines": [
+            {
+              "textHtml": "&quot;Ashvein. It's in the older records — always adjacent to things that hold, or bind, or persist. I don't know what it does. I know it's very old and I know it keeps showing up near things that matter.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only · Step 3",
+          "bodyHtml": "Serris names the material and stops. If Xyrrathh's player wants the phial connection, let them make it."
+        },
+        {
+          "type": "heading",
+          "text": "The Threshold-Bound Echo · Pre-Initiative"
+        },
+        {
+          "type": "table",
+          "columns": [
+            "Sense",
+            "What they perceive"
+          ],
+          "rows": [
+            {
+              "cellsHtml": [
+                "Sound",
+                "The cold air in the fracture begins moving sideways. Through itself."
+              ]
+            },
+            {
+              "cellsHtml": [
+                "Sight",
+                "Where the shaft turns, the wall is not where it was. Something has chosen to be there instead."
+              ]
+            },
+            {
+              "cellsHtml": [
+                "Smell",
+                "Dry. Faintly mineral. <em>The same smell the Shadow-Walkers carried in the alley on Halvash.</em>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "banner",
+          "variant": "initiative",
+          "text": "Roll for Initiative · reveal the Echo's token · place between the players and the entrance"
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only",
+          "bodyHtml": "Tester, not finisher. Tests once, withdraws, tests again. If they fight intelligently it disengages within three rounds. Once they leave the Maw it does not pursue. <strong>The Echo tests Xyrrathh more and withdraws less.</strong>"
+        },
+        {
+          "type": "heading",
+          "text": "The Spiral Carver (back in town, the cooperage)"
+        },
+        {
+          "type": "paragraph",
+          "bodyHtml": "Brynja's hook for Ragnfrid points here. A man at the back bench. Working clothes. Carving."
+        },
+        {
+          "type": "lines",
+          "who": "The Carver",
+          "hint": "slow, forgets sentences mid-way",
+          "lines": [
+            {
+              "textHtml": "&quot;We went up. Two of us. Hjalmar went in. I waited at the slot. He came out. (pause on the carving) he came out wrong. He looked the same. He walked the same. He did not. (long pause) he did not. (he forgets the sentence, begins again on the spiral). He carves the same shape every afternoon. He doesn't know why.&quot;"
+            },
+            {
+              "cue": "If asked what shape",
+              "textHtml": "(Shows them. It is the bone disc carving, continued past the edge of the disc and onto the wood.) &quot;I don't know what it is. My hands know.&quot;"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "dm-only",
+          "label": "DM Only · Ragnfrid",
+          "bodyHtml": "The spiral the Carver makes is the bone disc pattern. Ragnfrid will feel this before Serris recognises it. The Skald tradition reads the geometry before the linguistics."
+        },
+        {
+          "type": "callout",
+          "variant": "slate",
+          "label": "Stakes",
+          "bodyHtml": "Do not narrate the conclusion for them. The point is that moving the artefacts is not theft or collection. Every empty position is a community somewhere in Lösweg losing its specific shape."
+        },
+        {
+          "type": "actions",
+          "label": "Mark what landed",
+          "actions": [
+            {
+              "kind": "fact",
+              "id": "maw-tooling",
+              "label": "Fresh, non-Lösweg tooling at the Maw"
+            },
+            {
+              "kind": "fact",
+              "id": "aeorian-note",
+              "label": "The Aeorian note"
+            },
+            {
+              "kind": "fact",
+              "id": "carver-spiral",
+              "label": "The Carver's spiral = the bone disc"
+            },
+            {
+              "kind": "beat",
+              "id": "maw-network-revealed",
+              "label": "The Maw network geometry landed"
+            },
+            {
+              "kind": "beat",
+              "id": "maw-korvann-beat",
+              "label": "Korvann saw the original geometry"
+            },
+            {
+              "kind": "beat",
+              "id": "ashvein-serris-named",
+              "label": "Serris named Ashvein"
+            },
+            {
+              "kind": "beat",
+              "id": "ashvein-xyrrath-connection",
+              "label": "Xyrrathh made the phial connection"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "label": "← back to Scene 5",
+          "target": "scene",
+          "href": "scene5"
+        }
+      ],
+      "notesMd": "Structured thread scene for the Maw investigation path."
+    }
+  ]
+}
