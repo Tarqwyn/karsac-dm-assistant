@@ -4,12 +4,15 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const PROJECT_ROOT = resolve(__dirname, '..');
-export const INDEX_DIR = resolve(PROJECT_ROOT, '.karsac-index');
-export const DEBUG_DIR = resolve(INDEX_DIR, 'debug');
 
 function resolveFromProject(defaultRelativePath: string, envValue: string | undefined): string {
   return resolve(PROJECT_ROOT, envValue ?? defaultRelativePath);
 }
+
+// Index output dir. Overridable so promotion/index tests can isolate from the
+// real .karsac-index instead of clobbering it.
+export const INDEX_DIR = resolveFromProject('.karsac-index', process.env.KARSAC_INDEX_DIR);
+export const DEBUG_DIR = resolve(INDEX_DIR, 'debug');
 
 export const CORPUS_ROOT = resolveFromProject('../corpus', process.env.KARSAC_CORPUS_ROOT);
 export const REGISTRY_ROOT = resolveFromProject('../corpus/registry', process.env.KARSAC_REGISTRY_ROOT);

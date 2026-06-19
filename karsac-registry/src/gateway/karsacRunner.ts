@@ -3,6 +3,14 @@ import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { routeQuestion, type Profile } from '../router.js'
 import { detectProposalExecutionPlan } from '../proposals/proposalRouting.js'
+import { PROPOSALS_ROOT } from '../paths.js'
+import {
+  isPromoteRequest,
+  resolveProposalForPromotion,
+  renderNoMatch,
+  renderAmbiguous,
+  renderBlocked,
+} from './promoteIntent.js'
 import type { GatewayRecentMessage } from './openaiTypes.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -44,6 +52,10 @@ export interface KarsacProgressEvent {
     | 'validation-completed'
     | 'summary-started'
     | 'summary-completed'
+    | 'promote-started'
+    | 'promote-index-rebuild'
+    | 'promote-completed'
+    | 'promote-blocked'
   message: string
   data?: Record<string, unknown>
 }
@@ -278,6 +290,78 @@ function buildAskArgs(prompt: string, profile: Profile, modeOverride: string | n
   return args
 }
 
+/** Strip the runNpmCommand wrapper prefix, leaving the CLI's own failure text. */
+function cleanCommandError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  return msg.replace(/^Karsac command failed \([^)]*\):\s*/i, '').trim()
+}
+
+/**
+ * Promotion flow for the chat gateway. Blocked-by-default: a freshly generated
+ * proposal usually fails validation, so the CLI refuses without --force, and we
+ * render that refusal as actionable guidance. Never throws — every path returns
+ * text so the SSE stream closes cleanly.
+ */
+async function runPromoteFlow(input: RunKarsacInput): Promise<RunKarsacResult> {
+  const resolution = resolveProposalForPromotion(input.message, PROPOSALS_ROOT)
+
+  if (resolution.kind === 'none') {
+    return { text: renderNoMatch(resolution), routeProfile: 'promote' }
+  }
+  if (resolution.kind === 'ambiguous') {
+    return { text: renderAmbiguous(resolution), routeProfile: 'promote' }
+  }
+
+  const { match, intent } = resolution
+
+  emitProgress(input.onProgress, {
+    type: 'promote-started',
+    message: `Promoting \`${match.slug}\`${intent.force ? ' (forcing past validation)' : ''}...\n\n`,
+    data: { slug: match.slug, force: intent.force, overwrite: intent.overwrite },
+  })
+
+  const args = ['--silent', 'run', 'karsac:promote-proposal', '--', match.path]
+  if (intent.force) args.push('--force')
+  if (intent.overwrite) args.push('--overwrite')
+
+  let rebuildSignalled = false
+  try {
+    const result = await runNpmCommand(args, {
+      onStdoutLine: (line) => {
+        // buildIndex logs "Scanning: <dir>" when it starts — the corpus scan is
+        // the one long pause (~10s). Signal it once so the stream does not look
+        // hung. Neutral wording: a scan also runs during validation, which may
+        // then block, so we don't promise the entity is searchable yet.
+        if (!rebuildSignalled && /^Scanning:/i.test(line.trim())) {
+          rebuildSignalled = true
+          emitProgress(input.onProgress, {
+            type: 'promote-index-rebuild',
+            message: 'Validating and rebuilding the entity index...\n\n',
+          })
+        }
+      },
+    })
+
+    emitProgress(input.onProgress, {
+      type: 'promote-completed',
+      message: 'Promotion complete.\n\n',
+    })
+
+    return {
+      text: result.stdout || `Promoted \`${match.slug}\`.`,
+      routeProfile: 'promote',
+      proposalPath: match.path,
+    }
+  } catch (err) {
+    // Validation refusal is the common case, not an error condition.
+    emitProgress(input.onProgress, {
+      type: 'promote-blocked',
+      message: 'Promotion blocked by validation.\n\n',
+    })
+    return { text: renderBlocked(match, cleanCommandError(err)), routeProfile: 'promote' }
+  }
+}
+
 export async function runKarsacRequest(input: RunKarsacInput): Promise<RunKarsacResult> {
   const metaResponse = buildOpenWebUIMetaResponse(input.message)
   if (metaResponse) {
@@ -290,6 +374,12 @@ export async function runKarsacRequest(input: RunKarsacInput): Promise<RunKarsac
   const prompt = buildPrompt(input.message, input.messages)
   const forceProposal = input.forceMode === 'propose'
   const forceAsk = input.forceMode === 'ask'
+
+  // Promote intent — explicit human gate. Checked before proposal/ask routing.
+  if (!forceProposal && !forceAsk && isPromoteRequest(input.message) && !isOpenWebUIMetaPrompt(input.message)) {
+    return runPromoteFlow(input)
+  }
+
   const useProposalMode = forceProposal || (!forceAsk && shouldUseProposalMode(input.message))
 
   if (useProposalMode) {
