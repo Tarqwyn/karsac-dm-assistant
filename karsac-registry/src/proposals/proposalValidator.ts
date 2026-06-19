@@ -111,6 +111,24 @@ export function validateProposalContent(
     if (body.includes('player-knowledge.json')) {
       fail('chapter-outline body must not reference "player-knowledge.json" directly')
     }
+
+    const sceneSpineSection = body.match(/##\s+Scene Spine\s*\n([\s\S]*?)(?=\n##\s|\s*$)/i)?.[1] ?? ''
+    if (!sceneSpineSection.trim()) {
+      fail('chapter-outline body missing Scene Spine content')
+    } else {
+      const sceneBlocks = [...sceneSpineSection.matchAll(/###\s+Scene\s+\d+\s+[—-]\s+[\s\S]*?(?=\n###\s+Scene\s+\d+\s+[—-]|\s*$)/gi)].map((match) => match[0].trim())
+      if (sceneBlocks.length < 3 || sceneBlocks.length > 6) {
+        fail(`chapter-outline Scene Spine must contain 3 to 6 scenes, got ${sceneBlocks.length}`)
+      }
+      const requiredSceneFields = ['Purpose:', 'Location:', 'Pressure:', 'Choices:', 'Clues:', 'Failure:', 'Exit State:']
+      for (const [index, sceneBlock] of sceneBlocks.entries()) {
+        for (const field of requiredSceneFields) {
+          if (!sceneBlock.includes(field)) {
+            fail(`chapter-outline Scene ${index + 1} is missing required field: ${field}`)
+          }
+        }
+      }
+    }
   }
 
   if (proposalType === 'encounter') {

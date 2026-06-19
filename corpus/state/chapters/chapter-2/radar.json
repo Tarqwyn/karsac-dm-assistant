@@ -1,0 +1,84 @@
+{
+  "id": "chapter-2-radar",
+  "type": "chapter-radar",
+  "campaign": "karsac",
+  "chapterId": "chapter-2",
+  "source": "corpus/state/radar/session-2.json",
+  "importStatus": "migrated",
+  "radar": [
+    {
+      "id": "a",
+      "nav": "thread-a",
+      "worldThreadId": "brix-ashfen-influence",
+      "title": "Brix & the Coldfront",
+      "surface": "Brynja, Brix, Saltbone regulars",
+      "relation": "Ashfen, the black pin, and Aldric's reach into quiet arrests.",
+      "hook": "If the table stalls, let someone mention Brix is in the Saltbone again and drunk enough to talk to anyone patient.",
+      "cueScenes": [
+        "scene4",
+        "scene5",
+        "scene6"
+      ],
+      "cueText": "Brynja, tavern chatter, or dock pressure can steer them toward Brix right now.",
+      "currentThreadStatus": "simmering",
+      "type": "chapter-radar-entry",
+      "chapter": "chapter-2"
+    },
+    {
+      "id": "b",
+      "nav": "thread-b",
+      "worldThreadId": "aeorian-note-ashvein",
+      "title": "The Maw",
+      "surface": "Brynja, the Carver, Ragnfridd",
+      "relation": "The artefacts, the spiral geometry, and the same wrongness that touched Halvash.",
+      "hook": "If the mountain feels optional, use the Carver's spiral work or Brynja's warning to make it feel like an unanswered wound.",
+      "cueScenes": [
+        "scene2",
+        "scene4",
+        "scene5",
+        "scene6"
+      ],
+      "cueText": "The cargo, the Carver, or any talk of the mountain can make the Maw feel urgent here.",
+      "currentThreadStatus": "dormant",
+      "type": "chapter-radar-entry",
+      "chapter": "chapter-2"
+    },
+    {
+      "id": "c",
+      "nav": "thread-c",
+      "worldThreadId": "duvash-extract",
+      "title": "Pell Duvash",
+      "surface": "Brynja, Duvash, Rowan's Crow",
+      "relation": "The letters, Kohlmar, and proof that someone is watching the traders tied to Vane.",
+      "hook": "If Rowan drifts or the market scene needs heat, the Crow or a market whisper can point straight at Duvash before the assassins land.",
+      "cueScenes": [
+        "scene4",
+        "scene5",
+        "scene6"
+      ],
+      "cueText": "A Crow beat, market whisper, or Brynja prod can pull Duvash forward right now.",
+      "currentThreadStatus": "simmering",
+      "type": "chapter-radar-entry",
+      "chapter": "chapter-2"
+    },
+    {
+      "id": "d",
+      "nav": "thread-d",
+      "worldThreadId": "brynja-record",
+      "title": "The Records",
+      "surface": "Serris, the archives clerk, council scraps",
+      "relation": "Mathr's missing origin story and the Vane family's elevation sixty years ago.",
+      "hook": "If the conspiracy still feels abstract, let Serris or the clerk flag that Mathr enters the record fully formed and never quite ages.",
+      "cueScenes": [
+        "scene4",
+        "scene5",
+        "scene6",
+        "scene7"
+      ],
+      "cueText": "Serris or any council paperwork moment can turn the abstract conspiracy into evidence here.",
+      "currentThreadStatus": "dormant",
+      "type": "chapter-radar-entry",
+      "chapter": "chapter-2"
+    }
+  ]
+}

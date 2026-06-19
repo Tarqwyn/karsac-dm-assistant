@@ -3,9 +3,64 @@
   "type": "player-knowledge",
   "campaign": "karsac",
   "scope": "party",
-  "sessionBasis": "session-2",
-  "knownFacts": [],
-  "postedHandouts": [],
+  "chapterBasis": "chapter-2",
+  "knownFacts": [
+    "edvar-trawler",
+    "west-closed",
+    "yngondi-named",
+    "floki-prophecy",
+    "six-artefacts",
+    "maw-named",
+    "scroll-warm",
+    "deepwhale",
+    "hag-cargo",
+    "thrall-cloth",
+    "flag-half",
+    "welcome-wrong",
+    "brynja-cadence",
+    "crow-archives",
+    "fisherman-stitch",
+    "black-pin",
+    "brynja-record",
+    "vane-orders",
+    "dugweb-visit",
+    "ashfen-questions",
+    "ashfen-arrest",
+    "maw-tooling",
+    "aeorian-note",
+    "duvash-three-letters",
+    "kohlmar",
+    "duvash-attacked",
+    "mathr-no-antecedent",
+    "vane-elevated",
+    "mathr-arithmetic"
+  ],
+  "postedHandouts": [
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H10",
+    "H11",
+    "H12",
+    "H13",
+    "H17"
+  ],
+  "knownBeats": [
+    "ambient-quieting",
+    "ambient-forgetting",
+    "ambient-smoothing",
+    "seed-mathr-brix",
+    "seed-mathr-brynja",
+    "ashvein-brynja-hypothesis",
+    "ashvein-serris-named",
+    "ashvein-xyrrath-connection",
+    "ashvein-pin-question",
+    "maw-network-revealed",
+    "maw-korvann-beat",
+    "maw-handout-ready",
+    "maw-handout-posted"
+  ],
   "activeThreads": [
     {
       "id": "bone-disc",
@@ -33,23 +88,48 @@
       "status": "simmering"
     },
     {
+      "id": "deepwhale-followed",
+      "name": "The Deepwhale — recognised something",
+      "status": "simmering"
+    },
+    {
+      "id": "vishara-maw-torweg",
+      "name": "The Maw — Vishara's tooth in Torweg",
+      "status": "hot"
+    },
+    {
       "id": "brix-ashfen-influence",
       "name": "Brix — first sign of Vishara's reach",
-      "status": "simmering"
+      "status": "hot"
     },
     {
       "id": "duvash-extract",
       "name": "Pell Duvash — needs to be found and extracted",
-      "status": "simmering"
+      "status": "hot"
     },
     {
       "id": "mathr-arithmetic",
       "name": "Jarl Mathr — the ageing that doesn't add up",
-      "status": "simmering"
+      "status": "hot"
     },
     {
       "id": "vane-token-mathr",
       "name": "The token — it belongs to Mathr, not Vane",
+      "status": "hot"
+    },
+    {
+      "id": "operation-mathr",
+      "name": "Operation Mathr — building the case",
+      "status": "simmering"
+    },
+    {
+      "id": "brynja-record",
+      "name": "Brynja's record — the Mathr family origin",
+      "status": "hot"
+    },
+    {
+      "id": "aeorian-note-ashvein",
+      "name": "The Aeorian note — Thread B (Xyrrath's thread)",
       "status": "hot"
     },
     {
@@ -70,7 +150,7 @@
     {
       "id": "rowan-crow-karsac",
       "name": "Rowan — the Crow brought him here for a reason",
-      "status": "simmering"
+      "status": "hot"
     }
   ],
   "unresolvedQuestions": [
@@ -116,41 +196,12 @@
     }
   ],
   "notYetRevealed": [
-    "edvar-trawler",
-    "west-closed",
-    "yngondi-named",
-    "floki-prophecy",
-    "six-artefacts",
-    "maw-named",
-    "scroll-warm",
     "carver-spiral",
-    "deepwhale",
-    "hag-cargo",
-    "thrall-cloth",
     "maw-smell",
     "oath-ring-given",
     "oath-ring-inscription",
-    "flag-half",
-    "welcome-wrong",
-    "brynja-cadence",
-    "crow-archives",
-    "fisherman-stitch",
-    "black-pin",
-    "brynja-record",
     "brynja-artefact",
-    "vane-orders",
-    "dugweb-visit",
     "beorn-name",
-    "ashfen-questions",
-    "ashfen-arrest",
-    "maw-tooling",
-    "aeorian-note",
-    "duvash-three-letters",
-    "kohlmar",
-    "duvash-attacked",
-    "mathr-no-antecedent",
-    "vane-elevated",
-    "mathr-arithmetic",
     "vane-token",
     "third-letter",
     "vane-realises",
@@ -162,11 +213,11 @@
     "dugweb-7wk"
   ],
   "source": [
-    "corpus/state/session-facts/session-2.json",
-    "corpus/state/handouts/session-2.json",
+    "corpus/state/chapters/chapter-2/facts.json",
+    "corpus/state/chapters/chapter-2/handouts.json",
+    "corpus/state/chapters/chapter-2/beats.json",
     "corpus/state/world-threads.json",
     "corpus/state/party-state.json"
   ],
-  "importStatus": "imported",
-  "note": "No facts revealed in DEFAULT_STATE — all facts have knowledgeStatus \"available\". Run tracker in a live session to log facts as known."
+  "importStatus": "derived"
 }

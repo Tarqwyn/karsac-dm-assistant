@@ -60,9 +60,9 @@ export function detectExplicitProposalType(prompt: string): ProposalType | null 
 export function proposalTypeFromRoute(profile: Profile, prompt: string): ProposalType {
   if (profile === 'adversary-design') return 'adversary'
   if (profile === 'encounter-design') return 'encounter'
+  if (/chapter|outline/i.test(prompt)) return 'chapter-outline'
   if (isAdversaryProposal(prompt)) return 'adversary'
   if (isPlaceProposal(prompt)) return 'place'
-  if (/chapter|outline/i.test(prompt)) return 'chapter-outline'
   return 'encounter'
 }
 

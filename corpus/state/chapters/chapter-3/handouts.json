@@ -1,0 +1,9 @@
+{
+  "id": "chapter-3-handouts",
+  "type": "chapter-handouts",
+  "campaign": "karsac",
+  "chapterId": "chapter-3",
+  "source": "chapter-state seed",
+  "importStatus": "seeded",
+  "handouts": []
+}

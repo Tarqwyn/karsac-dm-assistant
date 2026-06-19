@@ -1,0 +1,505 @@
+import { afterEach, describe, expect, it } from 'vitest'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
+import { join } from 'path'
+import { tmpdir } from 'os'
+import { createStateService, StateServiceError } from '../src/state/service.js'
+
+function writeJson(root: string, relativePath: string, data: unknown): void {
+  const fullPath = join(root, relativePath)
+  mkdirSync(join(fullPath, '..'), { recursive: true })
+  writeFileSync(fullPath, JSON.stringify(data, null, 2) + '\n', 'utf8')
+}
+
+function readJson(root: string, relativePath: string): any {
+  return JSON.parse(readFileSync(join(root, relativePath), 'utf8'))
+}
+
+function makeStateFixture(): string {
+  const root = mkdtempSync(join(tmpdir(), 'karsac-state-'))
+
+  writeJson(root, 'campaign-state.json', {
+    id: 'campaign-state',
+    type: 'campaign-state',
+    campaign: 'karsac',
+    currentSession: 2,
+    currentChapter: 2,
+    currentScene: null,
+    currentLocation: null,
+    clock: { value: 0, max: 16, tiers: { low: '0-3', medium: '4-6', high: '7-9', critical: '10-16' }, meaning: 'test' },
+    progress: { session: 2, step: 0, steps: 8 },
+    storageKey: 'karsac.campaign.v1',
+    source: 'test',
+    importStatus: 'test',
+    uiStateIgnored: [],
+  })
+
+  writeJson(root, 'party-state.json', {
+    id: 'party-state',
+    type: 'party-state',
+    campaign: 'karsac',
+    currentParty: ['korvann'],
+    partyLevel: 3,
+    partySize: 1,
+    source: 'test',
+    importStatus: 'test',
+    characters: [
+      {
+        id: 'korvann',
+        name: 'Korvann',
+        class: 'Ranger',
+        status: 'present',
+        wound: 'wound',
+        karsac: 'karsac',
+        crow: null,
+        namNote: null,
+        dmNote: null,
+        threads: [
+          { hot: true, text: 'Korvann has finally seen the original geometry.' },
+        ],
+        npcs: [],
+      },
+    ],
+  })
+
+  writeJson(root, 'world-threads.json', {
+    id: 'world-threads',
+    type: 'world-threads',
+    campaign: 'karsac',
+    source: 'test',
+    importStatus: 'test',
+    statusLabels: {
+      hot: 'Hot',
+      simmering: 'Simmering',
+      dormant: 'Dormant',
+      closed: 'Closed',
+      abandoned: 'Abandoned',
+    },
+    threads: [
+      {
+        id: 'mathr-arithmetic',
+        name: 'Mathr arithmetic',
+        type: 'world',
+        origin: 'ch2',
+        defaultStatus: 'dormant',
+        currentStatus: 'dormant',
+        summary: 'summary',
+        players: [],
+        npcs: [],
+        pokeWhen: 'poke',
+        closesWhen: 'close',
+        autoTriggers: [],
+      },
+    ],
+  })
+
+  writeJson(root, 'player-knowledge.json', {
+    id: 'player-knowledge',
+    type: 'player-knowledge',
+    campaign: 'karsac',
+    scope: 'party',
+    chapterBasis: 'chapter-2',
+    knownFacts: [],
+    postedHandouts: [],
+    knownBeats: [],
+    activeThreads: [],
+    unresolvedQuestions: [],
+    notYetRevealed: ['mathr-no-antecedent'],
+    source: ['test'],
+    importStatus: 'derived',
+  })
+
+  writeJson(root, 'chapters/chapter-2/facts.json', {
+    id: 'chapter-2-facts',
+    type: 'chapter-facts',
+    campaign: 'karsac',
+    chapterId: 'chapter-2',
+    source: 'test',
+    importStatus: 'test',
+    facts: [
+      {
+        id: 'mathr-no-antecedent',
+        label: 'Mathr without antecedent',
+        scene: 'records',
+        desc: 'No record before sixty years ago.',
+        knowledgeStatus: 'available',
+        revealed: false,
+        type: 'chapter-fact',
+        chapter: 'chapter-2',
+        source: 'test',
+        importStatus: 'test',
+      },
+    ],
+  })
+
+  writeJson(root, 'chapters/chapter-2/handouts.json', {
+    id: 'chapter-2-handouts',
+    type: 'chapter-handouts',
+    campaign: 'karsac',
+    chapterId: 'chapter-2',
+    source: 'test',
+    importStatus: 'test',
+    handouts: [
+      {
+        id: 'H12',
+        label: 'Aeorian Note',
+        scene: 'maw',
+        desc: 'A note referencing Ashvein.',
+        posted: false,
+        visibility: 'player-facing-when-posted',
+        type: 'chapter-handout',
+        chapter: 'chapter-2',
+        source: 'test',
+        importStatus: 'test',
+      },
+    ],
+  })
+
+  writeJson(root, 'chapters/chapter-2/beats.json', {
+    id: 'chapter-2-beats',
+    type: 'chapter-beats',
+    campaign: 'karsac',
+    chapterId: 'chapter-2',
+    source: 'test',
+    importStatus: 'test',
+    beats: [
+      {
+        id: 'ambient-forgetting',
+        label: 'Ambient forgetting',
+        scene: 'ambient',
+        desc: 'The flag is at half mast and no one knows why.',
+        completed: true,
+        type: 'chapter-beat',
+        chapter: 'chapter-2',
+        source: 'test',
+        importStatus: 'test',
+      },
+    ],
+  })
+
+  writeJson(root, 'chapters/chapter-2/triggers.json', {
+    id: 'chapter-2-triggers',
+    type: 'chapter-triggers',
+    campaign: 'karsac',
+    chapterId: 'chapter-2',
+    source: 'test',
+    importStatus: 'test',
+    triggers: [
+      {
+        on: 'fact',
+        id: 'mathr-no-antecedent',
+        threadId: 'mathr-arithmetic',
+        setStatus: 'hot',
+      },
+      {
+        on: 'handout',
+        id: 'H12',
+        threadId: 'mathr-arithmetic',
+        setStatus: 'simmering',
+      },
+      {
+        on: 'beat',
+        id: 'ambient-forgetting',
+        threadId: 'mathr-arithmetic',
+        setStatus: 'simmering',
+      },
+    ],
+  })
+
+  writeJson(root, 'chapters/chapter-2/progress.json', {
+    id: 'chapter-2-progress',
+    type: 'chapter-progress',
+    campaign: 'karsac',
+    chapterId: 'chapter-2',
+    source: 'test',
+    importStatus: 'test',
+    currentCheckpoint: {
+      id: 'checkpoint-0',
+      index: 0,
+      label: 'Prelude',
+      pauseLabel: 'None',
+      pauseClass: null,
+      recap: [],
+    },
+    checkpoints: [
+      {
+        id: 'checkpoint-0',
+        index: 0,
+        label: 'Prelude',
+        pauseLabel: 'None',
+        pauseClass: null,
+        recap: [],
+      },
+      {
+        id: 'checkpoint-1',
+        index: 1,
+        label: 'Arrival',
+        pauseLabel: 'Pause',
+        pauseClass: 'pause',
+        recap: ['recap'],
+      },
+    ],
+    coverage: {
+      facts: { completed: 0, total: 1 },
+      handouts: { completed: 0, total: 1 },
+      beats: { completed: 1, total: 1 },
+      percent: 33,
+    },
+  })
+
+  writeJson(root, 'chapters/chapter-2/scenes.json', {
+    id: 'chapter-2-scenes',
+    type: 'chapter-scenes',
+    campaign: 'karsac',
+    chapterId: 'chapter-2',
+    source: 'test',
+    importStatus: 'test',
+    scenes: [],
+  })
+
+  writeJson(root, 'chapters/chapter-3/facts.json', {
+    id: 'chapter-3-facts',
+    type: 'chapter-facts',
+    campaign: 'karsac',
+    chapterId: 'chapter-3',
+    source: 'test',
+    importStatus: 'test',
+    facts: [],
+  })
+
+  writeJson(root, 'chapters/chapter-3/handouts.json', {
+    id: 'chapter-3-handouts',
+    type: 'chapter-handouts',
+    campaign: 'karsac',
+    chapterId: 'chapter-3',
+    source: 'test',
+    importStatus: 'test',
+    handouts: [],
+  })
+
+  writeJson(root, 'chapters/chapter-3/beats.json', {
+    id: 'chapter-3-beats',
+    type: 'chapter-beats',
+    campaign: 'karsac',
+    chapterId: 'chapter-3',
+    source: 'test',
+    importStatus: 'test',
+    beats: [],
+  })
+
+  writeJson(root, 'chapters/chapter-3/progress.json', {
+    id: 'chapter-3-progress',
+    type: 'chapter-progress',
+    campaign: 'karsac',
+    chapterId: 'chapter-3',
+    source: 'test',
+    importStatus: 'test',
+    currentCheckpoint: {
+      id: 'checkpoint-0',
+      index: 0,
+      label: 'Prelude',
+      pauseLabel: 'None',
+      pauseClass: null,
+      recap: [],
+    },
+    checkpoints: [
+      {
+        id: 'checkpoint-0',
+        index: 0,
+        label: 'Prelude',
+        pauseLabel: 'None',
+        pauseClass: null,
+        recap: [],
+      },
+    ],
+    coverage: {
+      facts: { completed: 0, total: 0 },
+      handouts: { completed: 0, total: 0 },
+      beats: { completed: 0, total: 0 },
+      percent: 0,
+    },
+  })
+
+  writeJson(root, 'chapters/chapter-3/scenes.json', {
+    id: 'chapter-3-scenes',
+    type: 'chapter-scenes',
+    campaign: 'karsac',
+    chapterId: 'chapter-3',
+    source: 'test',
+    importStatus: 'test',
+    scenes: [],
+  })
+
+  return root
+}
+
+const cleanupRoots: string[] = []
+
+afterEach(() => {
+  while (cleanupRoots.length > 0) {
+    const root = cleanupRoots.pop()
+    if (root) rmSync(root, { recursive: true, force: true })
+  }
+})
+
+describe('state service', () => {
+  it('reveals a fact, refreshes derived state, and appends a state log entry', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const result = service.revealFact('chapter-2', 'mathr-no-antecedent')
+
+    expect(result.fact.id).toBe('mathr-no-antecedent')
+    expect(result.fact.knowledgeStatus).toBe('revealed')
+    expect(result.fact.revealed).toBe(true)
+    expect(result.worldThreads.threads[0]?.currentStatus).toBe('hot')
+    expect(result.playerKnowledge.knownFacts).toEqual(['mathr-no-antecedent'])
+    expect(result.playerKnowledge.knownBeats).toEqual(['ambient-forgetting'])
+    expect(result.playerKnowledge.activeThreads).toEqual([
+      { id: 'mathr-arithmetic', name: 'Mathr arithmetic', status: 'hot' },
+    ])
+
+    const facts = readJson(root, 'chapters/chapter-2/facts.json')
+    expect(facts.facts[0].revealed).toBe(true)
+
+    const playerKnowledge = readJson(root, 'player-knowledge.json')
+    expect(playerKnowledge.knownFacts).toEqual(['mathr-no-antecedent'])
+
+    const logLines = readFileSync(join(root, 'state-log.ndjson'), 'utf8').trim().split('\n')
+    expect(logLines).toHaveLength(1)
+    const event = JSON.parse(logLines[0] ?? '{}')
+    expect(event.action).toBe('fact.reveal')
+    expect(event.chapterId).toBe('chapter-2')
+    expect(event.targetId).toBe('mathr-no-antecedent')
+  })
+
+  it('can hide a revealed fact and roll derived knowledge back', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    service.revealFact('chapter-2', 'mathr-no-antecedent')
+    const result = service.hideFact('chapter-2', 'mathr-no-antecedent')
+
+    expect(result.fact.knowledgeStatus).toBe('available')
+    expect(result.fact.revealed).toBe(false)
+    expect(result.playerKnowledge.knownFacts).toEqual([])
+    expect(result.playerKnowledge.notYetRevealed).toEqual(['mathr-no-antecedent'])
+
+    const logLines = readFileSync(join(root, 'state-log.ndjson'), 'utf8').trim().split('\n')
+    expect(logLines).toHaveLength(2)
+    const lastEvent = JSON.parse(logLines[1] ?? '{}')
+    expect(lastEvent.action).toBe('fact.hide')
+  })
+
+  it('throws a not-found error for an unknown fact id', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    expect(() => service.revealFact('chapter-2', 'missing-fact')).toThrowError(StateServiceError)
+    expect(() => service.revealFact('chapter-2', 'missing-fact')).toThrow('Unknown fact "missing-fact"')
+  })
+
+  it('posts a handout, refreshes player knowledge, and updates coverage', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const result = service.postHandout('chapter-2', 'H12')
+
+    expect(result.handout.id).toBe('H12')
+    expect(result.handout.posted).toBe(true)
+    expect(result.playerKnowledge.postedHandouts).toEqual(['H12'])
+
+    const progress = readJson(root, 'chapters/chapter-2/progress.json')
+    expect(progress.coverage.handouts).toEqual({ completed: 1, total: 1 })
+  })
+
+  it('marks a beat complete and keeps derived beat knowledge in sync', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    service.unmarkBeat('chapter-2', 'ambient-forgetting')
+    const result = service.markBeat('chapter-2', 'ambient-forgetting')
+
+    expect(result.beat.id).toBe('ambient-forgetting')
+    expect(result.beat.completed).toBe(true)
+    expect(result.playerKnowledge.knownBeats).toEqual(['ambient-forgetting'])
+  })
+
+  it('sets a thread status directly and keeps the manual choice through derived refresh', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const result = service.setThreadStatus('chapter-2', 'mathr-arithmetic', 'closed')
+
+    expect(result.thread).toEqual({ id: 'mathr-arithmetic', currentStatus: 'closed' })
+    expect(result.worldThreads.threads[0]?.currentStatus).toBe('closed')
+
+    const factResult = service.revealFact('chapter-2', 'mathr-no-antecedent')
+    expect(factResult.worldThreads.threads[0]?.currentStatus).toBe('closed')
+
+    const threads = readJson(root, 'world-threads.json')
+    expect(threads.threads[0].currentStatus).toBe('closed')
+  })
+
+  it('sets the current checkpoint and updates campaign progress mirror', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const result = service.setCheckpoint('chapter-2', 1)
+
+    expect(result.progress.currentCheckpoint.index).toBe(1)
+    expect(result.progress.currentCheckpoint.label).toBe('Arrival')
+
+    const campaign = readJson(root, 'campaign-state.json')
+    expect(campaign.progress.step).toBe(1)
+  })
+
+  it('locks and unlocks a chapter without changing the campaign pointer', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const locked = service.setChapterLock('chapter-2', true)
+    expect(locked.campaign.lockedChapters).toContain('chapter-2')
+    expect(locked.campaign.currentChapter).toBe(2)
+
+    const unlocked = service.setChapterLock('chapter-2', false)
+    expect(unlocked.campaign.lockedChapters).not.toContain('chapter-2')
+  })
+
+  it('switches to another chapter and locks the current chapter when requested', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const result = service.setCurrentChapter('chapter-3', true)
+
+    expect(result.campaign.currentChapter).toBe(3)
+    expect(result.chapter.chapterId).toBe('chapter-3')
+    expect(result.chapterList.find((entry) => entry.id === 'chapter-2')?.locked).toBe(true)
+    expect(result.chapterList.find((entry) => entry.id === 'chapter-3')?.current).toBe(true)
+
+    const campaign = readJson(root, 'campaign-state.json')
+    expect(campaign.currentChapter).toBe(3)
+    expect(campaign.lockedChapters).toContain('chapter-2')
+  })
+
+  it('sets the clock value in campaign state', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const result = service.setClock(7)
+
+    expect(result.clock.value).toBe(7)
+
+    const campaign = readJson(root, 'campaign-state.json')
+    expect(campaign.clock.value).toBe(7)
+  })
+})

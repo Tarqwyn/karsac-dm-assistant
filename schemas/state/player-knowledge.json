@@ -11,12 +11,33 @@
       "type": "object",
       "required": [
         "scope",
-        "sessionBasis",
         "knownFacts",
         "postedHandouts",
         "activeThreads",
         "unresolvedQuestions",
         "notYetRevealed"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "sessionBasis"
+          ],
+          "properties": {
+            "sessionBasis": {
+              "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+            }
+          }
+        },
+        {
+          "required": [
+            "chapterBasis"
+          ],
+          "properties": {
+            "chapterBasis": {
+              "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+            }
+          }
+        }
       ],
       "properties": {
         "scope": {
@@ -25,10 +46,16 @@
         "sessionBasis": {
           "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
         },
+        "chapterBasis": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
         "knownFacts": {
           "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
         },
         "postedHandouts": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
+        },
+        "knownBeats": {
           "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/stringArray"
         },
         "activeThreads": {

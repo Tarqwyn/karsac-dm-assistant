@@ -52,7 +52,12 @@ export interface ProposalFrontmatter {
     places: string[]
     npcs: string[]
     items: string[]
+    scenes?: string[]
+    adversaries?: string[]
+    threads?: string[]
+    events?: string[]
   }
   promote_target: string
   summary: string
+  structured_outline?: Record<string, unknown>
 }

@@ -3,11 +3,12 @@
   "type": "campaign-state",
   "campaign": "karsac",
   "currentSession": 2,
-  "currentChapter": 2,
+  "currentChapter": 3,
   "currentScene": null,
   "currentLocation": null,
+  "lockedChapters": [],
   "clock": {
-    "value": 0,
+    "value": 9,
     "max": 16,
     "tiers": {
       "low": "0–3",
@@ -19,7 +20,7 @@
   },
   "progress": {
     "session": 2,
-    "step": 0,
+    "step": 6,
     "steps": 8
   },
   "storageKey": "karsac.campaign.v1",

@@ -1,0 +1,9 @@
+{
+  "id": "chapter-3-facts",
+  "type": "chapter-facts",
+  "campaign": "karsac",
+  "chapterId": "chapter-3",
+  "source": "chapter-state seed",
+  "importStatus": "seeded",
+  "facts": []
+}

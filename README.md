@@ -26,6 +26,36 @@ The compiled brief is the instruction.
 
 Generated design output is provisional until it is canonised into the corpus.
 
+## Chapter Workflow
+
+Chapter authoring now follows a schema-driven path:
+
+1. Ask for a `chapter-outline` proposal.
+2. Validate the outline contract.
+3. Extract the structured outline from the proposal.
+4. Promote the proposal into `corpus/planning/chapters`.
+5. Auto-derive `corpus/state/chapters/<chapterId>/seed.json` from the structured outline.
+6. Materialize chapter state from the seed.
+7. Use the tracker against the assistant API during play.
+
+Useful commands:
+
+```bash
+npm run karsac:propose:chapter -- "Propose a new chapter-outline for chapter 3"
+npm run karsac:validate-proposals
+npm run karsac:promote-proposal -- corpus/proposals/chapters/<proposal>.proposed.md
+npm run karsac:materialize-chapter-state -- --chapter=chapter-3
+```
+
+The important boundary is:
+- proposals are generated content
+- planning files are reviewed structure
+- `seed.json` is tracker-driving data
+- runtime chapter state is derived from the seed
+
+Detailed operator steps are in [docs/chapter-authoring-workflow.md](docs/chapter-authoring-workflow.md).
+Broader architecture notes live in [docs/](docs/), with RFCs in [docs/rfc/](docs/rfc/) and task backlogs in [docs/tasks/](docs/tasks/).
+
 ## Folders
 
 - `karsac-registry/` - TypeScript registry/runtime code

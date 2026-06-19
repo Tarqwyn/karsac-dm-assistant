@@ -71,6 +71,40 @@
         }
       ]
     },
+    "chapterFile": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/campaignFile"
+        },
+        {
+          "type": "object",
+          "required": [
+            "chapterId"
+          ],
+          "properties": {
+            "chapterId": {
+              "type": "string",
+              "pattern": "^chapter-[A-Za-z0-9._-]+$"
+            }
+          }
+        }
+      ]
+    },
+    "knowledgeStatus": {
+      "type": "string",
+      "enum": [
+        "available",
+        "revealed"
+      ]
+    },
+    "triggerEventType": {
+      "type": "string",
+      "enum": [
+        "fact",
+        "handout",
+        "beat"
+      ]
+    },
     "threadStatus": {
       "type": "string",
       "enum": [
@@ -190,6 +224,925 @@
         },
         "setStatus": {
           "$ref": "#/$defs/threadStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterCheckpoint": {
+      "type": "object",
+      "required": [
+        "id",
+        "index",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "pauseLabel": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "pauseClass": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "recap": {
+          "$ref": "#/$defs/stringArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "coverageCounter": {
+      "type": "object",
+      "required": [
+        "completed",
+        "total"
+      ],
+      "properties": {
+        "completed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterCoverage": {
+      "type": "object",
+      "required": [
+        "facts",
+        "handouts",
+        "beats",
+        "percent"
+      ],
+      "properties": {
+        "facts": {
+          "$ref": "#/$defs/coverageCounter"
+        },
+        "handouts": {
+          "$ref": "#/$defs/coverageCounter"
+        },
+        "beats": {
+          "$ref": "#/$defs/coverageCounter"
+        },
+        "percent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterFact": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "scene",
+        "desc",
+        "knowledgeStatus",
+        "revealed",
+        "type",
+        "chapter",
+        "source",
+        "importStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "scene": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "desc": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "knowledgeStatus": {
+          "$ref": "#/$defs/knowledgeStatus"
+        },
+        "revealed": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "chapter-fact"
+        },
+        "chapter": {
+          "type": "string",
+          "pattern": "^chapter-[A-Za-z0-9._-]+$"
+        },
+        "source": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "importStatus": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterHandout": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "scene",
+        "desc",
+        "posted",
+        "visibility",
+        "type",
+        "chapter",
+        "source",
+        "importStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "scene": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "desc": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "posted": {
+          "type": "boolean"
+        },
+        "visibility": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "type": {
+          "const": "chapter-handout"
+        },
+        "chapter": {
+          "type": "string",
+          "pattern": "^chapter-[A-Za-z0-9._-]+$"
+        },
+        "source": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "importStatus": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterBeat": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "scene",
+        "desc",
+        "completed",
+        "type",
+        "chapter",
+        "source",
+        "importStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "scene": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "desc": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "chapter-beat"
+        },
+        "chapter": {
+          "type": "string",
+          "pattern": "^chapter-[A-Za-z0-9._-]+$"
+        },
+        "source": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "importStatus": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterScene": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "kind",
+        "order",
+        "meta",
+        "title",
+        "summary",
+        "facts",
+        "handouts",
+        "beats",
+        "blocks"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "meta": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "facts": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "handouts": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "beats": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/chapterSceneBlock"
+          },
+          "minItems": 1
+        },
+        "guidance": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "dialogueCues": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "consequences": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "notesMd": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterRadarEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "nav",
+        "worldThreadId",
+        "title",
+        "surface",
+        "relation",
+        "hook",
+        "cueScenes",
+        "cueText",
+        "currentThreadStatus",
+        "type",
+        "chapter"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "nav": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "worldThreadId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "surface": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "relation": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "hook": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "cueScenes": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "cueText": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "currentThreadStatus": {
+          "$ref": "#/$defs/threadStatus"
+        },
+        "type": {
+          "const": "chapter-radar-entry"
+        },
+        "chapter": {
+          "type": "string",
+          "pattern": "^chapter-[A-Za-z0-9._-]+$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterTrigger": {
+      "type": "object",
+      "required": [
+        "on",
+        "id",
+        "threadId",
+        "setStatus"
+      ],
+      "properties": {
+        "on": {
+          "$ref": "#/$defs/triggerEventType"
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "threadId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "setStatus": {
+          "$ref": "#/$defs/threadStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sceneActionKind": {
+      "type": "string",
+      "enum": [
+        "fact",
+        "handout",
+        "beat"
+      ]
+    },
+    "sceneLinkTarget": {
+      "type": "string",
+      "enum": [
+        "scene",
+        "file",
+        "external"
+      ]
+    },
+    "sceneCalloutVariant": {
+      "type": "string",
+      "enum": [
+        "dm-only",
+        "slate",
+        "conditional",
+        "private-prompt"
+      ]
+    },
+    "sceneLine": {
+      "type": "object",
+      "required": [
+        "textHtml"
+      ],
+      "properties": {
+        "cue": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "textHtml": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sceneAction": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id",
+        "label"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/sceneActionKind"
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapterSceneBlock": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "text"
+          ],
+          "properties": {
+            "type": {
+              "const": "heading"
+            },
+            "text": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "bodyHtml"
+          ],
+          "properties": {
+            "type": {
+              "const": "paragraph"
+            },
+            "bodyHtml": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "id",
+            "name",
+            "role",
+            "rows"
+          ],
+          "properties": {
+            "type": {
+              "const": "npc-card"
+            },
+            "id": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "name": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "role": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "label",
+                  "textHtml"
+                ],
+                "properties": {
+                  "label": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  },
+                  "textHtml": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "variant",
+            "label",
+            "bodyHtml"
+          ],
+          "properties": {
+            "type": {
+              "const": "callout"
+            },
+            "variant": {
+              "$ref": "#/$defs/sceneCalloutVariant"
+            },
+            "label": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "bodyHtml": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "who",
+            "lines"
+          ],
+          "properties": {
+            "type": {
+              "const": "lines"
+            },
+            "who": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "hint": {
+              "$ref": "#/$defs/nullableString"
+            },
+            "lines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/sceneLine"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "style",
+            "itemsHtml"
+          ],
+          "properties": {
+            "type": {
+              "const": "list"
+            },
+            "heading": {
+              "$ref": "#/$defs/nullableString"
+            },
+            "style": {
+              "type": "string",
+              "enum": [
+                "bullet",
+                "numbered"
+              ]
+            },
+            "itemsHtml": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "actions"
+          ],
+          "properties": {
+            "type": {
+              "const": "actions"
+            },
+            "label": {
+              "$ref": "#/$defs/nullableString"
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/sceneAction"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "label",
+            "target",
+            "href"
+          ],
+          "properties": {
+            "type": {
+              "const": "link"
+            },
+            "label": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "target": {
+              "$ref": "#/$defs/sceneLinkTarget"
+            },
+            "href": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "title",
+            "help",
+            "controls"
+          ],
+          "properties": {
+            "type": {
+              "const": "clock"
+            },
+            "title": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "help": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "controls": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": -16,
+                "maximum": 16
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "bodyHtml"
+          ],
+          "properties": {
+            "type": {
+              "const": "read-aloud"
+            },
+            "speaker": {
+              "$ref": "#/$defs/nullableString"
+            },
+            "bodyHtml": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "columns",
+            "rows"
+          ],
+          "properties": {
+            "type": {
+              "const": "table"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "minItems": 1
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/sceneTableRow"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "variant",
+            "text"
+          ],
+          "properties": {
+            "type": {
+              "const": "banner"
+            },
+            "variant": {
+              "$ref": "#/$defs/sceneBannerVariant"
+            },
+            "text": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "label",
+            "title",
+            "summary"
+          ],
+          "properties": {
+            "type": {
+              "const": "choke-point"
+            },
+            "label": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "title": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "summary": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "heading",
+            "items"
+          ],
+          "properties": {
+            "type": {
+              "const": "sequence"
+            },
+            "heading": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/sceneSequenceItem"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "heading",
+            "items"
+          ],
+          "properties": {
+            "type": {
+              "const": "scene-links"
+            },
+            "heading": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/sceneLinkCard"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "heading",
+            "items"
+          ],
+          "properties": {
+            "type": {
+              "const": "path-cards"
+            },
+            "heading": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/scenePathCard"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "sceneBannerVariant": {
+      "type": "string",
+      "enum": [
+        "initiative"
+      ]
+    },
+    "scenePathTone": {
+      "type": "string",
+      "enum": [
+        "low",
+        "high"
+      ]
+    },
+    "sceneTableRow": {
+      "type": "object",
+      "required": [
+        "cellsHtml"
+      ],
+      "properties": {
+        "cellsHtml": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "sceneSequenceItem": {
+      "type": "object",
+      "required": [
+        "label",
+        "bodyHtml"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "bodyHtml": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sceneLinkCard": {
+      "type": "object",
+      "required": [
+        "sceneId",
+        "title",
+        "summary",
+        "label"
+      ],
+      "properties": {
+        "sceneId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "scenePathCard": {
+      "type": "object",
+      "required": [
+        "tone",
+        "label",
+        "bodyHtml"
+      ],
+      "properties": {
+        "tone": {
+          "$ref": "#/$defs/scenePathTone"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "bodyHtml": {
+          "$ref": "#/$defs/nonEmptyString"
         }
       },
       "additionalProperties": false

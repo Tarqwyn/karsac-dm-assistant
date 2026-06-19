@@ -1,0 +1,232 @@
+{
+  "id": "chapter-2-triggers",
+  "type": "chapter-triggers",
+  "campaign": "karsac",
+  "chapterId": "chapter-2",
+  "source": "corpus/state/triggers/session-2-triggers.json",
+  "importStatus": "migrated",
+  "triggers": [
+    {
+      "on": "fact",
+      "id": "carver-spiral",
+      "threadId": "bone-disc",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "yngondi-named",
+      "threadId": "bone-disc",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "yngondi-named",
+      "threadId": "ragnfridd-tradition-shadow",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "oath-ring-given",
+      "threadId": "ragnfridd-tradition-shadow",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "maw-named",
+      "threadId": "vishara-maw-torweg",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "maw-tooling",
+      "threadId": "vishara-maw-torweg",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "maw-smell",
+      "threadId": "vishara-maw-torweg",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "hag-cargo",
+      "threadId": "vishara-maw-torweg",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "ashfen-questions",
+      "threadId": "brix-ashfen-influence",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "ashfen-arrest",
+      "threadId": "brix-ashfen-influence",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "duvash-three-letters",
+      "threadId": "duvash-extract",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "duvash-attacked",
+      "threadId": "duvash-extract",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "mathr-no-antecedent",
+      "threadId": "mathr-arithmetic",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "mathr-arithmetic",
+      "threadId": "mathr-arithmetic",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "vane-elevated",
+      "threadId": "mathr-arithmetic",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "brynja-record",
+      "threadId": "brynja-record",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "brynja-cadence",
+      "threadId": "brynja-record",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "brynja-artefact",
+      "threadId": "brynja-record",
+      "setStatus": "hot"
+    },
+    {
+      "on": "handout",
+      "id": "H10",
+      "threadId": "brynja-record",
+      "setStatus": "hot"
+    },
+    {
+      "on": "handout",
+      "id": "H11",
+      "threadId": "brynja-record",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "vane-token",
+      "threadId": "vane-token-mathr",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "vane-orders",
+      "threadId": "vane-token-mathr",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "vane-realises",
+      "threadId": "vane-token-mathr",
+      "setStatus": "closed"
+    },
+    {
+      "on": "handout",
+      "id": "H15",
+      "threadId": "vane-token-mathr",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "operation-mathr",
+      "threadId": "operation-mathr",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "vane-elevated",
+      "threadId": "operation-mathr",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "vane-realises",
+      "threadId": "operation-mathr",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "six-artefacts",
+      "threadId": "pryzi-key-gone",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "deepwhale",
+      "threadId": "deepwhale-followed",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "aeorian-note",
+      "threadId": "aeorian-note-ashvein",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "aeorian-note",
+      "threadId": "xyrrath-phial-ashvein",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "ashvein-recognised",
+      "threadId": "aeorian-note-ashvein",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "ashvein-recognised",
+      "threadId": "xyrrath-phial-ashvein",
+      "setStatus": "hot"
+    },
+    {
+      "on": "handout",
+      "id": "H12",
+      "threadId": "aeorian-note-ashvein",
+      "setStatus": "hot"
+    },
+    {
+      "on": "handout",
+      "id": "H12",
+      "threadId": "xyrrath-phial-ashvein",
+      "setStatus": "simmering"
+    },
+    {
+      "on": "fact",
+      "id": "crow-archives",
+      "threadId": "rowan-crow-karsac",
+      "setStatus": "hot"
+    },
+    {
+      "on": "fact",
+      "id": "carver-spiral",
+      "threadId": "korvann-rune-disc",
+      "setStatus": "hot"
+    }
+  ]
+}

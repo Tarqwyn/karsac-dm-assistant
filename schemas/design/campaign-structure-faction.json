@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/design/campaign-structure-faction.json",
+  "allOf": [
+    { "$ref": "https://karsac.local/schemas/design/campaign-structure-global-entity.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "faction" },
+        "kind": { "$ref": "https://karsac.local/schemas/design/campaign-structure.json#/$defs/nonEmptyString" },
+        "status": { "$ref": "https://karsac.local/schemas/design/campaign-structure.json#/$defs/nonEmptyString" },
+        "leaderId": { "$ref": "https://karsac.local/schemas/design/campaign-structure.json#/$defs/nonEmptyString" }
+      }
+    }
+  ]
+}

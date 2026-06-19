@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/design/campaign-structure.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": ["volumes", "globalEntities", "themes"],
+  "properties": {
+    "volumes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/volume" }
+    },
+    "globalEntities": { "$ref": "#/$defs/globalEntityCatalog" },
+    "themes": { "$ref": "#/$defs/themeCatalog" }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "sceneType": {
+      "type": "string",
+      "enum": ["scene", "encounter", "thread", "hub", "support", "reference"]
+    },
+    "timerKind": {
+      "type": "string",
+      "enum": ["none", "clock", "countdown", "pressure"]
+    },
+    "beatScope": {
+      "type": "string",
+      "enum": ["scene", "encounter", "thread", "chapter", "volume"]
+    },
+    "beatKind": {
+      "type": "string",
+      "enum": [
+        "opening",
+        "travel",
+        "social",
+        "interdiction",
+        "thread",
+        "hub",
+        "encounter",
+        "combat",
+        "pressure",
+        "clue",
+        "reveal",
+        "choice",
+        "intervention",
+        "aftermath",
+        "exit"
+      ]
+    },
+    "entityCategory": {
+      "type": "string",
+      "enum": ["thread", "npc", "adversary", "player-character", "item", "place", "faction", "event"]
+    },
+    "spineBeat": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["id", "label", "purpose", "pressure", "endState"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "label": { "$ref": "#/$defs/nonEmptyString" },
+        "purpose": { "$ref": "#/$defs/nonEmptyString" },
+        "pressure": { "$ref": "#/$defs/nonEmptyString" },
+        "endState": { "$ref": "#/$defs/nonEmptyString" },
+        "midpointTurn": { "$ref": "#/$defs/nonEmptyString" },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "timerRule": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/timerKind" },
+        "label": { "$ref": "#/$defs/nonEmptyString" },
+        "limit": { "type": ["number", "null"] },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "beat": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["id", "scope", "kind", "label", "purpose", "text"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "scope": { "$ref": "#/$defs/beatScope" },
+        "kind": { "$ref": "#/$defs/beatKind" },
+        "label": { "$ref": "#/$defs/nonEmptyString" },
+        "purpose": { "$ref": "#/$defs/nonEmptyString" },
+        "text": { "$ref": "#/$defs/nonEmptyString" },
+        "trigger": { "$ref": "#/$defs/nonEmptyString" },
+        "outcome": { "$ref": "#/$defs/nonEmptyString" },
+        "consequence": { "$ref": "#/$defs/nonEmptyString" },
+        "themeTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "entityRef": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "type": { "$ref": "#/$defs/entityCategory" },
+        "label": { "$ref": "#/$defs/nonEmptyString" },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["id", "title", "type", "spine"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "type": { "$ref": "#/$defs/sceneType" },
+        "summary": { "$ref": "#/$defs/nonEmptyString" },
+        "spine": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/spineBeat" }
+        },
+        "themeTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "beats": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/beat" }
+        },
+        "timer": { "$ref": "#/$defs/timerRule" },
+        "facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "handouts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "cast": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entityRef" }
+        },
+        "adversaries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entityRef" }
+        },
+        "threads": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entityRef" }
+        },
+        "subscenes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entityRef" }
+        },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "chapter": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["id", "title", "spine", "scenes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "spine": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/spineBeat" }
+        },
+        "themeTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "beats": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/beat" }
+        },
+        "scenes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scene" }
+        },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "volume": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["id", "title", "spine", "chapters"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "spine": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/spineBeat" }
+        },
+        "themeTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "beats": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/beat" }
+        },
+        "chapters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/chapter" }
+        },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "label": { "$ref": "#/$defs/nonEmptyString" },
+        "summary": { "$ref": "#/$defs/nonEmptyString" },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "themeCatalog": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["themes"],
+      "properties": {
+        "themes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/theme" }
+        }
+      }
+    },
+    "globalEntityRef": {
+      "type": "object",
+      "required": ["id", "type", "label"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "type": { "$ref": "#/$defs/entityCategory" },
+        "label": { "$ref": "#/$defs/nonEmptyString" },
+        "summary": { "$ref": "#/$defs/nonEmptyString" },
+        "primarySceneId": { "$ref": "#/$defs/nonEmptyString" },
+        "sceneIds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "themeTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "globalEntityCatalog": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["threads", "npcs", "adversaries", "playerCharacters", "items", "places", "factions", "events"],
+      "properties": {
+        "threads": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        },
+        "npcs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        },
+        "adversaries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        },
+        "playerCharacters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        },
+        "places": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        },
+        "factions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/globalEntityRef" }
+        }
+      }
+    }
+  }
+}

@@ -377,9 +377,9 @@ explicit_proposal_opening_patterns:
     proposal_type: handout
   - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+state(?:\s+update)?\b'
     proposal_type: state-update
-  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+session(?:\s+outline)?\b'
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+session(?:[-\s]+outline)?\b'
     proposal_type: session-outline
-  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+chapter(?:\s+outline)?\b'
+  - pattern: '^\s*(?:please\s+)?propose\s+(?:a|an)\s+new\s+chapter(?:[-\s]+outline)?\b'
     proposal_type: chapter-outline
 
 # Validator mismatch guard patterns (proposalValidator.ts)

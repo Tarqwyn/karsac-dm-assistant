@@ -37,6 +37,8 @@ import { creativeTreatmentEnabled, getDraftGenerationSettings, getDraftModel } f
 import { buildConstrainedProposalPrompt } from '../proposals/proposalConstraints.js'
 import { detectCorpusAnchorForProposal } from '../proposals/proposalEntityRegistry.js'
 import { pruneProposalOutput } from '../proposals/proposalPruner.js'
+import { extractChapterOutlineStructure } from '../proposals/chapterOutlineStructure.js'
+import { validateDesignObject } from '../designSchemaValidator.js'
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434'
 const DEFAULT_MODEL = getDraftModel()
@@ -686,8 +688,31 @@ async function main(): Promise<void> {
     proposalType === 'adversary' && treatmentLockedConstraints.lockedFaction
       ? [treatmentLockedConstraints.lockedFaction]
       : []
+  const relatedScenes =
+    proposalType === 'chapter-outline' && structuredOutline
+      ? Array.isArray(structuredOutline.sceneSpine)
+        ? structuredOutline.sceneSpine.map((_, index) => `scene-${index + 1}`)
+        : []
+      : []
+  const relatedChapters = proposalType === 'chapter-outline' ? [slug] : []
   const pruneResult = pruneProposalOutput(finalOutput, proposalType, corpusAnchor.policy)
   finalOutput = pruneResult.body
+  const structuredOutlineIssues: string[] = []
+  let structuredOutline: Record<string, unknown> | undefined
+  if (proposalType === 'chapter-outline') {
+    const extracted = extractChapterOutlineStructure(finalOutput, `chapters/${slug}`, title)
+    const structuredValidation = validateDesignObject('campaign-structure-chapter-outline.json', extracted)
+    if (!structuredValidation.valid) {
+      process.stderr.write('\n⚠  Chapter outline structure validation failed:\n')
+      for (const issue of structuredValidation.issues) {
+        process.stderr.write(`   · ${issue}\n`)
+      }
+      structuredOutlineIssues.push(...structuredValidation.issues.map((issue) => `FAIL: chapter-outline structured output: ${issue}`))
+    } else {
+      structuredOutline = extracted as unknown as Record<string, unknown>
+      process.stderr.write('Structured chapter outline extracted and validated.\n')
+    }
+  }
   const frontmatter: ProposalFrontmatter = {
     id: `proposals/${slug}`,
     proposal_type: proposalType,
@@ -706,9 +731,21 @@ async function main(): Promise<void> {
     route_profile: frontmatterRouteProfile,
     validation: { status: 'pass', issues: [] },
     repair_log: pruneResult.repairLog,
-    related: { chapters: [], sessions: [], factions: relatedFactions, places: [], npcs: [], items: [] },
+    related: {
+      chapters: relatedChapters,
+      sessions: [],
+      factions: relatedFactions,
+      places: [],
+      npcs: [],
+      items: [],
+      scenes: relatedScenes,
+      adversaries: [],
+      threads: [],
+      events: [],
+    },
     promote_target: promoteTarget ?? '',
     summary: title,
+    ...(structuredOutline ? { structured_outline: structuredOutline } : {}),
   }
 
   // Merge adversary structural violations + content validation into frontmatter
@@ -727,7 +764,7 @@ async function main(): Promise<void> {
       ? validateAnchorBoundedContent(proposalType, finalOutput, corpusAnchor.exactSnippets.join('\n'))
       : { issues: [] as string[] }
   const { allIssues, status: mergedStatus } = mergeValidationIssues(
-    [...proposalStructuralIssues, ...treatmentIssues, ...creativeValidation.issues, ...anchorValidation.issues],
+    [...proposalStructuralIssues, ...structuredOutlineIssues, ...treatmentIssues, ...creativeValidation.issues, ...anchorValidation.issues],
     contentValidation.issues,
   )
 

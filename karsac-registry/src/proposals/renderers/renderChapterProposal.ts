@@ -1,5 +1,9 @@
 import type { ProposalSummary } from '../proposalSummaryTypes.js'
 import {
+  getCreativeTreatmentContractFromData,
+  getProposalRequiredSections,
+} from '../proposalContractsLoader.js'
+import {
   extractSection,
   formatValidationLabel,
   renderPromotionDetails,
@@ -8,18 +12,12 @@ import {
 } from './markdownHelpers.js'
 
 export function renderChapterProposal(summary: Omit<ProposalSummary, 'humanMarkdown'>, body: string): string {
+  const requiredSections = getProposalRequiredSections('chapter-outline')
+  const creativeTreatment = getCreativeTreatmentContractFromData('chapter-outline')
   const sectionNames = [
-    'Chapter Purpose',
-    'Starting State',
-    'Starting Emotional State',
-    'Core Pressure',
-    'Repeated Motif',
-    'Scene Spine',
-    'Midpoint Turn',
-    'End Conditions',
-    'What This Chapter Changes',
-    'Suggested State Updates After Play',
-  ]
+    ...requiredSections,
+    ...(creativeTreatment?.requiredSections ?? []),
+  ].map(section => section.replace(/^##\s*/, ''))
 
   const lines = [
     `# Proposal: ${summary.title}`,

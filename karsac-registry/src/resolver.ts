@@ -3,6 +3,10 @@ import { resolve } from 'path';
 import type { AliasMap, EntityMap, Entity } from './types.js';
 import { scoreMatches, isBestMatch } from './scorer.js';
 import type { ScoredMatch, MatchReason } from './scorer.js';
+import {
+  getCreativeTreatmentContractFromData,
+  getProposalRequiredSections,
+} from './proposals/proposalContractsLoader.js'
 
 export { type ScoredMatch };
 
@@ -3030,6 +3034,13 @@ export function buildChapterOutlineMessages(
     ? npcs.slice(0, 8).map((n: any) => `  ${n.name} [${n.status ?? 'unknown'}] — ${n.location ?? '?'}`).join('\n')
     : '  (none)'
 
+  const requiredSections = getProposalRequiredSections('chapter-outline')
+  const creativeTreatment = getCreativeTreatmentContractFromData('chapter-outline')
+  const chapterSections = [
+    ...requiredSections,
+    ...(creativeTreatment?.requiredSections ?? []),
+  ]
+
   const stateBlock = `CAMPAIGN STATE
 ${div}
 ${campaignHeader}
@@ -3047,7 +3058,7 @@ Active NPCs:
 ${npcBlock}
 ${div}`
 
-  const system = `You are Karsac Chapter Planner. You create grounded chapter outlines from campaign state, using the current table state as your foundation.
+const system = `You are Karsac Chapter Planner. You create grounded chapter outlines from campaign state, using the current table state as your foundation.
 
 Rules:
 - Chapter outlines are proposals only. They do NOT describe what has happened — only what may happen.
@@ -3055,6 +3066,10 @@ Rules:
 - Do not update campaign-state.json or player-knowledge.json.
 - State updates are suggestions only — to be applied after actual play.
 - Draw on the CAMPAIGN STATE below for player knowledge, hot threads, active NPCs, and session progress.
+- Write the outline so it can later be converted into chapter seed data without guessing.
+- Keep scene boundaries explicit and stable: support scenes, thread scenes, and chapter-level pressure beats should be easy to turn into seed records.
+- Prefer concrete locations, pressures, choices, clues, failure consequences, and exit states over broad thematic language.
+- Follow the chapter-outline contract exactly. Use only the headings listed in the user message and include every required section.
 
 ${stateBlock}`
 
@@ -3065,45 +3080,28 @@ Use EXACTLY these headings IN THIS ORDER:
 
 # Chapter Outline: [title]
 
-## Chapter Purpose
-[What this chapter does in the campaign. 2-3 sentences.]
+Suggested state updates are suggestions only. Do not apply them until after play.
 
-## Starting State
-[What is confirmed true at the start of this chapter. Draw from campaign state. Do NOT invent new facts.]
+${chapterSections.map((section) => {
+  const heading = section.replace(/^##\s*/, '')
+  if (heading === 'Scene Spine') {
+    return `## Scene Spine
+[A suggested sequence of 3–6 scenes. Each scene must use this format:
 
-## Player Knowledge
-[What players currently know based on corpus/state/player-knowledge.json. If knownFacts is 0, say so.]
+### Scene 1 — [Name]
+- Purpose: [what this scene does]
+- Location: [where it happens]
+- Pressure: [what makes it difficult]
+- Choices: [what the party can do]
+- Clues: [what they can learn]
+- Failure: [what happens if it goes badly]
+- Exit State: [where the scene leaves them]
 
-## DM Truth
-[What is happening behind the screen that players do not know yet.]
-
-## Core Pressure
-[The force driving the chapter forward.]
-
-## Active Factions and NPCs
-[For each relevant NPC/faction: what they want, what they know, what they will do if ignored.]
-
-## Scene Spine
-[A suggested sequence of 3–6 scenes. For each: purpose, location, pressure, likely choices, clues, failure consequence.]
-
-## Optional Scenes
-[Scenes for party drift, delay, split, or bypass.]
-
-## Clues and Reveals
-[Separate player-safe clues from deeper implications and DM-only truth.]
-
-## Adversaries and Obstacles
-[Social, procedural, factional, investigative and combat obstacles. Reference existing adversary corpus where applicable.]
-
-## Fail-Forward Paths
-[What happens if the party fails, delays, misses clues, or refuses the hook.]
-
-## End Conditions
-[Possible states at the end of the chapter. At least 3: success, partial, failure.]
-
-## Suggested State Updates After Play
-IMPORTANT: These are suggestions only. Do not apply them until the chapter has actually been played at the table.
-[List suggested campaign state changes: thread status updates, revealed facts, NPC changes, etc.]`
+Do not write this section as prose.]`
+  }
+  return `## ${heading}
+[Fill this section with seed-ready chapter content.]`
+}).join('\n\n')}`
 
   return [
     { role: 'system', content: system },

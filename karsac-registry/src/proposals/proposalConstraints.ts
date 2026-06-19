@@ -1,6 +1,7 @@
 import { getFactionProfile } from '../faction-profiles.js'
 import {
   getAdversaryConstraintHeader,
+  getChapterOutlineConstraintLines,
   getEncounterConstraintLines,
   getNpcConstraintLines,
   getPlaceConstraintLines,
@@ -203,6 +204,8 @@ export function buildConstrainedProposalPrompt(input: ProposalConstraintInput): 
       ? buildAdversaryConstraintLines(input)
       : input.proposalType === 'encounter'
         ? buildEncounterConstraintLines()
+        : input.proposalType === 'chapter-outline'
+          ? getChapterOutlineConstraintLines()
         : input.proposalType === 'npc'
           ? buildNpcConstraintLines()
           : input.proposalType === 'place'
