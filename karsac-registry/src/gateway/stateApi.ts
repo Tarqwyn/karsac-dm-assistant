@@ -128,6 +128,11 @@ export async function handleStateApiRequest(
       return true
     }
 
+    if (req.method === 'GET' && path === '/api/v1/session/close/preview') {
+      sendJson(res, 200, stateService.previewSessionClose())
+      return true
+    }
+
     if (req.method === 'GET' && path === '/api/state/chapters') {
       sendJson(res, 200, { chapters: stateService.readChapterList() })
       return true
@@ -239,6 +244,11 @@ export async function handleStateApiRequest(
       }
 
       sendJson(res, 200, stateService.setChapterLock(body.chapterId!, body.locked !== false))
+      return true
+    }
+
+    if (req.method === 'POST' && path === '/api/v1/session/close') {
+      sendJson(res, 200, stateService.closeSession())
       return true
     }
 

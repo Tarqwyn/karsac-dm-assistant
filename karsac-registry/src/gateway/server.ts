@@ -6,6 +6,7 @@ import { buildModelsResponse, createChatCompletion, streamChatCompletion } from 
 import type { OpenAIChatCompletionRequest } from './openaiTypes.js'
 import { getGatewayBuildInfo } from '../buildInfo.js'
 import { handleCorpusApiRequest } from './corpusApi.js'
+import { handleProposalApiRequest } from './proposalApi.js'
 import { handleStateApiRequest } from './stateApi.js'
 import { readJsonBody, sendError, sendJson, setCorsHeaders } from './httpUtils.js'
 import type { StateService } from '../state/service.js'
@@ -91,6 +92,10 @@ export function createGatewayServer(deps: { stateService?: StateService } = {}) 
       }
 
       if (await handleCorpusApiRequest(req, res)) {
+        return
+      }
+
+      if (await handleProposalApiRequest(req, res)) {
         return
       }
 

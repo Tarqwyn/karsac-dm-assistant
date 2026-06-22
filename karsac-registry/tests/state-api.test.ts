@@ -557,6 +557,33 @@ describe('state API', () => {
     expect(body.campaign.lockedChapters).toContain('chapter-2')
   })
 
+  it('previews and closes a session through the API', async () => {
+    const previewResponse = await fetch(`${baseUrl}/api/v1/session/close/preview`, {
+      headers: {
+        Authorization: 'Bearer local-karsac-dev-key',
+      },
+    })
+
+    expect(previewResponse.status).toBe(200)
+    const previewBody = await previewResponse.json()
+    expect(previewBody.summary.chapterId).toBe('chapter-2')
+
+    const response = await fetch(`${baseUrl}/api/v1/session/close`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer local-karsac-dev-key',
+      },
+    })
+
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.summary.chapterId).toBe('chapter-2')
+    expect(body.pathsWritten).toEqual([
+      'corpus/state/session-close/session-2-chapter-2.summary.json',
+      'corpus/state/session-close/session-2-chapter-2.summary.md',
+    ])
+  })
+
   it('rejects requests without a valid API key', async () => {
     const response = await fetch(`${baseUrl}/api/state/campaign`)
     expect(response.status).toBe(401)

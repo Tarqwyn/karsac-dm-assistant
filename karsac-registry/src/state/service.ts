@@ -77,6 +77,36 @@ type ClockMutationResult = {
   clock: any
 }
 
+type SessionCloseSummary = {
+  chapterId: string
+  sessionId: number | string | null
+  clock: {
+    value: number
+    max: number
+  }
+  coverage: {
+    facts: { completed: number; total: number }
+    handouts: { completed: number; total: number }
+    beats: { completed: number; total: number }
+    percent: number
+  }
+  openThreads: Array<{
+    id: string
+    name: string
+    status: string
+  }>
+  exportPaths: string[]
+}
+
+type SessionCloseResult = {
+  summary: SessionCloseSummary
+  pathsWritten: string[]
+  logEntry: {
+    action: string
+    targetId: string
+  }
+}
+
 type ChapterStateBundle = {
   chapterId: string
   progress: any | null
@@ -188,6 +218,8 @@ export interface StateService {
   setThreadStatus(chapterId: string, threadId: string, status: string): StateMutationResult
   setCheckpoint(chapterId: string, checkpointIndex: number): CheckpointMutationResult
   setClock(value: number): ClockMutationResult
+  previewSessionClose(): { summary: SessionCloseSummary }
+  closeSession(): SessionCloseResult
   setChapterLock(chapterId: string, locked: boolean): { campaign: CampaignState; chapterList: ChapterSummary[] }
   setCurrentChapter(chapterId: string, lockCurrent?: boolean): {
     campaign: CampaignState
@@ -251,6 +283,95 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
 
   function readWorldThreads(): any {
     return readJsonFile(join(stateRoot, 'world-threads.json'))
+  }
+
+  function currentChapterId(campaign: CampaignState): string {
+    if (typeof campaign.currentChapter !== 'number' || !Number.isInteger(campaign.currentChapter)) {
+      throw new StateServiceError(400, 'Campaign state does not have a valid currentChapter.', 'invalid_request_error')
+    }
+    return `chapter-${campaign.currentChapter}`
+  }
+
+  function relativeStatePath(...parts: string[]): string {
+    return join('corpus', 'state', ...parts)
+  }
+
+  function sessionClosePaths(chapterId: string, sessionId: number | string | null): { jsonPath: string; markdownPath: string; targetId: string } {
+    const sessionLabel = sessionId == null ? 'session-unknown' : `session-${sessionId}`
+    const targetId = `${sessionLabel}-${chapterId}`
+    return {
+      jsonPath: join(stateRoot, 'session-close', `${targetId}.summary.json`),
+      markdownPath: join(stateRoot, 'session-close', `${targetId}.summary.md`),
+      targetId,
+    }
+  }
+
+  function buildSessionCloseSummary(): SessionCloseSummary {
+    const campaign = readCampaignState()
+    const chapterId = currentChapterId(campaign)
+    const facts = readRequiredChapterFile(stateRoot, chapterId, 'facts') as ChapterFactsState
+    const handouts = (readOptionalChapterFile(stateRoot, chapterId, 'handouts') ?? { handouts: [] }) as ChapterHandoutsState
+    const beats = (readOptionalChapterFile(stateRoot, chapterId, 'beats') ?? { beats: [] }) as ChapterBeatsState
+    const coverage = buildCoverage(facts, handouts, beats)
+    const threads = readWorldThreads()
+    const openThreads = Array.isArray(threads.threads)
+      ? threads.threads
+        .filter((thread: { currentStatus?: string }) => {
+          const status = String(thread.currentStatus ?? '').toLowerCase()
+          return status === 'hot' || status === 'simmering' || status === 'dormant'
+        })
+        .map((thread: { id: string; name?: string; currentStatus?: string }) => ({
+          id: thread.id,
+          name: thread.name ?? thread.id,
+          status: String(thread.currentStatus ?? 'unknown'),
+        }))
+      : []
+    const paths = sessionClosePaths(chapterId, campaign.currentSession ?? null)
+
+    return {
+      chapterId,
+      sessionId: campaign.currentSession ?? null,
+      clock: {
+        value: Number(campaign.clock?.value) || 0,
+        max: Number(campaign.clock?.max) || 16,
+      },
+      coverage,
+      openThreads,
+      exportPaths: [
+        relativeStatePath('session-close', `${paths.targetId}.summary.json`),
+        relativeStatePath('session-close', `${paths.targetId}.summary.md`),
+      ],
+    }
+  }
+
+  function renderSessionCloseMarkdown(summary: SessionCloseSummary): string {
+    const threadLines = summary.openThreads.length
+      ? summary.openThreads.map((thread) => `- ${thread.name} (\`${thread.id}\`) — ${thread.status}`).join('\n')
+      : '- None'
+
+    return [
+      `# Session Close Summary`,
+      '',
+      `- Chapter: \`${summary.chapterId}\``,
+      `- Session: \`${summary.sessionId ?? 'unknown'}\``,
+      `- Clock: ${summary.clock.value}/${summary.clock.max}`,
+      `- Coverage: ${summary.coverage.percent}%`,
+      '',
+      `## Coverage`,
+      '',
+      `- Facts: ${summary.coverage.facts.completed}/${summary.coverage.facts.total}`,
+      `- Handouts: ${summary.coverage.handouts.completed}/${summary.coverage.handouts.total}`,
+      `- Beats: ${summary.coverage.beats.completed}/${summary.coverage.beats.total}`,
+      '',
+      `## Open Threads`,
+      '',
+      threadLines,
+      '',
+      `## Export Paths`,
+      '',
+      ...summary.exportPaths.map((path) => `- \`${path}\``),
+      '',
+    ].join('\n')
   }
 
   function readChapterState(chapterId: string): ChapterStateBundle {
@@ -602,6 +723,40 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       })
 
       return { clock: campaign.clock }
+    },
+    previewSessionClose() {
+      return { summary: buildSessionCloseSummary() }
+    },
+    closeSession(): SessionCloseResult {
+      const summary = buildSessionCloseSummary()
+      const paths = sessionClosePaths(summary.chapterId, summary.sessionId)
+      const markdown = renderSessionCloseMarkdown(summary)
+
+      writeJsonAtomic(paths.jsonPath, summary)
+      writeFileSync(paths.markdownPath, markdown, 'utf8')
+
+      const logEntry = {
+        ts: new Date().toISOString(),
+        action: 'session.close',
+        chapterId: summary.chapterId,
+        targetType: 'session-close',
+        targetId: paths.targetId,
+        value: {
+          exportPaths: summary.exportPaths,
+          coverage: summary.coverage,
+          sessionId: summary.sessionId,
+        },
+      }
+      appendLog(logPath, logEntry)
+
+      return {
+        summary,
+        pathsWritten: summary.exportPaths,
+        logEntry: {
+          action: logEntry.action,
+          targetId: logEntry.targetId,
+        },
+      }
     },
     setChapterLock(chapterId: string, locked: boolean) {
       return setChapterLock(chapterId, locked)

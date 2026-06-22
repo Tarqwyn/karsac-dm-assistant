@@ -136,4 +136,4 @@ The OpenAI-compatible routes are not removed as part of this task — they conti
 - [ADR-0001 — Lifecycle State Contract](../adr/0001-lifecycle-state-contract.md)
 - [ADR-0002 — Canonical Indexing and Read Modes](../adr/0002-canonical-indexing-and-read-modes.md)
 - [ADR-0003 — REST API as Primary Interface](../adr/0003-rest-api-as-primary-interface.md)
-- [Lifecycle Audit](../lifecycle-audit.md)
+- [Lifecycle Audit](../rfc/0002-lifecycle-read-write-audit.md)

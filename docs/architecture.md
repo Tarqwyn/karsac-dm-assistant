@@ -149,5 +149,6 @@ The model's job is wording and synthesis. The pipeline's job is everything else.
 | [adr/0001-lifecycle-state-contract.md](adr/0001-lifecycle-state-contract.md) | Agreed 5-stage lifecycle: proposed → reviewed → promoted → materialised → tracked |
 | [adr/0002-canonical-indexing-and-read-modes.md](adr/0002-canonical-indexing-and-read-modes.md) | Canonical indexing in place; live vs planning read modes |
 | [adr/0003-rest-api-as-primary-interface.md](adr/0003-rest-api-as-primary-interface.md) | REST API is primary; OpenAI-compat gateway is a secondary adapter |
-| [lifecycle-state-rfc.md](lifecycle-state-rfc.md) | RFC that produced the lifecycle contract (discussion record) |
-| [lifecycle-audit.md](lifecycle-audit.md) | Read/write audit: where each stage currently lives, what reads it, severed seams |
+| [adr/0004-ui-app-architecture.md](adr/0004-ui-app-architecture.md) | Monorepo, two React apps, shared package; Map geometry local, lore from API |
+| [rfc/0001-lifecycle-state-contract.md](rfc/0001-lifecycle-state-contract.md) | RFC that produced the lifecycle contract (discussion record) |
+| [rfc/0002-lifecycle-read-write-audit.md](rfc/0002-lifecycle-read-write-audit.md) | Read/write audit: where each stage currently lives, what reads it, severed seams |

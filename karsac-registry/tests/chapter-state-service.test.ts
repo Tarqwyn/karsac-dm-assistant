@@ -502,4 +502,33 @@ describe('state service', () => {
     const campaign = readJson(root, 'campaign-state.json')
     expect(campaign.clock.value).toBe(7)
   })
+
+  it('previews and closes a session export, writing summary files and appending the log', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    const preview = service.previewSessionClose()
+    expect(preview.summary.chapterId).toBe('chapter-2')
+    expect(preview.summary.exportPaths).toEqual([
+      'corpus/state/session-close/session-2-chapter-2.summary.json',
+      'corpus/state/session-close/session-2-chapter-2.summary.md',
+    ])
+
+    const result = service.closeSession()
+    expect(result.pathsWritten).toEqual(preview.summary.exportPaths)
+    expect(result.logEntry.action).toBe('session.close')
+
+    const summaryJson = readJson(root, 'session-close/session-2-chapter-2.summary.json')
+    expect(summaryJson.chapterId).toBe('chapter-2')
+    expect(summaryJson.coverage.percent).toBe(33)
+
+    const markdown = readFileSync(join(root, 'session-close/session-2-chapter-2.summary.md'), 'utf8')
+    expect(markdown).toContain('# Session Close Summary')
+
+    const logLines = readFileSync(join(root, 'state-log.ndjson'), 'utf8').trim().split('\n')
+    const event = JSON.parse(logLines[0] ?? '{}')
+    expect(event.action).toBe('session.close')
+    expect(event.targetId).toBe('session-2-chapter-2')
+  })
 })

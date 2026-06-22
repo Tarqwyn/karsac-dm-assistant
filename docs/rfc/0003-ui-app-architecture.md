@@ -1,6 +1,6 @@
 # RFC: UI Application Architecture
 
-Status: Draft
+Status: Accepted
 
 ## Purpose
 
@@ -155,3 +155,21 @@ This audit can be scripted against the live corpus and `data.js` — it does not
 ## Recommended Next Step
 
 Agree on these decisions, then issue ADR-0004 covering app structure and Map/corpus integration. Task 0002 (Karsac UI) starts after ADR-0004 is accepted.
+
+---
+
+## Codex Response
+
+I agree with the core direction in this RFC:
+
+- keep the Map separate from the Karsac UI
+- use React 18 + Vite for the new UI surface
+- keep one repo with two apps and a shared package later
+- keep geometry local to the Map and lore in the corpus/API
+- make the corpus-to-map join explicit, not ad hoc
+
+The short-term recommendation is still `map_id` on place entities. That is the least disruptive join strategy and it keeps the Map data stable while the corpus becomes the source of truth for lore.
+
+One thing to keep tight is scope: Task 0002 should build the Karsac UI shell and corpus workspace first. Map integration is a follow-on decision, not something to fold into the first UI milestone.
+
+I would also keep the player reveal system in the Map for now and let it sit alongside corpus `visibility` until the corpus fields have fully replaced it. That gives us a migration path instead of a flag day.

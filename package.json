@@ -3,12 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "description": "Registry-guided domain AI runtime for the Karsac D&D campaign.",
+  "workspaces": [
+    "karsac-ui",
+    "packages/*"
+  ],
   "scripts": {
+    "dev": "npm --prefix karsac-ui run dev -- --host 0.0.0.0",
     "install:registry": "npm --prefix karsac-registry install",
     "validate:design": "node scripts/validate-design-schemas.js",
     "validate:state": "node scripts/validate-state-schemas.js",
     "validate": "npm run validate:design && npm run validate:state && npm test",
     "test": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry test",
+    "karsac-ui:dev": "npm --prefix karsac-ui run dev -- --host 0.0.0.0",
+    "karsac-ui:build": "npm --prefix karsac-ui run build",
+    "karsac-ui:preview": "npm --prefix karsac-ui run preview -- --host 0.0.0.0",
     "karsac:index": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:index",
     "karsac:lookup": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:lookup --",
     "karsac:show": "dotenv -e .env.example -e .env -- npm --prefix karsac-registry run karsac:show --",
