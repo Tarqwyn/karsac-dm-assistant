@@ -429,6 +429,19 @@ describe('state service', () => {
     expect(result.playerKnowledge.knownBeats).toEqual(['ambient-forgetting'])
   })
 
+  it('falls back to an empty party state when party-state.json is absent', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    rmSync(join(root, 'party-state.json'))
+    const service = createStateService(root)
+
+    const result = service.revealFact('chapter-2', 'mathr-no-antecedent')
+
+    expect(result.fact.revealed).toBe(true)
+    expect(result.playerKnowledge.knownFacts).toEqual(['mathr-no-antecedent'])
+    expect(result.playerKnowledge.unresolvedQuestions).toEqual([])
+  })
+
   it('sets a thread status directly and keeps the manual choice through derived refresh', () => {
     const root = makeStateFixture()
     cleanupRoots.push(root)

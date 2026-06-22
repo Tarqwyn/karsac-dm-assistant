@@ -356,8 +356,8 @@ describe('state API', () => {
     rmSync(root, { recursive: true, force: true })
   })
 
-  it('returns campaign state from the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/campaign`, {
+  it('returns campaign state from the v1 API surface', async () => {
+    const response = await fetch(`${baseUrl}/api/v1/state/campaign`, {
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
       },
@@ -369,8 +369,8 @@ describe('state API', () => {
     expect(body.type).toBe('campaign-state')
   })
 
-  it('returns chapter state bundle from the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/chapters/chapter-2`, {
+  it('returns chapter state bundle from the v1 API surface', async () => {
+    const response = await fetch(`${baseUrl}/api/v1/state/chapters/chapter-2`, {
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
       },
@@ -383,8 +383,8 @@ describe('state API', () => {
     expect(body.radar.radar[0].worldThreadId).toBe('mathr-arithmetic')
   })
 
-  it('returns the chapter index from the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/chapters`, {
+  it('returns the chapter index from the v1 API surface', async () => {
+    const response = await fetch(`${baseUrl}/api/v1/state/chapters`, {
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
       },
@@ -396,8 +396,8 @@ describe('state API', () => {
     expect(body.chapters.map((entry: { id: string }) => entry.id)).toContain('chapter-3')
   })
 
-  it('returns world thread state from the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/world-threads`, {
+  it('returns world thread state from the v1 API surface', async () => {
+    const response = await fetch(`${baseUrl}/api/v1/state/world-threads`, {
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
       },
@@ -410,7 +410,7 @@ describe('state API', () => {
   })
 
   it('reveals a fact through the API and returns refreshed derived state', async () => {
-    const response = await fetch(`${baseUrl}/api/state/facts/reveal`, {
+    const response = await fetch(`${baseUrl}/api/v1/state/facts/reveal`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -430,7 +430,7 @@ describe('state API', () => {
   })
 
   it('posts a handout through the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/handouts/post`, {
+    const response = await fetch(`${baseUrl}/api/v1/state/handouts/post`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -449,7 +449,7 @@ describe('state API', () => {
   })
 
   it('marks a beat through the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/beats/mark`, {
+    const response = await fetch(`${baseUrl}/api/v1/state/beats/mark`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -468,7 +468,7 @@ describe('state API', () => {
   })
 
   it('sets a thread status through the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/threads/set`, {
+    const response = await fetch(`${baseUrl}/api/v1/state/threads/set`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -488,7 +488,7 @@ describe('state API', () => {
   })
 
   it('sets checkpoint and clock through the API', async () => {
-    const checkpointResponse = await fetch(`${baseUrl}/api/state/checkpoint/set`, {
+    const checkpointResponse = await fetch(`${baseUrl}/api/v1/state/checkpoint/set`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -503,7 +503,7 @@ describe('state API', () => {
     const checkpointBody = await checkpointResponse.json()
     expect(checkpointBody.progress.currentCheckpoint.index).toBe(1)
 
-    const clockResponse = await fetch(`${baseUrl}/api/state/clock/set`, {
+    const clockResponse = await fetch(`${baseUrl}/api/v1/state/clock/set`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -519,7 +519,7 @@ describe('state API', () => {
   })
 
   it('switches chapter and can lock the previous chapter through the API', async () => {
-    const response = await fetch(`${baseUrl}/api/state/campaign/chapter`, {
+    const response = await fetch(`${baseUrl}/api/v1/state/campaign/chapter`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -539,7 +539,7 @@ describe('state API', () => {
   })
 
   it('locks a chapter through the API without switching the campaign pointer', async () => {
-    const response = await fetch(`${baseUrl}/api/state/campaign/lock`, {
+    const response = await fetch(`${baseUrl}/api/v1/state/campaign/lock`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer local-karsac-dev-key',
@@ -585,7 +585,19 @@ describe('state API', () => {
   })
 
   it('rejects requests without a valid API key', async () => {
-    const response = await fetch(`${baseUrl}/api/state/campaign`)
+    const response = await fetch(`${baseUrl}/api/v1/state/campaign`)
     expect(response.status).toBe(401)
+  })
+
+  it('keeps the legacy state route alias working for compatibility', async () => {
+    const response = await fetch(`${baseUrl}/api/state/campaign`, {
+      headers: {
+        Authorization: 'Bearer local-karsac-dev-key',
+      },
+    })
+
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.currentChapter).toBe(2)
   })
 })

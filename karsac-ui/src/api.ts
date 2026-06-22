@@ -60,27 +60,27 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export function fetchCorpusEntities(mode: ReadMode): Promise<CorpusEntitiesResponse> {
-  return request(`/v1/corpus/entities?mode=${encodeURIComponent(mode)}`)
+  return request(`/api/v1/corpus/entities?mode=${encodeURIComponent(mode)}`)
 }
 
 export function fetchCorpusEntity(id: string, mode: ReadMode): Promise<CorpusEntityResponse> {
-  return request(`/v1/corpus/entities/${encodeURIComponent(id)}?mode=${encodeURIComponent(mode)}`)
+  return request(`/api/v1/corpus/entities/${encodeURIComponent(id)}?mode=${encodeURIComponent(mode)}`)
 }
 
 export function fetchCampaignState(mode: ReadMode): Promise<CampaignState> {
-  return request(`/api/state/campaign?mode=${encodeURIComponent(mode)}`)
+  return request(`/api/v1/state/campaign?mode=${encodeURIComponent(mode)}`)
 }
 
 export function fetchChapterList(mode: ReadMode): Promise<ChapterListResponse> {
-  return request(`/api/state/chapters?mode=${encodeURIComponent(mode)}`)
+  return request(`/api/v1/state/chapters?mode=${encodeURIComponent(mode)}`)
 }
 
 export function fetchChapterState(chapterId: string, mode: ReadMode): Promise<ChapterBundle> {
-  return request(`/api/state/chapters/${encodeURIComponent(chapterId)}?mode=${encodeURIComponent(mode)}`)
+  return request(`/api/v1/state/chapters/${encodeURIComponent(chapterId)}?mode=${encodeURIComponent(mode)}`)
 }
 
 export function fetchWorldThreads(mode: ReadMode): Promise<WorldThreadsState> {
-  return request(`/api/state/world-threads?mode=${encodeURIComponent(mode)}`)
+  return request(`/api/v1/state/world-threads?mode=${encodeURIComponent(mode)}`)
 }
 
 export function fetchProposals(mode: ReadMode): Promise<ProposalListResponse> {
@@ -114,77 +114,77 @@ export function promoteProposal(
 }
 
 export function revealFact(chapterId: string, factId: string, mode: ReadMode): Promise<TrackerMutationResult> {
-  return request(`/api/state/facts/reveal?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/facts/reveal?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, factId }),
   })
 }
 
 export function hideFact(chapterId: string, factId: string, mode: ReadMode): Promise<TrackerMutationResult> {
-  return request(`/api/state/facts/hide?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/facts/hide?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, factId }),
   })
 }
 
 export function postHandout(chapterId: string, handoutId: string, mode: ReadMode): Promise<TrackerMutationResult> {
-  return request(`/api/state/handouts/post?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/handouts/post?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, handoutId }),
   })
 }
 
 export function unpostHandout(chapterId: string, handoutId: string, mode: ReadMode): Promise<TrackerMutationResult> {
-  return request(`/api/state/handouts/unpost?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/handouts/unpost?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, handoutId }),
   })
 }
 
 export function markBeat(chapterId: string, beatId: string, mode: ReadMode): Promise<TrackerMutationResult> {
-  return request(`/api/state/beats/mark?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/beats/mark?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, beatId }),
   })
 }
 
 export function unmarkBeat(chapterId: string, beatId: string, mode: ReadMode): Promise<TrackerMutationResult> {
-  return request(`/api/state/beats/unmark?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/beats/unmark?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, beatId }),
   })
 }
 
 export function setThreadStatus(chapterId: string, threadId: string, status: string, mode: ReadMode): Promise<TrackerMutationResult> {
-  return request(`/api/state/threads/set?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/threads/set?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, threadId, status }),
   })
 }
 
 export function setCheckpoint(chapterId: string, checkpointIndex: number, mode: ReadMode): Promise<CheckpointMutationResult> {
-  return request(`/api/state/checkpoint/set?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/checkpoint/set?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, checkpointIndex }),
   })
 }
 
 export function setClock(value: number, mode: ReadMode): Promise<ClockMutationResult> {
-  return request(`/api/state/clock/set?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/clock/set?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ value }),
   })
 }
 
 export function setCurrentChapter(chapterId: string, lockCurrent: boolean, mode: ReadMode): Promise<SetCurrentChapterResult> {
-  return request(`/api/state/campaign/chapter?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/campaign/chapter?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, lockCurrent }),
   })
 }
 
 export function setChapterLock(chapterId: string, locked: boolean, mode: ReadMode): Promise<SetChapterLockResult> {
-  return request(`/api/state/campaign/lock?mode=${encodeURIComponent(mode)}`, {
+  return request(`/api/v1/state/campaign/lock?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify({ chapterId, locked }),
   })

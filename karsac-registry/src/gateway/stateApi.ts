@@ -54,6 +54,10 @@ function parseStatePath(url: string): string {
   return url.split('?', 1)[0] ?? url
 }
 
+function isStatePath(path: string, suffix: string): boolean {
+  return path === `/api/state${suffix}` || path === `/api/v1/state${suffix}`
+}
+
 function isFactMutationPayload(value: unknown): value is FactMutationPayload {
   if (!value || typeof value !== 'object') return false
   const candidate = value as FactMutationPayload
@@ -113,17 +117,17 @@ export async function handleStateApiRequest(
   const stateService = getStateService(deps)
 
   try {
-    if (req.method === 'GET' && path === '/api/state/campaign') {
+    if (req.method === 'GET' && isStatePath(path, '/campaign')) {
       sendJson(res, 200, stateService.readCampaignState())
       return true
     }
 
-    if (req.method === 'GET' && path === '/api/state/player-knowledge') {
+    if (req.method === 'GET' && isStatePath(path, '/player-knowledge')) {
       sendJson(res, 200, stateService.readPlayerKnowledge())
       return true
     }
 
-    if (req.method === 'GET' && path === '/api/state/world-threads') {
+    if (req.method === 'GET' && isStatePath(path, '/world-threads')) {
       sendJson(res, 200, stateService.readWorldThreads())
       return true
     }
@@ -133,20 +137,20 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'GET' && path === '/api/state/chapters') {
+    if (req.method === 'GET' && isStatePath(path, '/chapters')) {
       sendJson(res, 200, { chapters: stateService.readChapterList() })
       return true
     }
 
     const chapterMatch = req.method === 'GET'
-      ? path.match(/^\/api\/state\/chapters\/(chapter-[A-Za-z0-9._-]+)$/)
+      ? path.match(/^\/api\/(?:v1\/)?state\/chapters\/(chapter-[A-Za-z0-9._-]+)$/)
       : null
     if (chapterMatch) {
       sendJson(res, 200, stateService.readChapterState(chapterMatch[1]))
       return true
     }
 
-    if (req.method === 'POST' && (path === '/api/state/facts/reveal' || path === '/api/state/facts/hide')) {
+    if (req.method === 'POST' && (isStatePath(path, '/facts/reveal') || isStatePath(path, '/facts/hide'))) {
       const body = await readJsonBody(req)
       if (!isFactMutationPayload(body)) {
         sendError(res, 400, 'Invalid fact mutation payload.')
@@ -161,7 +165,7 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'POST' && (path === '/api/state/handouts/post' || path === '/api/state/handouts/unpost')) {
+    if (req.method === 'POST' && (isStatePath(path, '/handouts/post') || isStatePath(path, '/handouts/unpost'))) {
       const body = await readJsonBody(req)
       if (!isHandoutMutationPayload(body)) {
         sendError(res, 400, 'Invalid handout mutation payload.')
@@ -176,7 +180,7 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'POST' && (path === '/api/state/beats/mark' || path === '/api/state/beats/unmark')) {
+    if (req.method === 'POST' && (isStatePath(path, '/beats/mark') || isStatePath(path, '/beats/unmark'))) {
       const body = await readJsonBody(req)
       if (!isBeatMutationPayload(body)) {
         sendError(res, 400, 'Invalid beat mutation payload.')
@@ -191,7 +195,7 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'POST' && path === '/api/state/threads/set') {
+    if (req.method === 'POST' && isStatePath(path, '/threads/set')) {
       const body = await readJsonBody(req)
       if (!isThreadMutationPayload(body)) {
         sendError(res, 400, 'Invalid thread mutation payload.')
@@ -203,7 +207,7 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'POST' && path === '/api/state/checkpoint/set') {
+    if (req.method === 'POST' && isStatePath(path, '/checkpoint/set')) {
       const body = await readJsonBody(req)
       if (!isCheckpointPayload(body)) {
         sendError(res, 400, 'Invalid checkpoint payload.')
@@ -214,7 +218,7 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'POST' && path === '/api/state/clock/set') {
+    if (req.method === 'POST' && isStatePath(path, '/clock/set')) {
       const body = await readJsonBody(req)
       if (!isClockPayload(body)) {
         sendError(res, 400, 'Invalid clock payload.')
@@ -225,7 +229,7 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'POST' && path === '/api/state/campaign/chapter') {
+    if (req.method === 'POST' && isStatePath(path, '/campaign/chapter')) {
       const body = await readJsonBody(req)
       if (!isChapterSelectionPayload(body)) {
         sendError(res, 400, 'Invalid chapter selection payload.')
@@ -236,7 +240,7 @@ export async function handleStateApiRequest(
       return true
     }
 
-    if (req.method === 'POST' && path === '/api/state/campaign/lock') {
+    if (req.method === 'POST' && isStatePath(path, '/campaign/lock')) {
       const body = await readJsonBody(req)
       if (!isChapterLockPayload(body)) {
         sendError(res, 400, 'Invalid chapter lock payload.')

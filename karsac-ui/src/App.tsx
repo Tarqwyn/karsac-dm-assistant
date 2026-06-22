@@ -236,8 +236,7 @@ function cloneJson<T>(value: T): T {
 
 function nextChapterId(sourceChapterId: string): string {
   const match = String(sourceChapterId || '').match(/^chapter-(\d+)$/i)
-  if (!match) return 'chapter-4'
-  return `chapter-${Number(match[1]) + 1}`
+  return `chapter-${match ? Number(match[1]) + 1 : 1}`
 }
 
 function createEmptyChapterDraft(sourceChapterId = ''): DraftChapterState {
@@ -716,10 +715,6 @@ export default function App(): JSX.Element {
     }
   }
 
-  function navigateTo(path: string): void {
-    navigate(path)
-  }
-
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -734,7 +729,7 @@ export default function App(): JSX.Element {
                 key={section.id}
                 data-mode-tab={section.id}
                 className={activeSection === section.id ? 'active' : ''}
-                onClick={() => navigateTo(section.path)}
+                onClick={() => navigate(section.path)}
               >
                 {section.label}
               </button>
@@ -771,7 +766,7 @@ export default function App(): JSX.Element {
             <button
               key={section.id}
               className={activeSection === section.id ? 'nav-item active' : 'nav-item'}
-              onClick={() => navigateTo(section.path)}
+              onClick={() => navigate(section.path)}
             >
               {section.label}
             </button>
@@ -781,7 +776,6 @@ export default function App(): JSX.Element {
         <section className="workspace">
           <div className="workspace-head">
             <div>
-              <div className="workspace-kicker">Task 0002</div>
               <h2>{sections.find((section) => section.id === activeSection)?.label}</h2>
             </div>
             <div className="status-chip">{readMode.toUpperCase()}</div>

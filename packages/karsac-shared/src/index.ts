@@ -182,26 +182,26 @@ export interface ChapterScene {
   [key: string]: unknown
 }
 
-export interface ChapterCollection<TItem> {
+export interface ChapterCollection {
   id: string
   type: string
   chapterId: string
   [key: string]: unknown
 }
 
-export interface ChapterFactsState extends ChapterCollection<ChapterFact> {
+export interface ChapterFactsState extends ChapterCollection {
   facts: ChapterFact[]
 }
 
-export interface ChapterHandoutsState extends ChapterCollection<ChapterHandout> {
+export interface ChapterHandoutsState extends ChapterCollection {
   handouts: ChapterHandout[]
 }
 
-export interface ChapterBeatsState extends ChapterCollection<ChapterBeat> {
+export interface ChapterBeatsState extends ChapterCollection {
   beats: ChapterBeat[]
 }
 
-export interface ChapterScenesState extends ChapterCollection<ChapterScene> {
+export interface ChapterScenesState extends ChapterCollection {
   scenes: ChapterScene[]
 }
 

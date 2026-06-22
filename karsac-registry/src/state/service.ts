@@ -390,7 +390,9 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
   function refreshDerivedChapterState(chapterId: string, facts: ChapterFactsState, handouts: ChapterHandoutsState, beats: ChapterBeatsState) {
     const triggers = readOptionalChapterFile(stateRoot, chapterId, 'triggers') ?? { triggers: [] }
     const worldThreads = readJsonFile(join(stateRoot, 'world-threads.json'))
-    const partyState = readJsonFile(join(stateRoot, 'party-state.json'))
+    const partyState = existsSync(join(stateRoot, 'party-state.json'))
+      ? readJsonFile(join(stateRoot, 'party-state.json'))
+      : { characters: [] }
     const progressPath = chapterFilePath(stateRoot, chapterId, 'progress')
     const progress = readOptionalChapterFile(stateRoot, chapterId, 'progress') as ChapterProgressState | null
 
