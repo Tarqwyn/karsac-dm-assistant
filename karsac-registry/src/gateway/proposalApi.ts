@@ -6,15 +6,13 @@ import matter from 'gray-matter'
 import { PROJECT_ROOT, PROPOSALS_ROOT } from '../paths.js'
 import { getProposalFolder, getPromoteTarget } from '../proposals/proposalContractsLoader.js'
 import { promoteProposal } from '../proposals/proposalPromoter.js'
+import { PROPOSAL_TYPE_VALUES } from '../proposals/proposalTypes.js'
 import type { ProposalType } from '../proposals/proposalTypes.js'
 import { validateProposalFile } from '../proposals/proposalValidator.js'
 import { generateProposalFromPrompt } from './karsacRunner.js'
 import { readJsonBody, sendError, sendJson } from './httpUtils.js'
 
-const VALID_PROPOSAL_TYPES = new Set<string>([
-  'adversary', 'encounter', 'chapter-outline', 'session-outline',
-  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'state-update',
-])
+const VALID_PROPOSAL_TYPES = new Set<string>(PROPOSAL_TYPE_VALUES)
 
 type ProposalReviewState = {
   reviewed: boolean
@@ -202,6 +200,13 @@ function toCreatePayload(value: unknown): ProposalCreatePayload | null {
   return payload
 }
 
+function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  return Object.values(value).every(
+    (v) => Array.isArray(v) && v.every((item) => typeof item === 'string'),
+  )
+}
+
 function toUpdatePayload(value: unknown): ProposalUpdatePayload | null {
   if (!value || typeof value !== 'object') return null
   const candidate = value as Record<string, unknown>
@@ -219,8 +224,8 @@ function toUpdatePayload(value: unknown): ProposalUpdatePayload | null {
     payload.body = candidate.body
   }
   if (candidate.related !== undefined) {
-    if (typeof candidate.related !== 'object' || candidate.related === null) return null
-    payload.related = candidate.related as Record<string, string[]>
+    if (!isStringArrayRecord(candidate.related)) return null
+    payload.related = candidate.related
   }
   return payload
 }

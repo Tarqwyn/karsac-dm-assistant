@@ -1,10 +1,6 @@
 import { useState } from 'react'
+import { PROPOSAL_TYPES } from '@karsac/shared'
 import type { ProposalDetail, ProposalType } from '@karsac/shared'
-
-const PROPOSAL_TYPES: ProposalType[] = [
-  'npc', 'place', 'item', 'scene', 'chapter-outline',
-  'adversary', 'encounter', 'handout', 'clue', 'session-outline', 'state-update',
-]
 
 interface CreateProps {
   mode: 'create'
@@ -19,12 +15,17 @@ interface EditProps {
   mode: 'edit'
   proposal: ProposalDetail
   onCancel: () => void
-  onSave: (title: string, summary: string, body: string) => void
+  onSave: (title: string, summary: string, body: string, related?: Record<string, string[]>) => void
   isPending: boolean
   error: string
 }
 
 type ProposalFormProps = CreateProps | EditProps
+
+function initialRelated(proposal: ProposalDetail): string {
+  const rel = proposal.frontmatter.related
+  return rel ? JSON.stringify(rel, null, 2) : ''
+}
 
 export function ProposalForm(props: ProposalFormProps) {
   const isEdit = props.mode === 'edit'
@@ -36,13 +37,25 @@ export function ProposalForm(props: ProposalFormProps) {
   const [title, setTitle] = useState(isEdit ? (props as EditProps).proposal.title : '')
   const [summary, setSummary] = useState(isEdit ? (props as EditProps).proposal.summary : '')
   const [body, setBody] = useState(isEdit ? (props as EditProps).proposal.body : '')
+  const [related, setRelated] = useState(isEdit ? initialRelated((props as EditProps).proposal) : '')
   const [prompt, setPrompt] = useState('')
+  const [parseError, setParseError] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (isEdit) {
+      let parsedRelated: Record<string, string[]> | undefined
+      if (related.trim()) {
+        try {
+          parsedRelated = JSON.parse(related)
+          setParseError('')
+        } catch {
+          setParseError('Related field contains invalid JSON.')
+          return
+        }
+      }
       const ep = props as EditProps
-      ep.onSave(title, summary, body)
+      ep.onSave(title, summary, body, parsedRelated)
     } else {
       const cp = props as CreateProps
       if (authMethod === 'ai') {
@@ -62,7 +75,9 @@ export function ProposalForm(props: ProposalFormProps) {
         </button>
       </div>
 
-      {props.error && <div className="error-card">{props.error}</div>}
+      {(props.error || parseError) && (
+        <div className="error-card">{parseError || props.error}</div>
+      )}
 
       {!isEdit && (
         <div className="proposal-form-row">
@@ -131,17 +146,30 @@ export function ProposalForm(props: ProposalFormProps) {
             </label>
           </div>
           {isEdit && (
-            <div className="proposal-form-row">
-              <label>
-                <span>Body</span>
-                <textarea
-                  rows={16}
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="Proposal body (Markdown)"
-                />
-              </label>
-            </div>
+            <>
+              <div className="proposal-form-row">
+                <label>
+                  <span>Body</span>
+                  <textarea
+                    rows={14}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="Proposal body (Markdown)"
+                  />
+                </label>
+              </div>
+              <div className="proposal-form-row">
+                <label>
+                  <span>Related (JSON)</span>
+                  <textarea
+                    rows={8}
+                    value={related}
+                    onChange={(e) => { setRelated(e.target.value); setParseError('') }}
+                    placeholder={'{\n  "chapters": [],\n  "npcs": [],\n  "places": []\n}'}
+                  />
+                </label>
+              </div>
+            </>
           )}
         </>
       )}

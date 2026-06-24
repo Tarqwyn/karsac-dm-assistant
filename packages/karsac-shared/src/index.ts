@@ -93,9 +93,12 @@ export interface ProposalPromotionResponse {
   proposal: ProposalDetail
 }
 
-export type ProposalType =
-  | 'adversary' | 'encounter' | 'chapter-outline' | 'session-outline'
-  | 'scene' | 'npc' | 'place' | 'item' | 'clue' | 'handout' | 'state-update'
+export const PROPOSAL_TYPES = [
+  'adversary', 'encounter', 'chapter-outline', 'session-outline',
+  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'state-update',
+] as const
+
+export type ProposalType = typeof PROPOSAL_TYPES[number]
 
 export interface ProposalCreateRequest {
   type: ProposalType

@@ -1,7 +1,9 @@
-export type ProposalType =
-  | 'adversary' | 'encounter' | 'chapter-outline'
-  | 'session-outline' | 'scene' | 'npc' | 'place'
-  | 'item' | 'clue' | 'handout' | 'state-update'
+export const PROPOSAL_TYPE_VALUES = [
+  'adversary', 'encounter', 'chapter-outline', 'session-outline',
+  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'state-update',
+] as const
+
+export type ProposalType = typeof PROPOSAL_TYPE_VALUES[number]
 
 export interface ProposalValidation {
   status: 'pass' | 'warning' | 'fail'

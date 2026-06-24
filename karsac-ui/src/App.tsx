@@ -1,5 +1,6 @@
 import { createElement, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { PROPOSAL_TYPES } from '@karsac/shared'
 import type {
   ChapterBeat,
   ChapterBundle,
@@ -552,8 +553,8 @@ export default function App(): JSX.Element {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ title, summary, body }: { title: string; summary: string; body: string }) =>
-      updateProposal(selectedProposalId, { title, summary, body }, readMode),
+    mutationFn: ({ title, summary, body, related }: { title: string; summary: string; body: string; related?: Record<string, string[]> }) =>
+      updateProposal(selectedProposalId, { title, summary, body, related }, readMode),
     onSuccess: async () => {
       setProposalFormMode('view')
       setProposalFormError('')
@@ -947,7 +948,7 @@ export default function App(): JSX.Element {
                 />
                 <select className="select" value={proposalTypeFilter} onChange={(e) => setProposalTypeFilter(e.target.value)}>
                   <option value="all">All types</option>
-                  {['npc','place','item','scene','chapter-outline','adversary','encounter','handout','clue','session-outline','state-update'].map((t) => (
+                  {PROPOSAL_TYPES.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
@@ -1010,7 +1011,7 @@ export default function App(): JSX.Element {
                       isPending={updateMutation.isPending}
                       error={proposalFormError}
                       onCancel={() => setProposalFormMode('view')}
-                      onSave={(title, summary, body) => updateMutation.mutate({ title, summary, body })}
+                      onSave={(title, summary, body, related) => updateMutation.mutate({ title, summary, body, related })}
                     />
                   ) : proposalDetail ? (
                     <>
