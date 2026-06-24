@@ -34,68 +34,85 @@ This task closes the seam between Task 0003 proposal authoring and Task 0004 cha
 - The UI must preserve the originating chapter, segment, relationship slot, and parent artifact throughout proposal authoring
 - Hand-authored and AI-assisted creation must support the same contextual workflow
 
-## Pre-development decisions — resolved
+## Pre-development decisions — locked
 
 ### 1. What is the unit of contextual authoring?
 
-A contextual proposal request contains:
+A contextual proposal request carries workflow metadata as URL query parameters:
 
-- proposal type being created
-- originating chapter id
-- originating segment id
-- relationship slot to populate
-- parent proposal or corpus artifact id
-- suggested subject id or label, when one exists
-- relevant parent context for proposal generation
-- return destination after creation
+| Parameter | Description |
+|---|---|
+| `chapter` | originating chapter id |
+| `segment` | originating scene or segment id |
+| `relationship` | plan field to populate (e.g. `npcs`, `adversaries`) |
+| `parent` | parent proposal or corpus artifact id |
+| `createdProposal` | stable proposal id set after successful creation (enables retry after attachment failure) |
 
-The context is workflow metadata. It does not make the child proposal chapter-local or weaken its standalone lifecycle.
+URL query parameters are used — not React state alone, not sessionStorage — so the context survives a page refresh and the `createdProposal` field enables safe retry without re-creation.
+
+The context is workflow metadata only. It does not make the child proposal chapter-local or weaken its standalone lifecycle.
 
 ### 2. Which relationship types are initially supported?
 
-The first implementation must support the chapter composition relationships already useful to the DM:
+The first implementation must support:
 
-- scene or encounter -> NPC
-- scene or encounter -> place
-- scene or encounter -> adversary
-- scene or encounter -> item
-- scene or encounter -> clue
-- scene or encounter -> handout
-- scene or encounter -> faction
+- scene → NPC (`npcs[]`)
+- scene → place (`places[]`)
+- scene → adversary (`adversaries[]`)
+- scene → item (`items[]`)
+- scene → clue (`clueRefs[]`)
+- scene → handout (`handoutRefs[]`)
+- scene → faction (`factionRefs[]`)
+
+**Field naming constraint:** `handoutRefs[]` and `clueRefs[]` use explicit `Refs` suffix because `handouts[]` and `facts[]` on `planScene` already hold chapter-local inline items. Mixing them would create an ambiguous schema. `factionRefs[]` follows the same pattern for consistency.
+
+The `chapter-plan.json` schema must be updated to add `clueRefs`, `handoutRefs`, and `factionRefs` to `planScene` before this task can be considered complete.
 
 The relationship contract must allow additional proposal types without redesigning the workflow.
 
-### 3. What happens after proposal creation?
+### 3. Faction is a prerequisite — locked
 
-After a proposal is successfully created:
+`faction` is not currently a valid proposal type in `proposalTypes.ts`, `proposalContractsLoader.ts`, or `@karsac/shared`. Faction relationship support cannot be claimed until:
 
-- its stable proposal id is added to the requested segment relationship slot
-- the updated chapter plan is saved through the chapter plan API
-- the proposal remains visible as `proposed`, `reviewed`, or `promoted`
-- the UI returns to the originating segment unless the DM chooses to remain in proposal editing
+- `faction` is added to `PROPOSAL_TYPE_VALUES` and `PROPOSAL_TYPES`
+- `proposalContractsLoader.ts` maps `faction` to a folder and promote target
+- The schema and UI type lists are updated accordingly
 
-Creation and attachment are separate API writes. If attachment fails after creation, the proposal must remain intact and the UI must offer a retry rather than creating a duplicate proposal.
+This is a prerequisite for Epic 1, not an implementation detail.
 
-### 4. Does attachment require promotion?
+### 4. Relationship registry — locked
 
-No.
+Static relationship definitions (which proposal types map to which plan fields, which proposal types are valid targets for each slot) live in `@karsac/shared`. The UI consumes this to render relationship slots without an API call.
 
-The chapter plan may reference proposed or reviewed artifacts so the DM can compose ahead of promotion. Read-time status annotation remains visible in the workspace.
+Identity resolution and ambiguity detection (resolving a string to an existing proposal, promoted corpus entity, or missing/ambiguous match) live in the backend. The UI calls the backend resolver; it does not perform its own slug matching.
 
-Materialisation remains the hard gate and must fail if any attached reference is not promoted.
+Consumer-side slug matching is transitional behavior and must be replaced by this resolver in this task.
 
-### 5. How are suggested relationships resolved?
+### 5. Create and attach are separate operations — locked
 
-Relationship values from proposal metadata must be resolved through a shared relationship resolver.
+Creation (`POST /api/v1/proposals`) and attachment (`PATCH /api/v1/chapters/:id/plan`) are explicit separate API writes. The created proposal id is placed in the `createdProposal` URL parameter after creation. If attachment fails, the DM can retry attachment using the id from the URL without recreating the proposal.
 
-The resolver must distinguish:
+The API must not modify a chapter plan as an undocumented side effect of proposal creation.
 
-- an existing proposal reference
+### 6. Does attachment require promotion? — locked
+
+No. The plan may reference proposed or reviewed artifacts. Read-time status annotation distinguishes them. Materialisation remains the hard gate and blocks on any unpromoted reference.
+
+### 7. How are suggested relationships resolved? — locked
+
+The backend resolver distinguishes:
+
+- an existing proposal reference (by proposal id)
 - an existing promoted corpus entity
 - a suggested entity with no proposal
 - an invalid or ambiguous relationship
 
-Consumer-side slug matching is transitional behavior and must not be the final implementation.
+Resolution uses stable identifiers. Consumer-side slug or title matching must not be the final implementation.
+
+### 8. Error status codes — locked
+
+- `409` for relationship or plan conflicts (e.g. duplicate attachment, slug collision)
+- `422` for structurally valid but unresolvable or invalid relationship requests (e.g. unknown relationship slot, ambiguous match that cannot be auto-resolved)
 
 ## Expected API shape
 

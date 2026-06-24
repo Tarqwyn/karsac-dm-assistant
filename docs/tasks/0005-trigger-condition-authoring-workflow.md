@@ -24,44 +24,62 @@ This task exists because Task 0004 intentionally left trigger authoring out of t
 - Materialisation must derive trigger records explicitly, not infer them from unrelated scene joins
 - Trigger editing must stay structured and machine-readable, not raw metadata text by default
 
-## Pre-dev decisions — resolved
+## Pre-dev decisions — locked
 
 ### 1. What belongs in trigger authoring?
 
-Trigger authoring covers chapter-local rules that map plan items to thread status changes, such as:
-- fact -> thread status
-- beat -> thread status
-- handout -> thread status
+Trigger authoring covers chapter-local rules that map plan items to thread status changes:
+- fact → thread status
+- beat → thread status
+- handout → thread status
 
-The authoring surface should be able to express:
-- trigger event type
-- target chapter item id
-- target thread id
-- resulting thread status
-- optional notes or rationale
+Each trigger rule expresses: event type, target item id, target thread id, and resulting thread status.
 
 ### 2. Where does trigger data live?
 
-Trigger authoring lives in `plan.json` as chapter-local composition data and materialises into `corpus/state/chapters/<id>/triggers.json`.
+Trigger authoring lives in `plan.json` as chapter-local composition data and materialises into `corpus/state/chapters/<id>/triggers.json`. The tracker must only read the materialised triggers file.
 
-The plan may carry trigger definitions, but the tracker must only read the materialised triggers file.
+### 3. Trigger placement — scene-level — locked
 
-### 3. Materialisation behavior
+Triggers live inside each `planScene`, alongside `beats`, `facts`, and `handouts`. The DM authors a beat and its trigger in the same scene context. Materialisation flatmaps triggers across all scenes into `triggers.json`.
 
-Materialisation must derive `triggers.json` from the chapter plan and preserve all trigger rules needed by the tracker.
-
-If a plan contains trigger definitions that cannot be resolved into valid tracker triggers, materialisation must fail with a structured error and not partially materialise trigger output.
-
-### 4. REST shape — expected
-
-```
-GET    /api/v1/chapters/:id/plan          — read plan.json including trigger definitions
-PUT    /api/v1/chapters/:id/plan          — full write (create or replace)
-PATCH  /api/v1/chapters/:id/plan          — partial update including trigger rules
-POST   /api/v1/chapters/:id/materialise   — derive tracker-facing state including triggers.json
+```json
+{
+  "id": "scene-1",
+  "beats": [{ "id": "beat-departure", "label": "Departure", "desc": "..." }],
+  "triggers": [
+    { "on": "beat", "id": "beat-departure", "threadId": "thread-mathr", "setStatus": "hot" }
+  ]
+}
 ```
 
-Namespace stays under `/api/v1/chapters/`, not `/api/v1/state/chapters/`.
+### 4. ID uniqueness constraint — locked
+
+Plan item IDs (`beats[].id`, `facts[].id`, `handouts[].id`) must be globally unique across the entire plan, not just within their scene. Materialised tracker actions address items by ID without scene scope. Duplicate IDs across scenes must be rejected at plan write time with a structured error listing the duplicates.
+
+### 5. Trigger reference rules — locked
+
+All four trigger fields are validated at plan write time where resolvable, then revalidated at materialisation:
+
+- `on` must be `fact`, `beat`, or `handout`
+- `id` must reference an item of the matching type in **the same scene** as the trigger — not just anywhere in the plan
+- `threadId` must exist in both `plan.threads[]` and `world-threads.json` — both checks apply
+- `setStatus` must be a valid `threadStatus` value (`hot`, `simmering`, `dormant`, `closed`, `abandoned`)
+
+If any trigger rule fails these checks, materialisation must fail with a structured error listing each invalid rule. No partial trigger output.
+
+### 6. Materialisation behavior
+
+Materialisation derives `triggers.json` from the plan by flatmapping scene-level triggers into the tracker's `chapterTrigger` format: `{ on, id, threadId, setStatus }`. Validation runs before any file is written.
+
+### 7. REST shape — unchanged from Task 0004
+
+```
+GET    /api/v1/chapters/:id/plan          — read plan.json including scene-level triggers
+PUT    /api/v1/chapters/:id/plan          — full write (create or replace); validates triggers and ID uniqueness
+PATCH  /api/v1/chapters/:id/plan          — partial update; same validation applies
+POST   /api/v1/chapters/:id/materialise   — derives triggers.json; fails completely on any invalid trigger rule
+```
 
 ---
 
