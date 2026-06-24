@@ -6,6 +6,7 @@ import type {
   ChapterBundle,
   ChapterFact,
   ChapterHandout,
+  ChapterPlan,
   ChapterScene,
   ChapterSummary,
   ProposalType,
@@ -18,6 +19,7 @@ import {
   createProposal,
   fetchCampaignState,
   fetchChapterList,
+  fetchChapterPlan,
   fetchChapterState,
   fetchCorpusEntities,
   fetchCorpusEntity,
@@ -26,12 +28,15 @@ import {
   fetchWorldThreads,
   generateProposal,
   hideFact,
+  materializeChapterPlan,
   markBeat,
+  patchChapterPlan,
   postHandout,
   promoteProposal,
   previewSessionClose,
   revealFact,
   reviewProposal,
+  saveChapterPlan,
   setChapterLock,
   setCheckpoint,
   setClock,
@@ -41,6 +46,7 @@ import {
   unpostHandout,
   updateProposal,
 } from './api'
+import { ChapterCompositionWorkspace } from './ChapterCompositionWorkspace'
 import { ProposalForm } from './ProposalForm'
 
 const sections = [
@@ -361,6 +367,8 @@ export default function App(): JSX.Element {
   const [sessionActionError, setSessionActionError] = useState('')
   const [sessionActionNotice, setSessionActionNotice] = useState('')
   const [sessionCloseConfirming, setSessionCloseConfirming] = useState(false)
+  const [chapterPlanNotice, setChapterPlanNotice] = useState('')
+  const [chapterPlanActionError, setChapterPlanActionError] = useState('')
   const [chapterDraftView, setChapterDraftView] = useState<'overview' | 'facts' | 'handouts' | 'beats' | 'scenes'>('overview')
   const [chapterDraftSelection, setChapterDraftSelection] = useState({
     facts: '',
@@ -392,7 +400,7 @@ export default function App(): JSX.Element {
     }
     if (activeSection === 'chapters') {
       return chapterWorkspaceMode === 'planning'
-        ? 'Work on chapter prep explicitly: draft the next shape of the chapter without mixing it into the live tracker view.'
+        ? 'Assemble a chapter plan from proposal-backed inputs and chapter-local joins, then materialise it explicitly.'
         : 'Inspect chapter state, progress, and scene structure from the live service.'
     }
     if (activeSection === 'tracker') {
@@ -417,7 +425,7 @@ export default function App(): JSX.Element {
   const proposalListQuery = useQuery({
     queryKey: ['proposals', readMode],
     queryFn: () => fetchProposals(readMode),
-    enabled: activeSection === 'proposals',
+    enabled: activeSection === 'proposals' || (activeSection === 'chapters' && chapterWorkspaceMode === 'planning'),
   })
 
   const chapterListQuery = useQuery({
@@ -429,7 +437,7 @@ export default function App(): JSX.Element {
   const worldThreadsQuery = useQuery({
     queryKey: ['world-threads', trackerMode],
     queryFn: () => fetchWorldThreads(trackerMode),
-    enabled: activeSection === 'tracker',
+    enabled: activeSection === 'tracker' || (activeSection === 'chapters' && chapterWorkspaceMode === 'planning'),
   })
 
   const sessionClosePreviewQuery = useQuery({
@@ -473,6 +481,12 @@ export default function App(): JSX.Element {
     })
   }, [activeSection, chapters])
 
+  useEffect(() => {
+    if (activeSection !== 'chapters') return
+    setChapterPlanNotice('')
+    setChapterPlanActionError('')
+  }, [activeSection, selectedChapterId, chapterWorkspaceMode])
+
   const corpusDetailQuery = useQuery({
     queryKey: ['corpus-detail', readMode, selectedCorpusId],
     queryFn: () => fetchCorpusEntity(selectedCorpusId, readMode),
@@ -489,6 +503,13 @@ export default function App(): JSX.Element {
     queryKey: ['chapter-detail', activeSection === 'tracker' ? trackerMode : readMode, selectedChapterId],
     queryFn: () => fetchChapterState(selectedChapterId, activeSection === 'tracker' ? trackerMode : readMode),
     enabled: (activeSection === 'chapters' || activeSection === 'tracker') && Boolean(selectedChapterId),
+  })
+
+  const chapterPlanQuery = useQuery({
+    queryKey: ['chapter-plan', selectedChapterId],
+    queryFn: () => fetchChapterPlan(selectedChapterId),
+    enabled: activeSection === 'chapters' && chapterWorkspaceMode === 'planning' && Boolean(selectedChapterId),
+    retry: false,
   })
 
   const reviewMutation = useMutation({
@@ -568,6 +589,35 @@ export default function App(): JSX.Element {
     },
   })
 
+  const chapterPlanSaveMutation = useMutation({
+    mutationFn: (plan: ChapterPlan) => saveChapterPlan(selectedChapterId, plan as unknown as Record<string, unknown>),
+    onSuccess: async () => {
+      setChapterPlanActionError('')
+      setChapterPlanNotice(`Saved ${selectedChapterId} plan.`)
+      await queryClient.invalidateQueries({ queryKey: ['chapter-plan', selectedChapterId] })
+    },
+    onError: (error) => {
+      setChapterPlanActionError(errorWithIssues(error))
+    },
+  })
+
+  const chapterPlanMaterializeMutation = useMutation({
+    mutationFn: () => materializeChapterPlan(selectedChapterId),
+    onSuccess: async () => {
+      setChapterPlanActionError('')
+      setChapterPlanNotice(`Materialised ${selectedChapterId} into tracker-facing chapter state.`)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['chapter-plan', selectedChapterId] }),
+        queryClient.invalidateQueries({ queryKey: ['chapter-detail', readMode, selectedChapterId] }),
+        queryClient.invalidateQueries({ queryKey: ['chapter-detail', trackerMode, selectedChapterId] }),
+        queryClient.invalidateQueries({ queryKey: ['chapters'] }),
+      ])
+    },
+    onError: (error) => {
+      setChapterPlanActionError(errorWithIssues(error))
+    },
+  })
+
   const visibleEntities = corpusEntities.filter((entity) => {
     const q = query.trim().toLowerCase()
     const matchesQuery = !q
@@ -599,7 +649,6 @@ export default function App(): JSX.Element {
     { id: 'handouts', label: 'Handouts' },
     { id: 'beats', label: 'Beats' },
     { id: 'scenes', label: 'Scenes' },
-    { id: 'draft', label: 'Draft' },
   ] as const
 
   const chapterFacts = chapterDetail?.facts?.facts || []
@@ -1084,9 +1133,9 @@ export default function App(): JSX.Element {
                 <span className="meta-pill">{chapterDetail?.progress?.currentCheckpoint?.label || 'No checkpoint'}</span>
                 <span className="meta-pill">{percentLabel(chapterDetail?.progress?.coverage?.percent)}</span>
               </div>
-              {(chapterListQuery.error || chapterDetailQuery.error) && (
+              {(chapterListQuery.error || chapterDetailQuery.error || chapterPlanActionError || (chapterWorkspaceMode === 'planning' && worldThreadsQuery.error)) && (
                 <div className="error-card">
-                  {errorMessage(chapterListQuery.error || chapterDetailQuery.error, 'Failed to load chapters.')}
+                  {chapterPlanActionError || errorMessage(chapterListQuery.error || chapterDetailQuery.error || worldThreadsQuery.error, 'Failed to load chapters.')}
                 </div>
               )}
               <div className="chapter-workspace-layout">
@@ -1127,7 +1176,7 @@ export default function App(): JSX.Element {
                       className={chapterWorkspaceMode === 'planning' ? 'chapter-tab active' : 'chapter-tab'}
                       onClick={() => setChapterWorkspaceMode('planning')}
                     >
-                      Planning Draft
+                      Composition Plan
                     </button>
                   </div>
                 </div>
@@ -1144,23 +1193,6 @@ export default function App(): JSX.Element {
                           {chapterCheckpoint?.label || 'No checkpoint'}
                         </div>
                       </div>
-                      <div className="chapter-action-row">
-                        <button className="chapter-mini-btn" onClick={createBlankChapterDraft}>
-                          New draft
-                        </button>
-                        <button className="chapter-mini-btn" onClick={forkSelectedChapterIntoDraft} disabled={!chapterDetail}>
-                          Fork live chapter
-                        </button>
-                        <button className="chapter-mini-btn" onClick={exportChapterDraft}>
-                          Export draft JSON
-                        </button>
-                        <button className="chapter-mini-btn" onClick={() => void copyChapterDraft()}>
-                          Copy JSON
-                        </button>
-                      </div>
-                      {chapterDraftNotice && (
-                        <div className="placeholder-card">{chapterDraftNotice}</div>
-                      )}
                       {chapterWorkspaceMode === 'state' ? (
                         <>
                           <div className="chapter-tab-row">
@@ -1295,302 +1327,26 @@ export default function App(): JSX.Element {
                           )}
                         </>
                       ) : (
-                        <div className="chapter-draft-layout">
-                          <div className="chapter-draft-sidebar">
-                            <div className="placeholder-card">
-                              Planning draft mode is explicit here. Use this surface for chapter prep without confusing it with the live tracked bundle.
-                            </div>
-                            <div className="chapter-draft-grid">
-                              <label className="chapter-draft-field">
-                                <span>Source chapter</span>
-                                <input value={chapterDraftState.sourceChapterId} readOnly />
-                              </label>
-                              <label className="chapter-draft-field">
-                                <span>Chapter ID</span>
-                                <input value={chapterDraftState.chapterId} onChange={(event) => updateChapterDraftId(event.target.value)} />
-                              </label>
-                              <label className="chapter-draft-field chapter-draft-field-wide">
-                                <span>Title</span>
-                                <input value={chapterDraftState.title} onChange={(event) => updateChapterDraftField('title', event.target.value)} />
-                              </label>
-                              <label className="chapter-draft-field chapter-draft-field-wide">
-                                <span>Summary</span>
-                                <textarea rows={3} value={chapterDraftState.summary} onChange={(event) => updateChapterDraftField('summary', event.target.value)} />
-                              </label>
-                            </div>
-                            <div className="chapter-tab-row">
-                              {(['overview', 'facts', 'handouts', 'beats', 'scenes'] as const).map((view) => (
-                                <button
-                                  key={view}
-                                  className={chapterDraftView === view ? 'chapter-tab active' : 'chapter-tab'}
-                                  onClick={() => setChapterDraftView(view)}
-                                >
-                                  {view[0].toUpperCase()}{view.slice(1)}
-                                </button>
-                              ))}
-                            </div>
-                            {chapterDraftView === 'overview' ? (
-                              <>
-                                <div className="detail-grid">
-                                  <div><span>Facts</span><strong>{chapterDraftFacts.length}</strong></div>
-                                  <div><span>Handouts</span><strong>{chapterDraftHandouts.length}</strong></div>
-                                  <div><span>Beats</span><strong>{chapterDraftBeats.length}</strong></div>
-                                  <div><span>Scenes</span><strong>{chapterDraftScenes.length}</strong></div>
-                                </div>
-                                <div className="content-block markdown-block">
-                                  <h4>Draft checkpoint</h4>
-                                  <p>{chapterDraftCheckpoint?.label || 'No checkpoint label yet.'}</p>
-                                </div>
-                              </>
-                            ) : chapterDraftView === 'facts' ? (
-                              <div className="chapter-lane">
-                                <div className="chapter-draft-actions">
-                                  <button className="chapter-mini-btn" onClick={() => appendChapterDraftItem('facts', { knowledgeStatus: 'available', revealed: false })}>
-                                    Add fact
-                                  </button>
-                                </div>
-                                {chapterDraftFacts.length ? chapterDraftFacts.map((fact: ChapterFact) => (
-                                  <div
-                                    key={fact.id}
-                                    className={chapterDraftSelection.facts === fact.id ? 'chapter-drill-card active' : 'chapter-drill-card'}
-                                    onClick={() => selectChapterDraftItem('facts', fact.id)}
-                                  >
-                                    <div className="chapter-drill-head">
-                                      <strong>{fact.id}</strong>
-                                      <div className="chapter-scene-actions">
-                                        <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); removeChapterDraftItem('facts', fact.id) }}>
-                                          Remove
-                                        </button>
-                                      </div>
-                                    </div>
-                                    <div className="chapter-drill-meta">{fact.knowledgeStatus || 'available'} · {fact.revealed ? 'revealed' : 'hidden'}</div>
-                                  </div>
-                                )) : <div className="placeholder-card">No draft facts yet.</div>}
-                              </div>
-                            ) : chapterDraftView === 'handouts' ? (
-                              <div className="chapter-lane">
-                                <div className="chapter-draft-actions">
-                                  <button className="chapter-mini-btn" onClick={() => appendChapterDraftItem('handouts', { posted: false })}>
-                                    Add handout
-                                  </button>
-                                </div>
-                                {chapterDraftHandouts.length ? chapterDraftHandouts.map((handout: ChapterHandout) => (
-                                  <div
-                                    key={handout.id}
-                                    className={chapterDraftSelection.handouts === handout.id ? 'chapter-drill-card active' : 'chapter-drill-card'}
-                                    onClick={() => selectChapterDraftItem('handouts', handout.id)}
-                                  >
-                                    <div className="chapter-drill-head">
-                                      <strong>{handout.id}</strong>
-                                      <div className="chapter-scene-actions">
-                                        <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); removeChapterDraftItem('handouts', handout.id) }}>
-                                          Remove
-                                        </button>
-                                      </div>
-                                    </div>
-                                    <div className="chapter-drill-meta">{handout.label || handout.id} · {handout.posted ? 'posted' : 'unposted'}</div>
-                                  </div>
-                                )) : <div className="placeholder-card">No draft handouts yet.</div>}
-                              </div>
-                            ) : chapterDraftView === 'beats' ? (
-                              <div className="chapter-lane">
-                                <div className="chapter-draft-actions">
-                                  <button className="chapter-mini-btn" onClick={() => appendChapterDraftItem('beats', { completed: false })}>
-                                    Add beat
-                                  </button>
-                                </div>
-                                {chapterDraftBeats.length ? chapterDraftBeats.map((beat: ChapterBeat) => (
-                                  <div
-                                    key={beat.id}
-                                    className={chapterDraftSelection.beats === beat.id ? 'chapter-drill-card active' : 'chapter-drill-card'}
-                                    onClick={() => selectChapterDraftItem('beats', beat.id)}
-                                  >
-                                    <div className="chapter-drill-head">
-                                      <strong>{beat.id}</strong>
-                                      <div className="chapter-scene-actions">
-                                        <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); removeChapterDraftItem('beats', beat.id) }}>
-                                          Remove
-                                        </button>
-                                      </div>
-                                    </div>
-                                    <div className="chapter-drill-meta">{beat.label || beat.id} · {beat.completed ? 'complete' : 'pending'}</div>
-                                  </div>
-                                )) : <div className="placeholder-card">No draft beats yet.</div>}
-                              </div>
-                            ) : (
-                              <div className="chapter-lane">
-                                <div className="chapter-draft-actions">
-                                  <button
-                                    className="chapter-mini-btn"
-                                    onClick={() => appendChapterDraftItem('scenes', { kind: 'scene', order: chapterDraftScenes.length + 1, facts: [], handouts: [], beats: [] })}
-                                  >
-                                    Add scene
-                                  </button>
-                                </div>
-                                {chapterDraftScenes.length ? chapterDraftScenes.map((scene: ChapterScene) => (
-                                  <div
-                                    key={scene.id}
-                                    className={chapterDraftSelection.scenes === scene.id ? 'chapter-drill-card active' : 'chapter-drill-card'}
-                                    onClick={() => selectChapterDraftItem('scenes', scene.id)}
-                                  >
-                                    <div className="chapter-drill-head">
-                                      <strong>{scene.id}</strong>
-                                      <div className="chapter-scene-actions">
-                                        <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); removeChapterDraftItem('scenes', scene.id) }}>
-                                          Remove
-                                        </button>
-                                      </div>
-                                    </div>
-                                    <div className="chapter-drill-meta">{scene.label || scene.id} · {scene.kind || 'scene'} · {scene.order ?? 0}</div>
-                                  </div>
-                                )) : <div className="placeholder-card">No draft scenes yet.</div>}
-                              </div>
-                            )}
-                          </div>
-                          <div className="chapter-inspector">
-                            {chapterDraftView === 'facts' && selectedDraftFact && (
-                              <div className="chapter-inspector-card">
-                                <div className="chapter-drill-head">
-                                  <strong>Edit fact</strong>
-                                  <span className="status-chip subtle">{selectedDraftFact.id}</span>
-                                </div>
-                                <div className="chapter-draft-grid">
-                                  <label className="chapter-draft-field">
-                                    <span>Knowledge status</span>
-                                    <select
-                                      value={selectedDraftFact.knowledgeStatus || 'available'}
-                                      onChange={(event) => updateChapterDraftCollection('facts', selectedDraftFact.id, { knowledgeStatus: event.target.value })}
-                                    >
-                                      <option value="available">available</option>
-                                      <option value="known">known</option>
-                                      <option value="revealed">revealed</option>
-                                    </select>
-                                  </label>
-                                  <label className="chapter-draft-field">
-                                    <span>Revealed</span>
-                                    <select
-                                      value={selectedDraftFact.revealed ? 'true' : 'false'}
-                                      onChange={(event) => updateChapterDraftCollection('facts', selectedDraftFact.id, { revealed: event.target.value === 'true' })}
-                                    >
-                                      <option value="false">false</option>
-                                      <option value="true">true</option>
-                                    </select>
-                                  </label>
-                                </div>
-                              </div>
-                            )}
-                            {chapterDraftView === 'handouts' && selectedDraftHandout && (
-                              <div className="chapter-inspector-card">
-                                <div className="chapter-drill-head">
-                                  <strong>Edit handout</strong>
-                                  <span className="status-chip subtle">{selectedDraftHandout.id}</span>
-                                </div>
-                                <div className="chapter-draft-grid">
-                                  <label className="chapter-draft-field">
-                                    <span>Label</span>
-                                    <input
-                                      value={selectedDraftHandout.label || ''}
-                                      onChange={(event) => updateChapterDraftCollection('handouts', selectedDraftHandout.id, { label: event.target.value })}
-                                    />
-                                  </label>
-                                  <label className="chapter-draft-field">
-                                    <span>Posted</span>
-                                    <select
-                                      value={selectedDraftHandout.posted ? 'true' : 'false'}
-                                      onChange={(event) => updateChapterDraftCollection('handouts', selectedDraftHandout.id, { posted: event.target.value === 'true' })}
-                                    >
-                                      <option value="false">false</option>
-                                      <option value="true">true</option>
-                                    </select>
-                                  </label>
-                                  <label className="chapter-draft-field chapter-draft-field-wide">
-                                    <span>Description</span>
-                                    <textarea
-                                      rows={3}
-                                      value={selectedDraftHandout.desc || ''}
-                                      onChange={(event) => updateChapterDraftCollection('handouts', selectedDraftHandout.id, { desc: event.target.value })}
-                                    />
-                                  </label>
-                                </div>
-                              </div>
-                            )}
-                            {chapterDraftView === 'beats' && selectedDraftBeat && (
-                              <div className="chapter-inspector-card">
-                                <div className="chapter-drill-head">
-                                  <strong>Edit beat</strong>
-                                  <span className="status-chip subtle">{selectedDraftBeat.id}</span>
-                                </div>
-                                <div className="chapter-draft-grid">
-                                  <label className="chapter-draft-field">
-                                    <span>Label</span>
-                                    <input
-                                      value={selectedDraftBeat.label || ''}
-                                      onChange={(event) => updateChapterDraftCollection('beats', selectedDraftBeat.id, { label: event.target.value })}
-                                    />
-                                  </label>
-                                  <label className="chapter-draft-field">
-                                    <span>Completed</span>
-                                    <select
-                                      value={selectedDraftBeat.completed ? 'true' : 'false'}
-                                      onChange={(event) => updateChapterDraftCollection('beats', selectedDraftBeat.id, { completed: event.target.value === 'true' })}
-                                    >
-                                      <option value="false">false</option>
-                                      <option value="true">true</option>
-                                    </select>
-                                  </label>
-                                  <label className="chapter-draft-field chapter-draft-field-wide">
-                                    <span>Description</span>
-                                    <textarea
-                                      rows={3}
-                                      value={selectedDraftBeat.desc || ''}
-                                      onChange={(event) => updateChapterDraftCollection('beats', selectedDraftBeat.id, { desc: event.target.value })}
-                                    />
-                                  </label>
-                                </div>
-                              </div>
-                            )}
-                            {chapterDraftView === 'scenes' && selectedDraftScene && (
-                              <div className="chapter-inspector-card">
-                                <div className="chapter-drill-head">
-                                  <strong>Edit scene</strong>
-                                  <span className="status-chip subtle">{selectedDraftScene.id}</span>
-                                </div>
-                                <div className="chapter-draft-grid">
-                                  <label className="chapter-draft-field">
-                                    <span>Kind</span>
-                                    <input
-                                      value={selectedDraftScene.kind || 'scene'}
-                                      onChange={(event) => updateChapterDraftCollection('scenes', selectedDraftScene.id, { kind: event.target.value })}
-                                    />
-                                  </label>
-                                  <label className="chapter-draft-field">
-                                    <span>Order</span>
-                                    <input
-                                      type="number"
-                                      value={selectedDraftScene.order ?? 0}
-                                      onChange={(event) => updateChapterDraftCollection('scenes', selectedDraftScene.id, { order: Number(event.target.value) })}
-                                    />
-                                  </label>
-                                  <label className="chapter-draft-field chapter-draft-field-wide">
-                                    <span>Label</span>
-                                    <input
-                                      value={selectedDraftScene.label || ''}
-                                      onChange={(event) => updateChapterDraftCollection('scenes', selectedDraftScene.id, { label: event.target.value })}
-                                    />
-                                  </label>
-                                  <label className="chapter-draft-field chapter-draft-field-wide">
-                                    <span>Summary</span>
-                                    <textarea
-                                      rows={4}
-                                      value={selectedDraftScene.summary || ''}
-                                      onChange={(event) => updateChapterDraftCollection('scenes', selectedDraftScene.id, { summary: event.target.value })}
-                                    />
-                                  </label>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        <ChapterCompositionWorkspace
+                          chapterId={selectedChapterId}
+                          chapterDetail={chapterDetail}
+                          chapterPlanData={chapterPlanQuery.data ?? null}
+                          chapterPlanError={chapterPlanQuery.error}
+                          chapterPlanLoading={chapterPlanQuery.isLoading}
+                          proposals={proposals}
+                          worldThreads={worldThreads}
+                          notice={chapterPlanNotice}
+                          error={chapterPlanActionError}
+                          busy={chapterPlanSaveMutation.isPending || chapterPlanMaterializeMutation.isPending}
+                          onSave={async (plan) => {
+                            setChapterPlanNotice('')
+                            await chapterPlanSaveMutation.mutateAsync(plan)
+                          }}
+                          onMaterialize={async () => {
+                            setChapterPlanNotice('')
+                            await chapterPlanMaterializeMutation.mutateAsync()
+                          }}
+                        />
                       )}
                     </>
                   ) : chapterDetailQuery.isLoading ? (

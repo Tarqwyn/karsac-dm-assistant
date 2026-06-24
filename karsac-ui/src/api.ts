@@ -2,6 +2,8 @@ import type {
   CampaignState,
   CheckpointMutationResult,
   ChapterBundle,
+  ChapterPlanMaterializeResponse,
+  ChapterPlanResponse,
   ChapterListResponse,
   ClockMutationResult,
   CorpusEntitiesResponse,
@@ -46,17 +48,21 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     let message = `Request failed: ${response.status}`
     let issues: string[] | undefined
+    let scaffold: Record<string, unknown> | undefined
 
     try {
       const payload = await response.json()
       if (payload?.error?.message) message = payload.error.message
       if (Array.isArray(payload?.issues)) issues = payload.issues
+      if (payload?.scaffold && typeof payload.scaffold === 'object') scaffold = payload.scaffold
     } catch {
       // Ignore parse errors on non-JSON error responses.
     }
 
-    const error = new Error(message) as Error & { issues?: string[] }
+    const error = new Error(message) as Error & { issues?: string[]; scaffold?: Record<string, unknown>; statusCode?: number }
     if (issues) error.issues = issues
+    if (scaffold) error.scaffold = scaffold
+    error.statusCode = response.status
     throw error
   }
 
@@ -81,6 +87,30 @@ export function fetchChapterList(mode: ReadMode): Promise<ChapterListResponse> {
 
 export function fetchChapterState(chapterId: string, mode: ReadMode): Promise<ChapterBundle> {
   return request(`/api/v1/state/chapters/${encodeURIComponent(chapterId)}?mode=${encodeURIComponent(mode)}`)
+}
+
+export function fetchChapterPlan(chapterId: string): Promise<ChapterPlanResponse> {
+  return request(`/api/v1/chapters/${encodeURIComponent(chapterId)}/plan`)
+}
+
+export function saveChapterPlan(chapterId: string, data: Record<string, unknown>): Promise<ChapterPlanResponse> {
+  return request(`/api/v1/chapters/${encodeURIComponent(chapterId)}/plan`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export function patchChapterPlan(chapterId: string, data: Record<string, unknown>): Promise<ChapterPlanResponse> {
+  return request(`/api/v1/chapters/${encodeURIComponent(chapterId)}/plan`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export function materializeChapterPlan(chapterId: string): Promise<ChapterPlanMaterializeResponse> {
+  return request(`/api/v1/chapters/${encodeURIComponent(chapterId)}/materialise`, {
+    method: 'POST',
+  })
 }
 
 export function fetchWorldThreads(mode: ReadMode): Promise<WorldThreadsState> {

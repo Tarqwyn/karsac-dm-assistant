@@ -5,6 +5,7 @@ import { isAuthorized } from './auth.js'
 import { buildModelsResponse, createChatCompletion, streamChatCompletion } from './chatCompletion.js'
 import type { OpenAIChatCompletionRequest } from './openaiTypes.js'
 import { getGatewayBuildInfo } from '../buildInfo.js'
+import { handleChapterApiRequest } from './chapterApi.js'
 import { handleCorpusApiRequest } from './corpusApi.js'
 import { handleProposalApiRequest } from './proposalApi.js'
 import { handleStateApiRequest } from './stateApi.js'
@@ -96,6 +97,10 @@ export function createGatewayServer(deps: { stateService?: StateService } = {}) 
       }
 
       if (await handleProposalApiRequest(req, res)) {
+        return
+      }
+
+      if (await handleChapterApiRequest(req, res, deps)) {
         return
       }
 

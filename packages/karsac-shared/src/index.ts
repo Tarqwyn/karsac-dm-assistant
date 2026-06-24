@@ -213,6 +213,89 @@ export interface ChapterScene {
   [key: string]: unknown
 }
 
+export type ProposalRefStatus = 'promoted' | 'reviewed' | 'proposed' | 'missing'
+
+export interface ChapterPlanBeat {
+  id: string
+  label: string
+  desc: string
+}
+
+export interface ChapterPlanFact {
+  id: string
+  label: string
+  desc?: string
+}
+
+export interface ChapterPlanHandout {
+  id: string
+  label: string
+  desc?: string
+}
+
+export interface ChapterPlanScene {
+  id: string
+  label: string
+  kind: string
+  order: number
+  summary: string
+  artifactRef?: string | null
+  npcs?: string[]
+  places?: string[]
+  beats: ChapterPlanBeat[]
+  facts: ChapterPlanFact[]
+  handouts: ChapterPlanHandout[]
+}
+
+export interface ChapterPlanThread {
+  threadId: string
+  hook: string
+  cueSceneIds?: string[]
+}
+
+export interface ChapterPlanCheckpoint {
+  id: string
+  index: number
+  label: string
+  sceneIds: string[]
+  pauseLabel?: string | null
+}
+
+export interface ChapterPlan {
+  id: string
+  type: 'chapter-plan'
+  campaign: string
+  chapterId: string
+  source: string | string[]
+  importStatus: string
+  title: string
+  updatedAt?: string
+  notes?: string
+  scenes: ChapterPlanScene[]
+  threads: ChapterPlanThread[]
+  checkpoints: ChapterPlanCheckpoint[]
+}
+
+export interface ChapterPlanReferenceStatus {
+  proposalId: string
+  status: ProposalRefStatus
+  title?: string
+  proposalType?: string
+  reviewStatus?: ReviewStatus
+  promoteTarget?: string
+}
+
+export interface ChapterPlanResponse {
+  plan: ChapterPlan
+  referenceStatuses: ChapterPlanReferenceStatus[]
+}
+
+export interface ChapterPlanMaterializeResponse {
+  chapterId: string
+  bundle: ChapterBundle
+  writtenFiles: string[]
+}
+
 export interface ChapterCollection {
   id: string
   type: string

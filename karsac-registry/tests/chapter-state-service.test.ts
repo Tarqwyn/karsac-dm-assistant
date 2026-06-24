@@ -329,6 +329,51 @@ function makeStateFixture(): string {
     scenes: [],
   })
 
+  mkdirSync(join(root, 'proposals', 'scenes'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'scenes', 'greybacks-departure.proposed.md'), `---
+id: proposals/scenes/greybacks-departure
+proposal_type: scene
+title: Greyback's Departure
+status: promoted
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/scenes
+---
+
+# Greyback's Departure
+`, 'utf8')
+
+  mkdirSync(join(root, 'proposals', 'npcs'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'npcs', 'brynja.proposed.md'), `---
+id: proposals/npcs/brynja
+proposal_type: npc
+title: Brynja
+status: promoted
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/npcs
+---
+
+# Brynja
+`, 'utf8')
+
+  mkdirSync(join(root, 'proposals', 'places'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'places', 'torweg-harbour.proposed.md'), `---
+id: proposals/places/torweg-harbour
+proposal_type: place
+title: Torweg Harbour
+status: proposed
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/places
+---
+
+# Torweg Harbour
+`, 'utf8')
+
   return root
 }
 
@@ -543,5 +588,116 @@ describe('state service', () => {
     const event = JSON.parse(logLines[0] ?? '{}')
     expect(event.action).toBe('session.close')
     expect(event.targetId).toBe('session-2-chapter-2')
+  })
+
+  it('writes and reads a chapter plan with annotated proposal reference status', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    service.writeChapterPlan('chapter-3', {
+      title: 'The Weight of Witness',
+      notes: 'Chapter notes',
+      scenes: [
+        {
+          id: 'scene-1',
+          label: 'The Greyback Departure',
+          kind: 'opening',
+          order: 10,
+          summary: 'Set the departure tone.',
+          artifactRef: 'proposals/scenes/greybacks-departure',
+          npcs: ['proposals/npcs/brynja'],
+          places: ['proposals/places/torweg-harbour'],
+          beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
+          facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
+          handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
+        },
+      ],
+      threads: [{ threadId: 'mathr-arithmetic', hook: 'Mathr pressure builds.', cueSceneIds: ['scene-1'] }],
+      checkpoints: [{ id: 'cp-opening', index: 0, label: 'Opening', sceneIds: ['scene-1'], pauseLabel: null }],
+    })
+
+    const result = service.readChapterPlan('chapter-3')
+
+    expect(result.plan.id).toBe('chapter-3-plan')
+    expect(result.plan.type).toBe('chapter-plan')
+    expect(result.referenceStatuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ proposalId: 'proposals/scenes/greybacks-departure', status: 'promoted' }),
+      expect.objectContaining({ proposalId: 'proposals/npcs/brynja', status: 'promoted' }),
+      expect.objectContaining({ proposalId: 'proposals/places/torweg-harbour', status: 'reviewed' }),
+    ]))
+  })
+
+  it('materialises a chapter plan into tracker-facing state files when all refs are promoted', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    service.writeChapterPlan('chapter-3', {
+      title: 'The Weight of Witness',
+      scenes: [
+        {
+          id: 'scene-1',
+          label: 'The Greyback Departure',
+          kind: 'opening',
+          order: 10,
+          summary: 'Set the departure tone.',
+          artifactRef: 'proposals/scenes/greybacks-departure',
+          npcs: ['proposals/npcs/brynja'],
+          places: [],
+          beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
+          facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
+          handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
+        },
+      ],
+      threads: [{ threadId: 'mathr-arithmetic', hook: 'Mathr pressure builds.', cueSceneIds: ['scene-1'] }],
+      checkpoints: [{ id: 'cp-opening', index: 0, label: 'Opening', sceneIds: ['scene-1'], pauseLabel: null }],
+    })
+
+    const result = service.materializeChapterPlan('chapter-3')
+
+    expect(result.bundle.chapterId).toBe('chapter-3')
+    expect(result.bundle.facts?.facts[0]?.revealed).toBe(false)
+    expect(result.bundle.beats?.beats[0]?.completed).toBe(false)
+    expect(result.bundle.progress?.currentCheckpoint?.id).toBe('cp-opening')
+    expect(result.writtenFiles).toContain('corpus/state/chapters/chapter-3/facts.json')
+  })
+
+  it('rejects materialisation when the plan still references unpromoted artifacts', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    service.writeChapterPlan('chapter-3', {
+      title: 'The Weight of Witness',
+      scenes: [
+        {
+          id: 'scene-1',
+          label: 'The Greyback Departure',
+          kind: 'opening',
+          order: 10,
+          summary: 'Set the departure tone.',
+          artifactRef: 'proposals/scenes/greybacks-departure',
+          npcs: [],
+          places: ['proposals/places/torweg-harbour'],
+          beats: [],
+          facts: [],
+          handouts: [],
+        },
+      ],
+      threads: [],
+      checkpoints: [],
+    })
+
+    try {
+      service.materializeChapterPlan('chapter-3')
+      throw new Error('Expected materialisation to fail.')
+    } catch (error) {
+      expect(error).toBeInstanceOf(StateServiceError)
+      expect((error as StateServiceError).statusCode).toBe(409)
+      expect((error as StateServiceError).issues).toContain(
+        'scene-1 places reference proposals/places/torweg-harbour is reviewed, not promoted.',
+      )
+    }
   })
 })

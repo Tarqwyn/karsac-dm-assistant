@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { createGatewayServer } from '../src/gateway/server.js'
@@ -334,6 +334,21 @@ function makeStateFixture(): string {
     scenes: [],
   })
 
+  mkdirSync(join(root, 'proposals', 'scenes'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'scenes', 'greybacks-departure.proposed.md'), `---
+id: proposals/scenes/greybacks-departure
+proposal_type: scene
+title: Greyback's Departure
+status: promoted
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/scenes
+---
+
+# Greyback's Departure
+`, 'utf8')
+
   return root
 }
 
@@ -582,6 +597,70 @@ describe('state API', () => {
       'corpus/state/session-close/session-2-chapter-2.summary.json',
       'corpus/state/session-close/session-2-chapter-2.summary.md',
     ])
+  })
+
+  it('reads, writes, patches, and materialises a chapter plan through the chapter API', async () => {
+    const authHeaders = {
+      Authorization: 'Bearer local-karsac-dev-key',
+      'Content-Type': 'application/json',
+    }
+
+    const writeResponse = await fetch(`${baseUrl}/api/v1/chapters/chapter-3/plan`, {
+      method: 'PUT',
+      headers: authHeaders,
+      body: JSON.stringify({
+        title: 'The Weight of Witness',
+        scenes: [
+          {
+            id: 'scene-1',
+            label: 'The Greyback Departure',
+            kind: 'opening',
+            order: 10,
+            summary: 'Set the departure tone.',
+            artifactRef: 'proposals/scenes/greybacks-departure',
+            npcs: [],
+            places: [],
+            beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
+            facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
+            handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
+          },
+        ],
+        threads: [{ threadId: 'mathr-arithmetic', hook: 'Mathr pressure builds.', cueSceneIds: ['scene-1'] }],
+        checkpoints: [{ id: 'cp-opening', index: 0, label: 'Opening', sceneIds: ['scene-1'], pauseLabel: null }],
+      }),
+    })
+    expect(writeResponse.status).toBe(200)
+    const writeBody = await writeResponse.json()
+    expect(writeBody.plan.id).toBe('chapter-3-plan')
+    expect(writeBody.referenceStatuses[0].status).toBe('promoted')
+
+    const readResponse = await fetch(`${baseUrl}/api/v1/chapters/chapter-3/plan`, {
+      headers: { Authorization: 'Bearer local-karsac-dev-key' },
+    })
+    expect(readResponse.status).toBe(200)
+    const readBody = await readResponse.json()
+    expect(readBody.plan.title).toBe('The Weight of Witness')
+
+    const patchResponse = await fetch(`${baseUrl}/api/v1/chapters/chapter-3/plan`, {
+      method: 'PATCH',
+      headers: authHeaders,
+      body: JSON.stringify({ notes: 'Updated notes' }),
+    })
+    expect(patchResponse.status).toBe(200)
+    const patchBody = await patchResponse.json()
+    expect(patchBody.plan.notes).toBe('Updated notes')
+
+    const materializeResponse = await fetch(`${baseUrl}/api/v1/chapters/chapter-3/materialise`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer local-karsac-dev-key' },
+    })
+    expect(materializeResponse.status).toBe(200)
+    const materializeBody = await materializeResponse.json()
+    expect(materializeBody.bundle.chapterId).toBe('chapter-3')
+    expect(materializeBody.bundle.facts.facts[0].revealed).toBe(false)
+
+    const facts = JSON.parse(readFileSync(join(root, 'chapters/chapter-3/facts.json'), 'utf8'))
+    expect(facts.facts[0].id).toBe('fact-mathr')
   })
 
   it('rejects requests without a valid API key', async () => {
