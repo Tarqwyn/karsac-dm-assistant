@@ -58,6 +58,7 @@ export interface ProposalSummary {
   summary: string
   promoteTarget: string
   sourcePrompt: string
+  related: Record<string, string[]>
   validation: ProposalValidation
   review: ProposalReviewState
   updatedAt?: string
@@ -242,6 +243,8 @@ export interface ChapterPlanScene {
   artifactRef?: string | null
   npcs?: string[]
   places?: string[]
+  adversaries?: string[]
+  items?: string[]
   beats: ChapterPlanBeat[]
   facts: ChapterPlanFact[]
   handouts: ChapterPlanHandout[]

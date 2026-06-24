@@ -32,6 +32,7 @@ type ProposalSummary = {
   summary: string
   promoteTarget: string
   sourcePrompt: string
+  related: Record<string, string[]>
   validation: {
     status: 'pass' | 'warning' | 'fail'
     issues: string[]
@@ -106,6 +107,12 @@ function proposalSummaryFrom(filePath: string): ProposalSummary {
   const parsed = matter(raw)
   const fm = parsed.data as Record<string, unknown>
   const validation = validateProposalFile(filePath)
+  const related = fm.related && typeof fm.related === 'object' && !Array.isArray(fm.related)
+    ? Object.fromEntries(
+      Object.entries(fm.related as Record<string, unknown>)
+        .filter((entry): entry is [string, string[]] => Array.isArray(entry[1]) && entry[1].every((value) => typeof value === 'string')),
+    )
+    : {}
 
   return {
     id: String(fm.id ?? ''),
@@ -118,6 +125,7 @@ function proposalSummaryFrom(filePath: string): ProposalSummary {
     summary: String(fm.summary ?? '').trim() || parsed.content.trim().split('\n\n', 1)[0] || 'No summary available.',
     promoteTarget: String(fm.promote_target ?? ''),
     sourcePrompt: String(fm.source_prompt ?? ''),
+    related,
     validation: {
       status: validation.status,
       issues: validation.issues,

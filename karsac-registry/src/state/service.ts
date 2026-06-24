@@ -88,6 +88,8 @@ type ChapterPlanScene = {
   artifactRef?: string | null
   npcs?: string[]
   places?: string[]
+  adversaries?: string[]
+  items?: string[]
   beats: ChapterPlanBeat[]
   facts: ChapterPlanFact[]
   handouts: ChapterPlanHandout[]
@@ -594,6 +596,8 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       artifactRef,
       npcs: asStringArray(value.npcs, `scenes[${index}].npcs`),
       places: asStringArray(value.places, `scenes[${index}].places`),
+      adversaries: asStringArray(value.adversaries, `scenes[${index}].adversaries`),
+      items: asStringArray(value.items, `scenes[${index}].items`),
       beats: Array.isArray(value.beats) ? value.beats.map((entry, beatIndex) => normalizePlanBeat(entry, beatIndex)) : [],
       facts: Array.isArray(value.facts) ? value.facts.map((entry, factIndex) => normalizePlanFact(entry, factIndex)) : [],
       handouts: Array.isArray(value.handouts) ? value.handouts.map((entry, handoutIndex) => normalizePlanHandout(entry, handoutIndex)) : [],
@@ -707,6 +711,8 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       if (scene.artifactRef) ids.add(scene.artifactRef)
       for (const proposalId of scene.npcs ?? []) ids.add(proposalId)
       for (const proposalId of scene.places ?? []) ids.add(proposalId)
+      for (const proposalId of scene.adversaries ?? []) ids.add(proposalId)
+      for (const proposalId of scene.items ?? []) ids.add(proposalId)
     }
     return Array.from(ids)
   }
@@ -794,6 +800,8 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
         scene.artifactRef ? { slot: 'artifactRef', proposalId: scene.artifactRef } : null,
         ...(scene.npcs ?? []).map((proposalId) => ({ slot: 'npcs', proposalId })),
         ...(scene.places ?? []).map((proposalId) => ({ slot: 'places', proposalId })),
+        ...(scene.adversaries ?? []).map((proposalId) => ({ slot: 'adversaries', proposalId })),
+        ...(scene.items ?? []).map((proposalId) => ({ slot: 'items', proposalId })),
       ].filter((entry): entry is { slot: string; proposalId: string } => Boolean(entry))
 
       for (const ref of refs) {
@@ -906,6 +914,8 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
           scene.artifactRef ? `Artifact: \`${scene.artifactRef}\`` : '',
           (scene.npcs ?? []).length ? `NPCs: ${(scene.npcs ?? []).map((value) => `\`${value}\``).join(', ')}` : '',
           (scene.places ?? []).length ? `Places: ${(scene.places ?? []).map((value) => `\`${value}\``).join(', ')}` : '',
+          (scene.adversaries ?? []).length ? `Adversaries: ${(scene.adversaries ?? []).map((value) => `\`${value}\``).join(', ')}` : '',
+          (scene.items ?? []).length ? `Items: ${(scene.items ?? []).map((value) => `\`${value}\``).join(', ')}` : '',
         ].filter(Boolean).join('\n') || null,
       })),
     }

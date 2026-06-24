@@ -1,0 +1,145 @@
+# Task 0005: Trigger Condition Authoring Workflow
+
+Status: Ready for development
+
+## Goal
+
+Add first-class authoring for chapter trigger conditions so materialised chapters preserve tracker progression behavior.
+
+This task exists because Task 0004 intentionally left trigger authoring out of the locked plan shape, but the tracker depends on trigger records to advance thread state from facts, beats, and handouts.
+
+## Architectural decisions in force
+
+- **ADR-0006** — Chapter composition data lives at `corpus/state/chapters/<id>/plan.json`
+- **ADR-0005** — Promoted corpus content enters via proposals; chapter-local assembly data may be authored directly in the plan
+- **ADR-0001** — Chapter composition sits between `promoted` and `materialised` as a planning/composition sub-phase
+- **ADR-0003** — The chapter workspace reads and writes through `/api/v1/` only
+- **RFC-0004** — Chapter authoring is composition, not blob editing
+
+## Design constraints
+
+- Trigger conditions must remain chapter-local planning data, not promoted corpus content
+- The tracker must still consume `chapter-triggers.json` as the runtime source of truth
+- The UI is an API consumer only — it never writes state files directly to disk
+- Materialisation must derive trigger records explicitly, not infer them from unrelated scene joins
+- Trigger editing must stay structured and machine-readable, not raw metadata text by default
+
+## Pre-dev decisions — resolved
+
+### 1. What belongs in trigger authoring?
+
+Trigger authoring covers chapter-local rules that map plan items to thread status changes, such as:
+- fact -> thread status
+- beat -> thread status
+- handout -> thread status
+
+The authoring surface should be able to express:
+- trigger event type
+- target chapter item id
+- target thread id
+- resulting thread status
+- optional notes or rationale
+
+### 2. Where does trigger data live?
+
+Trigger authoring lives in `plan.json` as chapter-local composition data and materialises into `corpus/state/chapters/<id>/triggers.json`.
+
+The plan may carry trigger definitions, but the tracker must only read the materialised triggers file.
+
+### 3. Materialisation behavior
+
+Materialisation must derive `triggers.json` from the chapter plan and preserve all trigger rules needed by the tracker.
+
+If a plan contains trigger definitions that cannot be resolved into valid tracker triggers, materialisation must fail with a structured error and not partially materialise trigger output.
+
+### 4. REST shape — expected
+
+```
+GET    /api/v1/chapters/:id/plan          — read plan.json including trigger definitions
+PUT    /api/v1/chapters/:id/plan          — full write (create or replace)
+PATCH  /api/v1/chapters/:id/plan          — partial update including trigger rules
+POST   /api/v1/chapters/:id/materialise   — derive tracker-facing state including triggers.json
+```
+
+Namespace stays under `/api/v1/chapters/`, not `/api/v1/state/chapters/`.
+
+---
+
+## Epic Breakdown
+
+### Epic 1 — Plan schema for triggers
+
+Extend the chapter plan schema to store trigger conditions as structured chapter-local data.
+
+Acceptance criteria:
+- The plan schema can represent trigger rules for fact, beat, and handout events
+- Trigger rules remain distinct from tracker runtime state
+- The schema stays machine-readable and stable
+
+### Epic 2 — Chapter plan API support
+
+Expose trigger definitions through the chapter plan API.
+
+Acceptance criteria:
+- `GET /api/v1/chapters/:id/plan` returns trigger definitions
+- `PUT` and `PATCH` can create and update trigger definitions
+- Missing plan behavior still works cleanly
+- Tests cover trigger plan read/write behavior
+
+### Epic 3 — Trigger editing in the workspace
+
+Add structured trigger editing to the chapter composition workspace.
+
+Acceptance criteria:
+- The DM can add, edit, and remove trigger rules
+- The DM can connect a trigger to a plan fact, beat, or handout
+- The workspace makes it obvious which thread and status the trigger affects
+- Editing triggers does not require raw JSON editing
+
+### Epic 4 — Materialisation output
+
+Derive `chapter-triggers.json` from the plan.
+
+Acceptance criteria:
+- Materialisation writes trigger records into the tracker-facing state
+- The tracker can consume the materialised triggers without any manual repair
+- Materialisation fails clearly if trigger rules are invalid or incomplete
+
+### Epic 5 — Tracker verification
+
+Confirm the tracker still advances thread state correctly after trigger materialisation.
+
+Acceptance criteria:
+- Revealing a fact, marking a beat, or posting a handout still drives thread state as expected
+- The workflow is covered by tests
+- No silent trigger suppression remains
+
+---
+
+## Done When
+
+- The chapter plan can store trigger conditions as structured data
+- The chapter workspace can author trigger conditions without raw JSON editing
+- Materialisation produces `chapter-triggers.json` from the plan
+- The tracker continues to advance thread state from materialised trigger records
+
+## Out of scope
+
+- Reworking the tracker UI
+- Proposal-backed corpus authoring beyond trigger-linked inputs
+- Rich scene block reconstruction from promoted corpus content
+
+## Notes
+
+Task 0004 is reviewable, but trigger materialisation is not ship-safe until this follow-up lands.
+
+Do not solve this by sprinkling ad hoc trigger writes into the UI. The trigger model needs to exist as explicit plan data and explicit materialisation output.
+
+## Related
+
+- [Task 0004 — Chapter Composition Workspace](0004-chapter-composition-workspace.md)
+- [ADR-0001 — Lifecycle State Contract](../adr/0001-lifecycle-state-contract.md)
+- [ADR-0003 — REST API as Primary Interface](../adr/0003-rest-api-as-primary-interface.md)
+- [ADR-0005 — Proposals as the Primary Authoring Unit](../adr/0005-proposals-as-primary-authoring-unit.md)
+- [ADR-0006 — Chapter Composition Model](../adr/0006-chapter-composition-model.md)
+- [RFC-0004 — Proposal-Backed Chapter Authoring](../rfc/0004-proposal-backed-chapter-authoring.md)

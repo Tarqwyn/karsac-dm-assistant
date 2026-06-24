@@ -54,10 +54,13 @@ describe('gateway proposal api', () => {
   it('lists, reads, reviews, and promotes a proposal', async () => {
     const listResponse = await fetch(`${baseUrl}/api/v1/proposals?mode=live`, { headers: authHeaders })
     expect(listResponse.status).toBe(200)
-    const listPayload = await listResponse.json() as { proposals: Array<{ id: string; validation: { status: string } }> }
+    const listPayload = await listResponse.json() as {
+      proposals: Array<{ id: string; related: Record<string, string[]>; validation: { status: string } }>
+    }
     expect(listPayload.proposals).toHaveLength(1)
     expect(listPayload.proposals[0].id).toBe('proposals/gateway-ui-warden')
     expect(listPayload.proposals[0].validation.status).toBe('fail')
+    expect(listPayload.proposals[0].related.chapters).toEqual([])
 
     const detailResponse = await fetch(`${baseUrl}/api/v1/proposals/${encodeURIComponent('proposals/gateway-ui-warden')}?mode=planning`, { headers: authHeaders })
     expect(detailResponse.status).toBe(200)

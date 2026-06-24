@@ -92,6 +92,18 @@
             "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
           }
         },
+        "adversaries": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
         "beats": {
           "type": "array",
           "items": {

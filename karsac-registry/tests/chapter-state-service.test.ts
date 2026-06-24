@@ -374,6 +374,36 @@ promote_target: corpus/planning/places
 # Torweg Harbour
 `, 'utf8')
 
+  mkdirSync(join(root, 'proposals', 'adversaries'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'adversaries', 'ledger-keeper.proposed.md'), `---
+id: proposals/ledger-keeper
+proposal_type: adversary
+title: The Ledger-Keeper
+status: promoted
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/adversaries
+---
+
+# The Ledger-Keeper
+`, 'utf8')
+
+  mkdirSync(join(root, 'proposals', 'items'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'items', 'mathr-token.proposed.md'), `---
+id: proposals/mathr-token
+proposal_type: item
+title: Mathr Token
+status: proposed
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/items
+---
+
+# Mathr Token
+`, 'utf8')
+
   return root
 }
 
@@ -608,6 +638,8 @@ describe('state service', () => {
           artifactRef: 'proposals/scenes/greybacks-departure',
           npcs: ['proposals/npcs/brynja'],
           places: ['proposals/places/torweg-harbour'],
+          adversaries: ['proposals/ledger-keeper'],
+          items: ['proposals/mathr-token'],
           beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
           facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
           handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
@@ -625,6 +657,8 @@ describe('state service', () => {
       expect.objectContaining({ proposalId: 'proposals/scenes/greybacks-departure', status: 'promoted' }),
       expect.objectContaining({ proposalId: 'proposals/npcs/brynja', status: 'promoted' }),
       expect.objectContaining({ proposalId: 'proposals/places/torweg-harbour', status: 'reviewed' }),
+      expect.objectContaining({ proposalId: 'proposals/ledger-keeper', status: 'promoted' }),
+      expect.objectContaining({ proposalId: 'proposals/mathr-token', status: 'reviewed' }),
     ]))
   })
 
@@ -645,6 +679,8 @@ describe('state service', () => {
           artifactRef: 'proposals/scenes/greybacks-departure',
           npcs: ['proposals/npcs/brynja'],
           places: [],
+          adversaries: ['proposals/ledger-keeper'],
+          items: [],
           beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
           facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
           handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
@@ -661,6 +697,7 @@ describe('state service', () => {
     expect(result.bundle.beats?.beats[0]?.completed).toBe(false)
     expect(result.bundle.progress?.currentCheckpoint?.id).toBe('cp-opening')
     expect(result.writtenFiles).toContain('corpus/state/chapters/chapter-3/facts.json')
+    expect(result.bundle.scenes?.scenes[0]?.notesMd).toContain('Adversaries: `proposals/ledger-keeper`')
   })
 
   it('rejects materialisation when the plan still references unpromoted artifacts', () => {
@@ -679,7 +716,9 @@ describe('state service', () => {
           summary: 'Set the departure tone.',
           artifactRef: 'proposals/scenes/greybacks-departure',
           npcs: [],
-          places: ['proposals/places/torweg-harbour'],
+          places: [],
+          adversaries: [],
+          items: ['proposals/mathr-token'],
           beats: [],
           facts: [],
           handouts: [],
@@ -696,7 +735,7 @@ describe('state service', () => {
       expect(error).toBeInstanceOf(StateServiceError)
       expect((error as StateServiceError).statusCode).toBe(409)
       expect((error as StateServiceError).issues).toContain(
-        'scene-1 places reference proposals/places/torweg-harbour is reviewed, not promoted.',
+        'scene-1 items reference proposals/mathr-token is reviewed, not promoted.',
       )
     }
   })
