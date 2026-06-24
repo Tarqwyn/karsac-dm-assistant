@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://karsac.local/schemas/state/chapters/chapter-plan.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterFile"
+    },
+    {
+      "type": "object",
+      "required": [
+        "title",
+        "scenes",
+        "threads",
+        "checkpoints"
+      ],
+      "properties": {
+        "title": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/planScene"
+          }
+        },
+        "threads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/planThread"
+          }
+        },
+        "checkpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/planCheckpoint"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "planScene": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "kind",
+        "order",
+        "summary",
+        "beats",
+        "facts",
+        "handouts"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["opening", "middle", "climax", "interlude", "closing", "optional"]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "summary": {
+          "type": "string"
+        },
+        "artifactRef": {
+          "type": ["string", "null"]
+        },
+        "npcs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
+        "places": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
+        "beats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/planBeat"
+          }
+        },
+        "facts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/planFact"
+          }
+        },
+        "handouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/planHandout"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "planBeat": {
+      "type": "object",
+      "required": ["id", "label", "desc"],
+      "properties": {
+        "id": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "desc": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "planFact": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "desc": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "planHandout": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "label": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "desc": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "planThread": {
+      "type": "object",
+      "required": ["threadId", "hook"],
+      "properties": {
+        "threadId": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "hook": {
+          "type": "string"
+        },
+        "cueSceneIds": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "planCheckpoint": {
+      "type": "object",
+      "required": ["id", "index", "label", "sceneIds"],
+      "properties": {
+        "id": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "label": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+        },
+        "sceneIds": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
+        "pauseLabel": {
+          "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nullableString"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

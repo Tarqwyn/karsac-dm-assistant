@@ -45,9 +45,71 @@ The plan stores:
 - operational planning metadata
 - materialisation-ready chapter structure
 
-### 3. What remains open?
+### 3. `plan.json` schema — locked
 
-The exact `plan.json` schema and the exact rules for reviewed-but-unpromoted artifact inclusion remain task-level implementation decisions and should be specified before coding starts.
+`plan.json` conforms to the `chapterFile` envelope from `_shared.json` (fields: `id`, `type`, `campaign`, `chapterId`, `source`, `importStatus`). Fixed conventions for plan files: `type: "chapter-plan"`, `source: "authored"`, `importStatus: "live"`. The `id` is `<chapterId>-plan`.
+
+JSON Schema: `schemas/state/chapters/chapter-plan.json`
+
+Canonical example:
+
+```json
+{
+  "id": "chapter-3-plan",
+  "type": "chapter-plan",
+  "campaign": "karsac",
+  "chapterId": "chapter-3",
+  "source": "authored",
+  "importStatus": "live",
+  "title": "The Weight of Witness",
+  "updatedAt": "2026-06-24T10:00:00.000Z",
+  "notes": "",
+  "scenes": [
+    {
+      "id": "scene-1",
+      "label": "The Greyback's Departure",
+      "kind": "opening",
+      "order": 10,
+      "summary": "Establish the uneasy atmosphere of departure.",
+      "artifactRef": "proposals/scenes/greybacks-departure",
+      "npcs": ["proposals/npcs/brynja"],
+      "places": ["proposals/places/torweg-harbour"],
+      "beats": [{ "id": "beat-departure", "label": "Departure", "desc": "Players depart Törweg." }],
+      "facts": [{ "id": "fact-mathr-named", "label": "Mathr named", "desc": "The name Mathr surfaces." }],
+      "handouts": [{ "id": "handout-mathr-note", "label": "The Mathr Note", "desc": "A note naming Mathr." }]
+    }
+  ],
+  "threads": [
+    { "threadId": "thread-mathr", "hook": "Mathr's influence pervades the journey north.", "cueSceneIds": ["scene-1"] }
+  ],
+  "checkpoints": [
+    { "id": "cp-opening", "index": 0, "label": "Opening", "sceneIds": ["scene-1"] }
+  ]
+}
+```
+
+Reference fields (`artifactRef`, `npcs[]`, `places[]`) hold proposal IDs (e.g. `proposals/npcs/brynja`), not file paths. Resolved at materialisation time.
+
+`planBeat`, `planFact`, `planHandout` hold content only — no tracker status fields. Defaults (`completed: false`, `revealed: false`, `posted: false`, `knowledgeStatus: "available"`) are set by materialisation, not stored in the plan.
+
+`planCheckpoint` differs from `chapterCheckpoint`: it maps scene IDs to checkpoint groups (composition concern), whereas `chapterCheckpoint` in `progress.json` tracks completion state (tracker concern).
+
+### 4. Reviewed-but-unpromoted artifact inclusion — locked
+
+Any proposal ID may appear in `artifactRef`, `npcs[]`, or `places[]` regardless of the referenced proposal's current status. The API annotates each reference at read time with its current status (`promoted`, `reviewed`, `proposed`, `missing`). The UI surfaces this visually so the DM knows what still needs promoting.
+
+Materialisation validates that all non-null artifact references resolve to `status: promoted` and fails with a structured error listing unready refs. It does not partially materialise.
+
+### 5. REST shape — locked
+
+```
+GET    /api/v1/chapters/:id/plan          — read plan.json; 404 with scaffold hint if absent
+PUT    /api/v1/chapters/:id/plan          — full write (create or replace)
+PATCH  /api/v1/chapters/:id/plan          — partial update (scenes, threads, checkpoints, notes)
+POST   /api/v1/chapters/:id/materialise   — derive tracker-facing state from plan; errors if any ref not promoted
+```
+
+Namespace is `/api/v1/chapters/`, not `/api/v1/state/chapters/`. The plan is upstream of tracker state, not part of it. Existing state endpoints (`GET /api/v1/state/chapters/:id`) are unchanged.
 
 ---
 
