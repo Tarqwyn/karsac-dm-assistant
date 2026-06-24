@@ -1,11 +1,20 @@
 import type { IncomingMessage, ServerResponse } from 'http'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
 import fg from 'fast-glob'
-import { readFileSync, writeFileSync } from 'fs'
 import matter from 'gray-matter'
 import { PROJECT_ROOT, PROPOSALS_ROOT } from '../paths.js'
+import { getProposalFolder, getPromoteTarget } from '../proposals/proposalContractsLoader.js'
 import { promoteProposal } from '../proposals/proposalPromoter.js'
+import type { ProposalType } from '../proposals/proposalTypes.js'
 import { validateProposalFile } from '../proposals/proposalValidator.js'
+import { generateProposalFromPrompt } from './karsacRunner.js'
 import { readJsonBody, sendError, sendJson } from './httpUtils.js'
+
+const VALID_PROPOSAL_TYPES = new Set<string>([
+  'adversary', 'encounter', 'chapter-outline', 'session-outline',
+  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'state-update',
+])
 
 type ProposalReviewState = {
   reviewed: boolean
@@ -163,6 +172,93 @@ function toPromotePayload(value: unknown): ProposalPromotePayload | null {
   return candidate
 }
 
+type ProposalGeneratePayload = { type: ProposalType; prompt: string }
+type ProposalCreatePayload = { type: ProposalType; title: string; summary?: string }
+type ProposalUpdatePayload = {
+  title?: string
+  summary?: string
+  body?: string
+  related?: Record<string, string[]>
+}
+
+function toGeneratePayload(value: unknown): ProposalGeneratePayload | null {
+  if (!value || typeof value !== 'object') return null
+  const candidate = value as Record<string, unknown>
+  if (typeof candidate.type !== 'string' || !VALID_PROPOSAL_TYPES.has(candidate.type)) return null
+  if (typeof candidate.prompt !== 'string' || !candidate.prompt.trim()) return null
+  return { type: candidate.type as ProposalType, prompt: candidate.prompt.trim() }
+}
+
+function toCreatePayload(value: unknown): ProposalCreatePayload | null {
+  if (!value || typeof value !== 'object') return null
+  const candidate = value as Record<string, unknown>
+  if (typeof candidate.type !== 'string' || !VALID_PROPOSAL_TYPES.has(candidate.type)) return null
+  if (typeof candidate.title !== 'string' || !candidate.title.trim()) return null
+  const payload: ProposalCreatePayload = {
+    type: candidate.type as ProposalType,
+    title: candidate.title.trim(),
+  }
+  if (typeof candidate.summary === 'string') payload.summary = candidate.summary
+  return payload
+}
+
+function toUpdatePayload(value: unknown): ProposalUpdatePayload | null {
+  if (!value || typeof value !== 'object') return null
+  const candidate = value as Record<string, unknown>
+  const payload: ProposalUpdatePayload = {}
+  if (candidate.title !== undefined) {
+    if (typeof candidate.title !== 'string') return null
+    payload.title = candidate.title
+  }
+  if (candidate.summary !== undefined) {
+    if (typeof candidate.summary !== 'string') return null
+    payload.summary = candidate.summary
+  }
+  if (candidate.body !== undefined) {
+    if (typeof candidate.body !== 'string') return null
+    payload.body = candidate.body
+  }
+  if (candidate.related !== undefined) {
+    if (typeof candidate.related !== 'object' || candidate.related === null) return null
+    payload.related = candidate.related as Record<string, string[]>
+  }
+  return payload
+}
+
+function titleToSlug(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+function scaffoldProposal(payload: ProposalCreatePayload): { filePath: string } | { conflict: string } {
+  const folder = getProposalFolder(payload.type)
+  const slug = titleToSlug(payload.title)
+  const id = `proposals/${folder}/${slug}`
+  const dir = join(PROPOSALS_ROOT, folder)
+  const filePath = join(dir, `${slug}.proposed.md`)
+
+  if (existsSync(filePath)) {
+    return { conflict: `A proposal with slug '${slug}' already exists in ${folder}.` }
+  }
+
+  mkdirSync(dir, { recursive: true })
+
+  const frontmatter: Record<string, unknown> = {
+    id,
+    proposal_type: payload.type,
+    title: payload.title,
+    status: 'proposed',
+    canonical: 'provisional',
+    visibility: 'dm-only',
+    created_at: new Date().toISOString(),
+    promote_target: getPromoteTarget(payload.type) ?? '',
+    summary: payload.summary ?? '',
+  }
+
+  const body = `# ${payload.title}\n\n<!-- Add proposal content here. -->\n`
+  writeProposalFrontmatter(filePath, frontmatter, body)
+  return { filePath }
+}
+
 export async function handleProposalApiRequest(
   req: IncomingMessage,
   res: ServerResponse,
@@ -199,6 +295,43 @@ export async function handleProposalApiRequest(
       return true
     }
 
+    if (req.method === 'POST' && proposalId === 'generate' && !action) {
+      const payload = toGeneratePayload(await readJsonBody(req))
+      if (!payload) {
+        sendError(res, 400, 'Invalid generate payload. Expected { type, prompt }.', 'invalid_request_error')
+        return true
+      }
+      const generated = await generateProposalFromPrompt(payload.prompt, payload.type)
+      if (!generated.proposalPath) {
+        sendError(res, 500, 'Proposal generation did not produce an output file.', 'server_error')
+        return true
+      }
+      sendJson(res, 200, {
+        mode: readMode,
+        validationStatus: generated.validationStatus,
+        proposal: proposalDetailFrom(generated.proposalPath),
+      })
+      return true
+    }
+
+    if (req.method === 'POST' && !proposalId) {
+      const payload = toCreatePayload(await readJsonBody(req))
+      if (!payload) {
+        sendError(res, 400, 'Invalid create payload. Expected { type, title }.', 'invalid_request_error')
+        return true
+      }
+      const scaffold = scaffoldProposal(payload)
+      if ('conflict' in scaffold) {
+        sendError(res, 409, scaffold.conflict, 'conflict_error')
+        return true
+      }
+      sendJson(res, 201, {
+        mode: readMode,
+        proposal: proposalDetailFrom(scaffold.filePath),
+      })
+      return true
+    }
+
     const filePath = proposalPathForId(proposalId)
     if (!filePath) {
       sendError(res, 404, `Proposal not found: ${proposalId}`, 'not_found_error')
@@ -206,6 +339,30 @@ export async function handleProposalApiRequest(
     }
 
     if (req.method === 'GET' && proposalId && !action) {
+      sendJson(res, 200, {
+        mode: readMode,
+        proposal: proposalDetailFrom(filePath),
+      })
+      return true
+    }
+
+    if (req.method === 'PUT' && proposalId && !action) {
+      const { frontmatter, body } = readProposalBody(filePath)
+      if (String(frontmatter.status) === 'promoted') {
+        sendError(res, 409, 'Cannot update a promoted proposal.', 'invalid_request_error')
+        return true
+      }
+      const payload = toUpdatePayload(await readJsonBody(req))
+      if (!payload) {
+        sendError(res, 400, 'Invalid update payload.', 'invalid_request_error')
+        return true
+      }
+      const nextFrontmatter: Record<string, unknown> = { ...frontmatter }
+      if (payload.title !== undefined) nextFrontmatter.title = payload.title
+      if (payload.summary !== undefined) nextFrontmatter.summary = payload.summary
+      if (payload.related !== undefined) nextFrontmatter.related = payload.related
+      const nextBody = payload.body !== undefined ? payload.body : body
+      writeProposalFrontmatter(filePath, nextFrontmatter, nextBody)
       sendJson(res, 200, {
         mode: readMode,
         proposal: proposalDetailFrom(filePath),

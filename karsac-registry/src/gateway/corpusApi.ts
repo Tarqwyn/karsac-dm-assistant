@@ -74,7 +74,10 @@ export async function handleCorpusApiRequest(
 
   const url = new URL(req.url, 'http://localhost')
   const pathname = url.pathname
-  if (!pathname.startsWith('/v1/corpus/')) return false
+  const canonicalPath = pathname.startsWith('/api/v1/corpus/')
+    ? pathname.slice('/api'.length)
+    : pathname
+  if (!canonicalPath.startsWith('/v1/corpus/')) return false
 
   if (req.method !== 'GET') {
     sendError(res, 405, 'Method not allowed.', 'invalid_request_error')
@@ -92,8 +95,8 @@ export async function handleCorpusApiRequest(
     const aliases = loadJSON<AliasMap>('aliases.json')
     const corpus = filterEntityIndexByReadMode(entities, aliases, readMode)
 
-    if (pathname.startsWith('/v1/corpus/entities/')) {
-      const id = decodeURIComponent(pathname.slice('/v1/corpus/entities/'.length))
+    if (canonicalPath.startsWith('/v1/corpus/entities/')) {
+      const id = decodeURIComponent(canonicalPath.slice('/v1/corpus/entities/'.length))
       const entity = findEntityById(id, corpus.entities)
       if (!entity) {
         sendError(res, 404, `Corpus entity not found: ${id}`, 'not_found_error')

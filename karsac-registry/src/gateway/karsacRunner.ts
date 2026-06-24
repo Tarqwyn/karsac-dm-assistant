@@ -282,6 +282,20 @@ function parseValidationStatus(output: string): 'pass' | 'warning' | 'fail' | un
   return match?.[1]?.toLowerCase() as 'pass' | 'warning' | 'fail' | undefined
 }
 
+export async function generateProposalFromPrompt(
+  prompt: string,
+  type?: string,
+): Promise<{ proposalPath?: string; validationStatus?: 'pass' | 'warning' | 'fail'; stdout: string; stderr: string }> {
+  const args = ['--silent', 'run', 'karsac:propose', '--', ...(type ? ['--type', type] : []), prompt]
+  const result = await runNpmCommand(args)
+  return {
+    proposalPath: parseProposalPath(result.stderr),
+    validationStatus: parseValidationStatus(result.stderr),
+    stdout: result.stdout,
+    stderr: result.stderr,
+  }
+}
+
 function buildAskArgs(prompt: string, profile: Profile, modeOverride: string | null): string[] {
   const args = ['--silent', 'run', 'karsac:ask', '--', prompt, '--profile', profile]
   if (modeOverride) {

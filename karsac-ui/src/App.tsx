@@ -7,12 +7,14 @@ import type {
   ChapterHandout,
   ChapterScene,
   ChapterSummary,
+  ProposalType,
   ReadMode,
   WorldThread,
 } from '@karsac/shared'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   closeSession,
+  createProposal,
   fetchCampaignState,
   fetchChapterList,
   fetchChapterState,
@@ -21,6 +23,7 @@ import {
   fetchProposal,
   fetchProposals,
   fetchWorldThreads,
+  generateProposal,
   hideFact,
   markBeat,
   postHandout,
@@ -35,7 +38,9 @@ import {
   setThreadStatus,
   unmarkBeat,
   unpostHandout,
+  updateProposal,
 } from './api'
+import { ProposalForm } from './ProposalForm'
 
 const sections = [
   { id: 'corpus', label: 'Corpus', path: '/corpus' },
@@ -343,6 +348,11 @@ export default function App(): JSX.Element {
   const [selectedChapterId, setSelectedChapterId] = useState('')
   const [selectedChapterView, setSelectedChapterView] = useState<'overview' | 'facts' | 'handouts' | 'beats' | 'scenes'>('overview')
   const [chapterWorkspaceMode, setChapterWorkspaceMode] = useState<'state' | 'planning'>(() => (currentMode() === 'planning' ? 'planning' : 'state'))
+  const [proposalFormMode, setProposalFormMode] = useState<'view' | 'create' | 'edit'>('view')
+  const [proposalFormError, setProposalFormError] = useState('')
+  const [proposalTypeFilter, setProposalTypeFilter] = useState('all')
+  const [proposalStatusFilter, setProposalStatusFilter] = useState('all')
+  const [proposalValidationFilter, setProposalValidationFilter] = useState('all')
   const [proposalActionError, setProposalActionError] = useState('')
   const [proposalForceReady, setProposalForceReady] = useState(false)
   const [trackerActionError, setTrackerActionError] = useState('')
@@ -514,6 +524,49 @@ export default function App(): JSX.Element {
     },
   })
 
+  const generateMutation = useMutation({
+    mutationFn: ({ type, prompt }: { type: ProposalType; prompt: string }) => generateProposal({ type, prompt }, readMode),
+    onSuccess: (data) => {
+      setProposalFormMode('view')
+      setProposalFormError('')
+      setSelectedProposalId(data.proposal.id)
+      queryClient.invalidateQueries({ queryKey: ['proposals', readMode] })
+    },
+    onError: (error) => {
+      setProposalFormError(errorMessage(error, 'Failed to generate proposal.'))
+    },
+  })
+
+  const createMutation = useMutation({
+    mutationFn: ({ type, title, summary }: { type: ProposalType; title: string; summary: string }) =>
+      createProposal({ type, title, summary }, readMode),
+    onSuccess: (data) => {
+      setProposalFormMode('view')
+      setProposalFormError('')
+      setSelectedProposalId(data.proposal.id)
+      queryClient.invalidateQueries({ queryKey: ['proposals', readMode] })
+    },
+    onError: (error) => {
+      setProposalFormError(errorMessage(error, 'Failed to create proposal.'))
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ title, summary, body }: { title: string; summary: string; body: string }) =>
+      updateProposal(selectedProposalId, { title, summary, body }, readMode),
+    onSuccess: async () => {
+      setProposalFormMode('view')
+      setProposalFormError('')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['proposals', readMode] }),
+        queryClient.invalidateQueries({ queryKey: ['proposal-detail', readMode, selectedProposalId] }),
+      ])
+    },
+    onError: (error) => {
+      setProposalFormError(errorMessage(error, 'Failed to update proposal.'))
+    },
+  })
+
   const visibleEntities = corpusEntities.filter((entity) => {
     const q = query.trim().toLowerCase()
     const matchesQuery = !q
@@ -524,7 +577,11 @@ export default function App(): JSX.Element {
 
   const visibleProposals = proposals.filter((proposal) => {
     const q = proposalQuery.trim().toLowerCase()
-    return !q || [proposal.id, proposal.title, proposal.proposalType, proposal.status, proposal.summary].join(' ').toLowerCase().includes(q)
+    if (q && ![proposal.id, proposal.title, proposal.proposalType, proposal.status, proposal.summary].join(' ').toLowerCase().includes(q)) return false
+    if (proposalTypeFilter !== 'all' && proposal.proposalType !== proposalTypeFilter) return false
+    if (proposalStatusFilter !== 'all' && proposal.status !== proposalStatusFilter) return false
+    if (proposalValidationFilter !== 'all' && proposal.validation.status !== proposalValidationFilter) return false
+    return true
   })
 
   const corpusDetail = corpusDetailQuery.data?.entity || null
@@ -888,6 +945,30 @@ export default function App(): JSX.Element {
                   value={proposalQuery}
                   onChange={(event) => setProposalQuery(event.target.value)}
                 />
+                <select className="select" value={proposalTypeFilter} onChange={(e) => setProposalTypeFilter(e.target.value)}>
+                  <option value="all">All types</option>
+                  {['npc','place','item','scene','chapter-outline','adversary','encounter','handout','clue','session-outline','state-update'].map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                <select className="select" value={proposalStatusFilter} onChange={(e) => setProposalStatusFilter(e.target.value)}>
+                  <option value="all">All statuses</option>
+                  <option value="proposed">proposed</option>
+                  <option value="promoted">promoted</option>
+                  <option value="rejected">rejected</option>
+                </select>
+                <select className="select" value={proposalValidationFilter} onChange={(e) => setProposalValidationFilter(e.target.value)}>
+                  <option value="all">All validation</option>
+                  <option value="pass">pass</option>
+                  <option value="warning">warning</option>
+                  <option value="fail">fail</option>
+                </select>
+                <button
+                  className="nav-item"
+                  onClick={() => { setProposalFormMode('create'); setProposalFormError('') }}
+                >
+                  New proposal
+                </button>
               </div>
               <div className="proposal-grid">
                 <div className="proposal-list">
@@ -895,7 +976,7 @@ export default function App(): JSX.Element {
                     <button
                       key={proposal.id}
                       className={selectedProposalId === proposal.id ? 'proposal-card active' : 'proposal-card'}
-                      onClick={() => setSelectedProposalId(proposal.id)}
+                      onClick={() => { setSelectedProposalId(proposal.id); setProposalFormMode('view') }}
                     >
                       <div className="entity-card-top">
                         <strong>{proposal.title}</strong>
@@ -913,7 +994,25 @@ export default function App(): JSX.Element {
                   )}
                 </div>
                 <div className="entity-detail">
-                  {proposalDetail ? (
+                  {proposalFormMode === 'create' ? (
+                    <ProposalForm
+                      mode="create"
+                      isPending={createMutation.isPending || generateMutation.isPending}
+                      error={proposalFormError}
+                      onCancel={() => setProposalFormMode('view')}
+                      onCreate={(type, title, summary) => createMutation.mutate({ type, title, summary })}
+                      onGenerate={(type, prompt) => generateMutation.mutate({ type, prompt })}
+                    />
+                  ) : proposalFormMode === 'edit' && proposalDetail ? (
+                    <ProposalForm
+                      mode="edit"
+                      proposal={proposalDetail}
+                      isPending={updateMutation.isPending}
+                      error={proposalFormError}
+                      onCancel={() => setProposalFormMode('view')}
+                      onSave={(title, summary, body) => updateMutation.mutate({ title, summary, body })}
+                    />
+                  ) : proposalDetail ? (
                     <>
                       <div className="entity-detail-head">
                         <div>
@@ -939,6 +1038,14 @@ export default function App(): JSX.Element {
                         {proposalForceReady && (
                           <button className="nav-item" onClick={() => promoteMutation.mutate(true)} disabled={promoteMutation.isPending}>
                             Force promote
+                          </button>
+                        )}
+                        {proposalDetail.status !== 'promoted' && (
+                          <button
+                            className="nav-item"
+                            onClick={() => { setProposalFormMode('edit'); setProposalFormError('') }}
+                          >
+                            Edit
                           </button>
                         )}
                       </div>

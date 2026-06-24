@@ -1247,3 +1247,61 @@ h1 {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ---- Proposal authoring form ---- */
+.proposal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.proposal-form-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.proposal-form-head h4 {
+  margin: 0;
+}
+
+.proposal-form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.proposal-form-row label > span {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.proposal-form-row input,
+.proposal-form-row select,
+.proposal-form-row textarea {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg, var(--surface));
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.proposal-form-row textarea {
+  resize: vertical;
+  min-height: 240px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.85rem;
+}
+
+.proposal-form-actions {
+  display: flex;
+  gap: 8px;
+}

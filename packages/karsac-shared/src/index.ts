@@ -93,6 +93,34 @@ export interface ProposalPromotionResponse {
   proposal: ProposalDetail
 }
 
+export type ProposalType =
+  | 'adversary' | 'encounter' | 'chapter-outline' | 'session-outline'
+  | 'scene' | 'npc' | 'place' | 'item' | 'clue' | 'handout' | 'state-update'
+
+export interface ProposalCreateRequest {
+  type: ProposalType
+  title: string
+  summary?: string
+}
+
+export interface ProposalUpdateRequest {
+  title?: string
+  summary?: string
+  body?: string
+  related?: Record<string, string[]>
+}
+
+export interface ProposalGenerateRequest {
+  type: ProposalType
+  prompt: string
+}
+
+export interface ProposalGenerateResponse {
+  mode: ReadMode
+  validationStatus?: string
+  proposal: ProposalDetail
+}
+
 export interface CampaignClock {
   value: number
   max?: number

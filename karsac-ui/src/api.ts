@@ -6,9 +6,13 @@ import type {
   ClockMutationResult,
   CorpusEntitiesResponse,
   CorpusEntityResponse,
+  ProposalCreateRequest,
   ProposalDetailResponse,
+  ProposalGenerateRequest,
+  ProposalGenerateResponse,
   ProposalListResponse,
   ProposalPromotionResponse,
+  ProposalUpdateRequest,
   ReadMode,
   SessionClosePreviewResponse,
   SessionCloseResponse,
@@ -110,6 +114,27 @@ export function promoteProposal(
   return request(`/api/v1/proposals/${encodeURIComponent(id)}/promote?mode=${encodeURIComponent(mode)}`, {
     method: 'POST',
     body: JSON.stringify(payload),
+  })
+}
+
+export function generateProposal(data: ProposalGenerateRequest, mode: ReadMode): Promise<ProposalGenerateResponse> {
+  return request(`/api/v1/proposals/generate?mode=${encodeURIComponent(mode)}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function createProposal(data: ProposalCreateRequest, mode: ReadMode): Promise<ProposalDetailResponse> {
+  return request(`/api/v1/proposals?mode=${encodeURIComponent(mode)}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function updateProposal(id: string, data: ProposalUpdateRequest, mode: ReadMode): Promise<ProposalDetailResponse> {
+  return request(`/api/v1/proposals/${encodeURIComponent(id)}?mode=${encodeURIComponent(mode)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
   })
 }
 
