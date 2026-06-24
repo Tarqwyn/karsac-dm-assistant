@@ -94,3 +94,24 @@ If a piece of content needs to drive the tracker directly, it must exist in one 
 - corpus planning material derived from the schema
 
 Anything else is still transitional and should be treated as a backlog item.
+
+## Technical debt
+
+### Proposal type registry is not fully centralized
+
+Task 0003 removed duplicated proposal-type lists from the UI and proposal API, but the CLI still maintains a separate hardcoded allowlist in:
+
+- [karsac-registry/src/commands/propose.ts](/mnt/e/Wierd%20Projects/karsac-dm-assistant/karsac-registry/src/commands/propose.ts:208)
+
+Desired future change:
+
+- derive CLI proposal-type validation from the same canonical proposal type source used by the API and shared package
+
+Why it matters:
+
+- adding a new governed proposal type can still drift across surfaces
+- a type may become valid in the UI/API while failing in the CLI path
+
+Priority:
+
+- low, but worth fixing before the next expansion of supported proposal types
