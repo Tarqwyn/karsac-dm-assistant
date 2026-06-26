@@ -753,6 +753,39 @@ describe('state service', () => {
     }
   })
 
+  it('rejects triggers for plan threads that are absent from world thread state', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    try {
+      service.writeChapterPlan('chapter-3', {
+        title: 'Unknown world thread plan',
+        scenes: [
+          {
+            id: 'scene-1',
+            label: 'First',
+            kind: 'opening',
+            order: 10,
+            summary: '',
+            beats: [],
+            facts: [{ id: 'fact-mathr', label: 'Mathr named' }],
+            handouts: [],
+            triggers: [{ on: 'fact', id: 'fact-mathr', threadId: 'missing-world-thread', setStatus: 'hot' }],
+          },
+        ],
+        threads: [{ threadId: 'missing-world-thread', hook: '', cueSceneIds: [] }],
+        checkpoints: [],
+      })
+      throw new Error('Expected missing world thread plan to fail.')
+    } catch (error) {
+      expect(error).toBeInstanceOf(StateServiceError)
+      expect((error as StateServiceError).issues).toContain(
+        'scene-1 trigger fact:fact-mathr references unknown world thread "missing-world-thread".',
+      )
+    }
+  })
+
   it('rejects materialisation when the plan still references unpromoted artifacts', () => {
     const root = makeStateFixture()
     cleanupRoots.push(root)

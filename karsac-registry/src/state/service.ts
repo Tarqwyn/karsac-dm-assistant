@@ -711,11 +711,7 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
         ? worldThreads.threads.map((thread: { id?: string }) => thread.id).filter((id): id is string => Boolean(id))
         : [],
     )
-    const validStatuses = new Set(
-      worldThreads?.statusLabels && typeof worldThreads.statusLabels === 'object'
-        ? Object.keys(worldThreads.statusLabels)
-        : ['hot', 'simmering', 'dormant', 'closed', 'abandoned'],
-    )
+    const validStatuses = new Set(['hot', 'simmering', 'dormant', 'closed', 'abandoned'])
 
     for (const scene of plan.scenes) {
       const sceneItems = {
