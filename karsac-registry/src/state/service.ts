@@ -79,6 +79,13 @@ type ChapterPlanHandout = {
   desc?: string
 }
 
+type ChapterPlanTrigger = {
+  on: 'fact' | 'beat' | 'handout'
+  id: string
+  threadId: string
+  setStatus: 'hot' | 'simmering' | 'dormant' | 'closed' | 'abandoned'
+}
+
 type ChapterPlanScene = {
   id: string
   label: string
@@ -93,6 +100,7 @@ type ChapterPlanScene = {
   beats: ChapterPlanBeat[]
   facts: ChapterPlanFact[]
   handouts: ChapterPlanHandout[]
+  triggers: ChapterPlanTrigger[]
 }
 
 type ChapterPlanThread = {
@@ -579,6 +587,27 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
     }
   }
 
+  function normalizePlanTrigger(value: unknown, sceneIndex: number, triggerIndex: number): ChapterPlanTrigger {
+    const label = `scenes[${sceneIndex}].triggers[${triggerIndex}]`
+    if (!isObject(value)) {
+      throw new StateServiceError(400, `${label} must be an object.`, 'invalid_request_error')
+    }
+    const on = asString(value.on, `${label}.on`)
+    const setStatus = asString(value.setStatus, `${label}.setStatus`)
+    if (!['fact', 'beat', 'handout'].includes(on)) {
+      throw new StateServiceError(400, `${label}.on must be fact, beat, or handout.`, 'invalid_request_error')
+    }
+    if (!['hot', 'simmering', 'dormant', 'closed', 'abandoned'].includes(setStatus)) {
+      throw new StateServiceError(400, `${label}.setStatus must be a valid thread status.`, 'invalid_request_error')
+    }
+    return {
+      on: on as ChapterPlanTrigger['on'],
+      id: asString(value.id, `${label}.id`),
+      threadId: asString(value.threadId, `${label}.threadId`),
+      setStatus: setStatus as ChapterPlanTrigger['setStatus'],
+    }
+  }
+
   function normalizePlanScene(value: unknown, index: number): ChapterPlanScene {
     if (!isObject(value)) {
       throw new StateServiceError(400, `scenes[${index}] must be an object.`, 'invalid_request_error')
@@ -601,6 +630,9 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       beats: Array.isArray(value.beats) ? value.beats.map((entry, beatIndex) => normalizePlanBeat(entry, beatIndex)) : [],
       facts: Array.isArray(value.facts) ? value.facts.map((entry, factIndex) => normalizePlanFact(entry, factIndex)) : [],
       handouts: Array.isArray(value.handouts) ? value.handouts.map((entry, handoutIndex) => normalizePlanHandout(entry, handoutIndex)) : [],
+      triggers: Array.isArray(value.triggers)
+        ? value.triggers.map((entry, triggerIndex) => normalizePlanTrigger(entry, index, triggerIndex))
+        : [],
     }
   }
 
@@ -667,6 +699,60 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
     nextPlan.scenes = [...nextPlan.scenes].sort((a, b) => a.order - b.order)
     nextPlan.checkpoints = [...nextPlan.checkpoints].sort((a, b) => a.index - b.index)
     return nextPlan
+  }
+
+  function validateChapterPlan(plan: ChapterPlan): string[] {
+    const issues: string[] = []
+    const itemOwners = new Map<string, string>()
+    const planThreadIds = new Set(plan.threads.map((thread) => thread.threadId))
+    const worldThreads = readWorldThreads()
+    const worldThreadIds = new Set(
+      Array.isArray(worldThreads?.threads)
+        ? worldThreads.threads.map((thread: { id?: string }) => thread.id).filter((id): id is string => Boolean(id))
+        : [],
+    )
+    const validStatuses = new Set(
+      worldThreads?.statusLabels && typeof worldThreads.statusLabels === 'object'
+        ? Object.keys(worldThreads.statusLabels)
+        : ['hot', 'simmering', 'dormant', 'closed', 'abandoned'],
+    )
+
+    for (const scene of plan.scenes) {
+      const sceneItems = {
+        beat: new Set(scene.beats.map((item) => item.id)),
+        fact: new Set(scene.facts.map((item) => item.id)),
+        handout: new Set(scene.handouts.map((item) => item.id)),
+      }
+
+      for (const [kind, items] of [
+        ['beat', scene.beats],
+        ['fact', scene.facts],
+        ['handout', scene.handouts],
+      ] as const) {
+        for (const item of items) {
+          const owner = itemOwners.get(item.id)
+          if (owner) issues.push(`Chapter item id "${item.id}" is duplicated in ${owner} and ${scene.id} ${kind}.`)
+          else itemOwners.set(item.id, `${scene.id} ${kind}`)
+        }
+      }
+
+      for (const trigger of scene.triggers) {
+        if (!sceneItems[trigger.on].has(trigger.id)) {
+          issues.push(`${scene.id} trigger ${trigger.on}:${trigger.id} must reference a ${trigger.on} in the same segment.`)
+        }
+        if (!planThreadIds.has(trigger.threadId)) {
+          issues.push(`${scene.id} trigger ${trigger.on}:${trigger.id} references thread "${trigger.threadId}" outside plan.threads.`)
+        }
+        if (!worldThreadIds.has(trigger.threadId)) {
+          issues.push(`${scene.id} trigger ${trigger.on}:${trigger.id} references unknown world thread "${trigger.threadId}".`)
+        }
+        if (!validStatuses.has(trigger.setStatus)) {
+          issues.push(`${scene.id} trigger ${trigger.on}:${trigger.id} uses invalid thread status "${trigger.setStatus}".`)
+        }
+      }
+    }
+
+    return issues
   }
 
   function resolveProposalsRoot(): string {
@@ -757,6 +843,10 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
 
   function writeChapterPlan(chapterId: string, plan: unknown): ChapterPlanReadResult {
     const normalized = normalizeChapterPlan(chapterId, plan)
+    const issues = validateChapterPlan(normalized)
+    if (issues.length > 0) {
+      throw new StateServiceError(400, `Chapter plan validation failed for ${chapterId}.`, 'validation_error', issues)
+    }
     writeJsonAtomic(chapterFilePath(stateRoot, chapterId, 'plan'), normalized)
     appendLog(logPath, {
       ts: new Date().toISOString(),
@@ -776,6 +866,10 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       ? normalizeChapterPlan(chapterId, readJsonFile(chapterFilePath(stateRoot, chapterId, 'plan')))
       : createPlanScaffold(chapterId)
     const normalized = normalizeChapterPlan(chapterId, patch, current)
+    const issues = validateChapterPlan(normalized)
+    if (issues.length > 0) {
+      throw new StateServiceError(400, `Chapter plan validation failed for ${chapterId}.`, 'validation_error', issues)
+    }
     writeJsonAtomic(chapterFilePath(stateRoot, chapterId, 'plan'), normalized)
     appendLog(logPath, {
       ts: new Date().toISOString(),
@@ -793,7 +887,7 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
   function materializeChapterPlan(chapterId: string): ChapterPlanMaterializeResult {
     const { plan, referenceStatuses } = readChapterPlan(chapterId)
     const referenceLookup = new Map(referenceStatuses.map((entry) => [entry.proposalId, entry]))
-    const issues: string[] = []
+    const issues = validateChapterPlan(plan)
 
     for (const scene of plan.scenes) {
       const refs = [
@@ -813,7 +907,7 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
     }
 
     if (issues.length > 0) {
-      throw new StateServiceError(409, `Cannot materialise ${chapterId} until all referenced artifacts are promoted.`, 'validation_error', issues)
+      throw new StateServiceError(409, `Cannot materialise ${chapterId} until the plan is valid and all references are promoted.`, 'validation_error', issues)
     }
 
     const sceneLookup = new Map(plan.scenes.map((scene) => [scene.id, scene]))
@@ -984,7 +1078,7 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       chapterId,
       source: 'chapter-plan',
       importStatus: 'live',
-      triggers: [],
+      triggers: plan.scenes.flatMap((scene) => scene.triggers),
     }
 
     const files: Array<[ChapterFileKey, unknown]> = [

@@ -643,6 +643,7 @@ describe('state service', () => {
           beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
           facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
           handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
+          triggers: [{ on: 'fact', id: 'fact-mathr', threadId: 'mathr-arithmetic', setStatus: 'hot' }],
         },
       ],
       threads: [{ threadId: 'mathr-arithmetic', hook: 'Mathr pressure builds.', cueSceneIds: ['scene-1'] }],
@@ -684,6 +685,7 @@ describe('state service', () => {
           beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
           facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
           handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
+          triggers: [{ on: 'fact', id: 'fact-mathr', threadId: 'mathr-arithmetic', setStatus: 'hot' }],
         },
       ],
       threads: [{ threadId: 'mathr-arithmetic', hook: 'Mathr pressure builds.', cueSceneIds: ['scene-1'] }],
@@ -698,6 +700,57 @@ describe('state service', () => {
     expect(result.bundle.progress?.currentCheckpoint?.id).toBe('cp-opening')
     expect(result.writtenFiles).toContain('corpus/state/chapters/chapter-3/facts.json')
     expect(result.bundle.scenes?.scenes[0]?.notesMd).toContain('Adversaries: `proposals/ledger-keeper`')
+    expect(result.bundle.triggers?.triggers).toEqual([
+      { on: 'fact', id: 'fact-mathr', threadId: 'mathr-arithmetic', setStatus: 'hot' },
+    ])
+
+    const revealResult = service.revealFact('chapter-3', 'fact-mathr')
+    expect(revealResult.worldThreads.threads.find((thread: { id: string }) => thread.id === 'mathr-arithmetic')?.currentStatus).toBe('hot')
+  })
+
+  it('rejects duplicate item ids and triggers that do not target the same segment', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    try {
+      service.writeChapterPlan('chapter-3', {
+        title: 'Invalid trigger plan',
+        scenes: [
+          {
+            id: 'scene-1',
+            label: 'First',
+            kind: 'opening',
+            order: 10,
+            summary: '',
+            beats: [],
+            facts: [{ id: 'shared-id', label: 'First fact' }],
+            handouts: [],
+            triggers: [{ on: 'fact', id: 'other-fact', threadId: 'mathr-arithmetic', setStatus: 'hot' }],
+          },
+          {
+            id: 'scene-2',
+            label: 'Second',
+            kind: 'middle',
+            order: 20,
+            summary: '',
+            beats: [],
+            facts: [{ id: 'shared-id', label: 'Second fact' }, { id: 'other-fact', label: 'Other fact' }],
+            handouts: [],
+            triggers: [],
+          },
+        ],
+        threads: [{ threadId: 'mathr-arithmetic', hook: '', cueSceneIds: [] }],
+        checkpoints: [],
+      })
+      throw new Error('Expected invalid trigger plan to fail.')
+    } catch (error) {
+      expect(error).toBeInstanceOf(StateServiceError)
+      expect((error as StateServiceError).issues).toEqual(expect.arrayContaining([
+        expect.stringContaining('Chapter item id "shared-id" is duplicated'),
+        'scene-1 trigger fact:other-fact must reference a fact in the same segment.',
+      ]))
+    }
   })
 
   it('rejects materialisation when the plan still references unpromoted artifacts', () => {

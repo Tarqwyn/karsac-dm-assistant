@@ -7,11 +7,16 @@ import type {
   ChapterPlanFact,
   ChapterPlanHandout,
   ChapterPlanScene,
+  ChapterPlanTrigger,
   ProposalSummary,
+  ThreadStatus,
   WorldThread,
 } from '@karsac/shared'
 
 type WorkspaceError = Error & { scaffold?: Record<string, unknown>; statusCode?: number }
+type TriggerEvent = ChapterPlanTrigger['on']
+
+const THREAD_STATUSES: ThreadStatus[] = ['dormant', 'simmering', 'hot', 'closed', 'abandoned']
 
 type Props = {
   chapterId: string
@@ -225,6 +230,7 @@ export function ChapterCompositionWorkspace({
         beats: [],
         facts: [],
         handouts: [],
+        triggers: [],
       })
       return current
     })
@@ -290,6 +296,12 @@ export function ChapterCompositionWorkspace({
     if (!selectedScene) return
     updateScene(selectedScene.id, (scene) => {
       scene[key] = scene[key].map((item) => (item.id === itemId ? { ...item, ...patch } : item)) as ChapterPlanScene[typeof key]
+      if (typeof patch.id === 'string' && patch.id !== itemId) {
+        const eventType: TriggerEvent = key === 'beats' ? 'beat' : key === 'facts' ? 'fact' : 'handout'
+        scene.triggers = (scene.triggers ?? []).map((trigger) => (
+          trigger.on === eventType && trigger.id === itemId ? { ...trigger, id: patch.id as string } : trigger
+        ))
+      }
     })
   }
 
@@ -297,6 +309,58 @@ export function ChapterCompositionWorkspace({
     if (!selectedScene) return
     updateScene(selectedScene.id, (scene) => {
       scene[key] = scene[key].filter((item) => item.id !== itemId) as ChapterPlanScene[typeof key]
+      const eventType: TriggerEvent = key === 'beats' ? 'beat' : key === 'facts' ? 'fact' : 'handout'
+      scene.triggers = (scene.triggers ?? []).filter((trigger) => !(trigger.on === eventType && trigger.id === itemId))
+    })
+  }
+
+  function triggerTargets(scene: ChapterPlanScene, on: TriggerEvent): Array<{ id: string; label: string }> {
+    if (on === 'beat') return scene.beats
+    if (on === 'fact') return scene.facts
+    return scene.handouts
+  }
+
+  function addTrigger(): void {
+    if (!selectedScene || !plan.threads.length) return
+    const firstTarget = selectedScene.beats[0]
+      ? { on: 'beat' as const, id: selectedScene.beats[0].id }
+      : selectedScene.facts[0]
+        ? { on: 'fact' as const, id: selectedScene.facts[0].id }
+        : selectedScene.handouts[0]
+          ? { on: 'handout' as const, id: selectedScene.handouts[0].id }
+          : null
+    if (!firstTarget) return
+    updateScene(selectedScene.id, (scene) => {
+      scene.triggers = [
+        ...(scene.triggers ?? []),
+        {
+          ...firstTarget,
+          threadId: plan.threads[0].threadId,
+          setStatus: 'simmering',
+        },
+      ]
+    })
+  }
+
+  function updateTrigger(index: number, patch: Partial<ChapterPlanTrigger>): void {
+    if (!selectedScene) return
+    updateScene(selectedScene.id, (scene) => {
+      scene.triggers = scene.triggers ?? []
+      const current = scene.triggers[index]
+      if (!current) return
+      const next = { ...current, ...patch }
+      if (patch.on && patch.on !== current.on) {
+        next.id = triggerTargets(scene, patch.on)[0]?.id || ''
+      }
+      scene.triggers[index] = next
+    })
+  }
+
+  function removeTrigger(index: number): void {
+    if (!selectedScene) return
+    updateScene(selectedScene.id, (scene) => {
+      scene.triggers = scene.triggers ?? []
+      scene.triggers.splice(index, 1)
     })
   }
 
@@ -779,6 +843,73 @@ export function ChapterCompositionWorkspace({
                       ))}
                     </div>
                   </div>
+
+                  <div className="composition-join-section">
+                    <div className="chapter-drill-head">
+                      <h4>Thread triggers</h4>
+                      <button
+                        className="chapter-mini-btn"
+                        onClick={addTrigger}
+                        disabled={!plan.threads.length || !(selectedScene.beats.length || selectedScene.facts.length || selectedScene.handouts.length)}
+                      >
+                        Add trigger
+                      </button>
+                    </div>
+                    {!plan.threads.length ? (
+                      <div className="chapter-scene-meta">Add a chapter thread before creating triggers.</div>
+                    ) : !(selectedScene.beats.length || selectedScene.facts.length || selectedScene.handouts.length) ? (
+                      <div className="chapter-scene-meta">Add a beat, fact, or handout to this segment before creating triggers.</div>
+                    ) : null}
+                    <div className="chapter-lane">
+                      {(selectedScene.triggers ?? []).map((trigger, index) => {
+                        const targets = triggerTargets(selectedScene, trigger.on)
+                        return (
+                          <div key={`${trigger.on}-${trigger.id}-${trigger.threadId}-${index}`} className="chapter-drill-card">
+                            <div className="chapter-draft-grid">
+                              <label className="chapter-draft-field">
+                                <span>When</span>
+                                <select
+                                  value={trigger.on}
+                                  onChange={(event) => updateTrigger(index, { on: event.target.value as TriggerEvent })}
+                                >
+                                  {selectedScene.facts.length ? <option value="fact">Fact revealed</option> : null}
+                                  {selectedScene.beats.length ? <option value="beat">Beat completed</option> : null}
+                                  {selectedScene.handouts.length ? <option value="handout">Handout posted</option> : null}
+                                </select>
+                              </label>
+                              <label className="chapter-draft-field">
+                                <span>Target</span>
+                                <select value={trigger.id} onChange={(event) => updateTrigger(index, { id: event.target.value })}>
+                                  {targets.map((target) => (
+                                    <option key={target.id} value={target.id}>{target.label} · {target.id}</option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className="chapter-draft-field">
+                                <span>Thread</span>
+                                <select value={trigger.threadId} onChange={(event) => updateTrigger(index, { threadId: event.target.value })}>
+                                  {plan.threads.map((thread) => {
+                                    const worldThread = worldThreads.find((candidate) => candidate.id === thread.threadId)
+                                    return <option key={thread.threadId} value={thread.threadId}>{worldThread?.name || thread.threadId}</option>
+                                  })}
+                                </select>
+                              </label>
+                              <label className="chapter-draft-field">
+                                <span>Set status</span>
+                                <select
+                                  value={trigger.setStatus}
+                                  onChange={(event) => updateTrigger(index, { setStatus: event.target.value as ThreadStatus })}
+                                >
+                                  {THREAD_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                                </select>
+                              </label>
+                            </div>
+                            <button className="chapter-mini-btn" onClick={() => removeTrigger(index)}>Remove</button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="placeholder-card">Select or add a scene to edit joins and chapter-local assembly data.</div>
@@ -798,7 +929,13 @@ export function ChapterCompositionWorkspace({
                           <select
                             value={thread.threadId}
                             onChange={(event) => updatePlan((current) => {
+                              const previousThreadId = current.threads[index].threadId
                               current.threads[index].threadId = event.target.value
+                              current.scenes.forEach((scene) => {
+                                scene.triggers = (scene.triggers ?? []).map((trigger) => (
+                                  trigger.threadId === previousThreadId ? { ...trigger, threadId: event.target.value } : trigger
+                                ))
+                              })
                               return current
                             })}
                           >
@@ -840,7 +977,11 @@ export function ChapterCompositionWorkspace({
                         })}
                       </div>
                       <button className="chapter-mini-btn" onClick={() => updatePlan((current) => {
+                        const removedThreadId = current.threads[index].threadId
                         current.threads.splice(index, 1)
+                        current.scenes.forEach((scene) => {
+                          scene.triggers = (scene.triggers ?? []).filter((trigger) => trigger.threadId !== removedThreadId)
+                        })
                         return current
                       })}>
                         Remove

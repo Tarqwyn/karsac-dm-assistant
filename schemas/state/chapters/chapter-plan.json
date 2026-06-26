@@ -121,6 +121,12 @@
           "items": {
             "$ref": "#/$defs/planHandout"
           }
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterTrigger"
+          }
         }
       },
       "additionalProperties": false

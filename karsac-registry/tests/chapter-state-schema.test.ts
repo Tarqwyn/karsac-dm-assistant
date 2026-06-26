@@ -39,6 +39,41 @@ function getValidator(schemaPath: string) {
 }
 
 describe('chapter state schemas', () => {
+  it('validates scene-level trigger authoring in a chapter plan', () => {
+    const validate = getValidator(join(SCHEMAS_ROOT, 'chapters', 'chapter-plan.json'));
+    const payload = {
+      id: 'chapter-3-plan',
+      type: 'chapter-plan',
+      campaign: 'karsac',
+      chapterId: 'chapter-3',
+      source: 'authored',
+      importStatus: 'live',
+      title: 'The Weight of Witness',
+      scenes: [
+        {
+          id: 'scene-1',
+          label: 'Opening',
+          kind: 'opening',
+          order: 10,
+          summary: 'Open the chapter.',
+          artifactRef: null,
+          npcs: [],
+          places: [],
+          adversaries: [],
+          items: [],
+          beats: [],
+          facts: [{ id: 'fact-mathr', label: 'Mathr named' }],
+          handouts: [],
+          triggers: [{ on: 'fact', id: 'fact-mathr', threadId: 'mathr-arithmetic', setStatus: 'hot' }],
+        },
+      ],
+      threads: [{ threadId: 'mathr-arithmetic', hook: 'Pressure rises.', cueSceneIds: ['scene-1'] }],
+      checkpoints: [],
+    };
+
+    expect(validate(payload)).toBe(true);
+  });
+
   it('validates a chapter facts document with reveal semantics', () => {
     const validate = getValidator(join(SCHEMAS_ROOT, 'chapters', 'chapter-facts.json'));
     const payload = {

@@ -91,6 +91,7 @@ Extend the chapter plan schema to store trigger conditions as structured chapter
 
 Acceptance criteria:
 - The plan schema can represent trigger rules for fact, beat, and handout events
+- Trigger rules live on `planScene.triggers[]`, not a global `plan.triggers[]`
 - Trigger rules remain distinct from tracker runtime state
 - The schema stays machine-readable and stable
 
@@ -120,6 +121,7 @@ Derive `chapter-triggers.json` from the plan.
 
 Acceptance criteria:
 - Materialisation writes trigger records into the tracker-facing state
+- Materialisation flattens scene-level trigger rules into `chapter-triggers.json`
 - The tracker can consume the materialised triggers without any manual repair
 - Materialisation fails clearly if trigger rules are invalid or incomplete
 

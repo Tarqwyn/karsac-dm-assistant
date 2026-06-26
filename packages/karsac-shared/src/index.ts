@@ -234,6 +234,16 @@ export interface ChapterPlanHandout {
   desc?: string
 }
 
+export type ChapterPlanTriggerEvent = 'fact' | 'beat' | 'handout'
+export type ThreadStatus = 'hot' | 'simmering' | 'dormant' | 'closed' | 'abandoned'
+
+export interface ChapterPlanTrigger {
+  on: ChapterPlanTriggerEvent
+  id: string
+  threadId: string
+  setStatus: ThreadStatus
+}
+
 export interface ChapterPlanScene {
   id: string
   label: string
@@ -248,6 +258,7 @@ export interface ChapterPlanScene {
   beats: ChapterPlanBeat[]
   facts: ChapterPlanFact[]
   handouts: ChapterPlanHandout[]
+  triggers: ChapterPlanTrigger[]
 }
 
 export interface ChapterPlanThread {
