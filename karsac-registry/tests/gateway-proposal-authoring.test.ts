@@ -89,6 +89,120 @@ describe('gateway proposal authoring api', () => {
       })
       expect(res.status).toBe(400)
     })
+
+    it('scaffolds faction proposals', async () => {
+      const res = await fetch(`${baseUrl}/api/v1/proposals?mode=live`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ type: 'faction', title: 'Ash Ledger Circle', summary: 'A test faction.' }),
+      })
+      expect(res.status).toBe(201)
+      const { proposal } = await res.json() as { proposal: { id: string; proposalType: string; promoteTarget: string } }
+      expect(proposal.id).toBe('proposals/factions/ash-ledger-circle')
+      expect(proposal.proposalType).toBe('faction')
+      expect(proposal.promoteTarget).toBe('corpus/planning/factions')
+    })
+
+    it('accepts contextual creation metadata and returns the retry-safe return path', async () => {
+      const res = await fetch(`${baseUrl}/api/v1/proposals?mode=live`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'npc',
+          title: 'Contextual Warden',
+          summary: 'A test NPC created from a segment gap.',
+          context: {
+            chapterId: 'chapter-3',
+            segmentId: 'scene-4',
+            relationship: 'npcs',
+            parentProposalId: 'proposals/scenes/the-market-inspection',
+            returnTo: '/chapters?chapter=chapter-3&segment=scene-4&relationship=npcs',
+          },
+        }),
+      })
+      expect(res.status).toBe(201)
+      const payload = await res.json() as {
+        returnTo: string
+        proposal: { id: string; frontmatter: { related: Record<string, string[]> } }
+      }
+      expect(payload.returnTo).toBe('/chapters?chapter=chapter-3&segment=scene-4&relationship=npcs')
+      expect(payload.proposal.id).toBe('proposals/npcs/contextual-warden')
+      expect(payload.proposal.frontmatter.related.scenes).toEqual(['proposals/scenes/the-market-inspection'])
+    })
+
+    it('returns 422 for unknown contextual relationship slots', async () => {
+      const res = await fetch(`${baseUrl}/api/v1/proposals?mode=live`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'npc',
+          title: 'Bad Context Warden',
+          context: {
+            chapterId: 'chapter-3',
+            segmentId: 'scene-4',
+            relationship: 'unknownSlot',
+          },
+        }),
+      })
+      expect(res.status).toBe(422)
+      const payload = await res.json() as { error: { issues: string[] } }
+      expect(payload.error.issues).toContain('Unknown relationship slot "unknownSlot".')
+    })
+  })
+
+  // ---- GET /api/v1/proposals/resolve ----
+
+  describe('GET /api/v1/proposals/resolve', () => {
+    beforeAll(() => {
+      mkdirSync(resolve(root, 'corpus/proposals/npcs'), { recursive: true })
+      mkdirSync(resolve(root, 'corpus/proposals/places'), { recursive: true })
+      mkdirSync(resolve(root, 'corpus/planning/scenes'), { recursive: true })
+
+      writeFileSync(
+        resolve(root, 'corpus/proposals/npcs/resolver-warden.proposed.md'),
+        `---\nid: proposals/npcs/resolver-warden\nproposal_type: npc\ntitle: Resolver Warden\nstatus: proposed\ncanonical: provisional\nvisibility: dm-only\ncreated_at: '2026-06-22T00:00:00.000Z'\npromote_target: corpus/planning/npcs\nsummary: A resolver test NPC.\nvalidation:\n  status: pass\n  issues: []\n---\n\n# Resolver Warden\n`,
+        'utf-8',
+      )
+      writeFileSync(
+        resolve(root, 'corpus/planning/scenes/resolved-market.md'),
+        `---\nid: proposals/scenes/resolved-market\nproposal_type: scene\ntitle: Resolved Market\nstatus: promoted\nsummary: A promoted planning scene.\n---\n\n# Resolved Market\n`,
+        'utf-8',
+      )
+      writeFileSync(
+        resolve(root, 'corpus/proposals/npcs/shared-name.proposed.md'),
+        `---\nid: proposals/npcs/shared-name\nproposal_type: npc\ntitle: Shared Name\nstatus: proposed\ncanonical: provisional\nvisibility: dm-only\ncreated_at: '2026-06-22T00:00:00.000Z'\npromote_target: corpus/planning/npcs\nsummary: Ambiguous NPC.\nvalidation:\n  status: pass\n  issues: []\n---\n\n# Shared Name\n`,
+        'utf-8',
+      )
+      writeFileSync(
+        resolve(root, 'corpus/proposals/places/shared-name.proposed.md'),
+        `---\nid: proposals/places/shared-name\nproposal_type: place\ntitle: Shared Name\nstatus: proposed\ncanonical: provisional\nvisibility: dm-only\ncreated_at: '2026-06-22T00:00:00.000Z'\npromote_target: corpus/planning/places\nsummary: Ambiguous place.\nvalidation:\n  status: pass\n  issues: []\n---\n\n# Shared Name\n`,
+        'utf-8',
+      )
+    })
+
+    it('resolves exact ids, namespaced ids, promoted planning entities, missing ids, and ambiguous aliases', async () => {
+      const ids = [
+        'proposals/npcs/resolver-warden',
+        'npcs/resolver-warden',
+        'scenes/resolved-market',
+        'missing-subject',
+        'shared-name',
+      ].map(encodeURIComponent).join(',')
+      const res = await fetch(`${baseUrl}/api/v1/proposals/resolve?ids=${ids}`, { headers: authHeaders })
+      expect(res.status).toBe(200)
+      const payload = await res.json() as {
+        items: Array<{ id: string; state: string; proposalType?: string; matches?: Array<{ id: string }> }>
+      }
+      expect(payload.items[0]).toMatchObject({ id: 'proposals/npcs/resolver-warden', state: 'proposal', proposalType: 'npc' })
+      expect(payload.items[1]).toMatchObject({ id: 'proposals/npcs/resolver-warden', state: 'proposal', proposalType: 'npc' })
+      expect(payload.items[2]).toMatchObject({ id: 'proposals/scenes/resolved-market', state: 'promoted', proposalType: 'scene' })
+      expect(payload.items[3]).toEqual({ id: 'missing-subject', state: 'missing' })
+      expect(payload.items[4].state).toBe('ambiguous')
+      expect(payload.items[4].matches?.map((match) => match.id).sort()).toEqual([
+        'proposals/npcs/shared-name',
+        'proposals/places/shared-name',
+      ])
+    })
   })
 
   // ---- PUT /api/v1/proposals/:id (update) ----
@@ -246,6 +360,46 @@ describe('gateway proposal authoring api', () => {
       expect(payload.proposal.id).toBe('proposals/npcs/generated-merchant')
       expect(payload.proposal.proposalType).toBe('npc')
       expect(payload.validationStatus).toBe('pass')
+    })
+
+    it('passes bounded context into AI-assisted generation', async () => {
+      const { generateProposalFromPrompt } = await import('../src/gateway/karsacRunner.js')
+      const proposalPath = resolve(root, 'corpus/proposals/npcs/generated-context-warden.proposed.md')
+      mkdirSync(resolve(root, 'corpus/proposals/npcs'), { recursive: true })
+      writeFileSync(
+        proposalPath,
+        `---\nid: proposals/npcs/generated-context-warden\nproposal_type: npc\ntitle: Generated Context Warden\nstatus: proposed\ncanonical: provisional\nvisibility: dm-only\ncreated_at: '2026-06-22T00:00:00.000Z'\npromote_target: corpus/planning/npcs\nsummary: A generated contextual NPC.\nvalidation:\n  status: pass\n  issues: []\n---\n\n# Generated Context Warden\n`,
+        'utf-8',
+      )
+      vi.mocked(generateProposalFromPrompt).mockResolvedValueOnce({
+        proposalPath,
+        validationStatus: 'pass',
+        stdout: '',
+        stderr: '',
+      })
+
+      const res = await fetch(`${baseUrl}/api/v1/proposals/generate?mode=live`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'npc',
+          prompt: 'a watch captain',
+          context: {
+            chapterId: 'chapter-3',
+            segmentId: 'scene-4',
+            relationship: 'npcs',
+            parentProposalId: 'proposals/scenes/the-market-inspection',
+            returnTo: '/chapters?chapter=chapter-3&segment=scene-4&relationship=npcs',
+          },
+        }),
+      })
+      expect(res.status).toBe(200)
+      const payload = await res.json() as { returnTo?: string }
+      expect(payload.returnTo).toBe('/chapters?chapter=chapter-3&segment=scene-4&relationship=npcs')
+      const calls = vi.mocked(generateProposalFromPrompt).mock.calls
+      const prompt = calls[calls.length - 1]?.[0]
+      expect(prompt).toContain('originating chapter: chapter-3')
+      expect(prompt).toContain('parent artifact: proposals/scenes/the-market-inspection')
     })
 
     it('returns 500 when subprocess produces no output file', async () => {

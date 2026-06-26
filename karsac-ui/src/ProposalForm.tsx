@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PROPOSAL_TYPES } from '@karsac/shared'
 import type { ProposalDetail, ProposalType } from '@karsac/shared'
 
@@ -9,6 +9,8 @@ interface CreateProps {
   onGenerate: (type: ProposalType, prompt: string) => void
   isPending: boolean
   error: string
+  initialType?: ProposalType
+  contextBanner?: string
 }
 
 interface EditProps {
@@ -29,10 +31,13 @@ function initialRelated(proposal: ProposalDetail): string {
 
 export function ProposalForm(props: ProposalFormProps) {
   const isEdit = props.mode === 'edit'
+  const initialType = !isEdit ? (props as CreateProps).initialType : undefined
 
   const [authMethod, setAuthMethod] = useState<'manual' | 'ai'>('manual')
   const [proposalType, setProposalType] = useState<ProposalType>(
-    isEdit ? (props as EditProps).proposal.proposalType as ProposalType : 'npc',
+    isEdit
+      ? (props as EditProps).proposal.proposalType as ProposalType
+      : (initialType ?? 'npc'),
   )
   const [title, setTitle] = useState(isEdit ? (props as EditProps).proposal.title : '')
   const [summary, setSummary] = useState(isEdit ? (props as EditProps).proposal.summary : '')
@@ -40,6 +45,12 @@ export function ProposalForm(props: ProposalFormProps) {
   const [related, setRelated] = useState(isEdit ? initialRelated((props as EditProps).proposal) : '')
   const [prompt, setPrompt] = useState('')
   const [parseError, setParseError] = useState('')
+
+  useEffect(() => {
+    if (initialType) {
+      setProposalType(initialType)
+    }
+  }, [initialType])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -74,6 +85,10 @@ export function ProposalForm(props: ProposalFormProps) {
           Cancel
         </button>
       </div>
+
+      {!isEdit && (props as CreateProps).contextBanner && (
+        <div className="placeholder-card">{(props as CreateProps).contextBanner}</div>
+      )}
 
       {(props.error || parseError) && (
         <div className="error-card">{parseError || props.error}</div>

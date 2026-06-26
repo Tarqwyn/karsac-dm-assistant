@@ -14,6 +14,7 @@ import type {
   ProposalGenerateResponse,
   ProposalListResponse,
   ProposalPromotionResponse,
+  ProposalResolveResponse,
   ProposalUpdateRequest,
   ReadMode,
   SessionClosePreviewResponse,
@@ -159,6 +160,10 @@ export function createProposal(data: ProposalCreateRequest, mode: ReadMode): Pro
     method: 'POST',
     body: JSON.stringify(data),
   })
+}
+
+export function resolveProposals(ids: string[]): Promise<ProposalResolveResponse> {
+  return request(`/api/v1/proposals/resolve?ids=${ids.map(encodeURIComponent).join(',')}`)
 }
 
 export function updateProposal(id: string, data: ProposalUpdateRequest, mode: ReadMode): Promise<ProposalDetailResponse> {

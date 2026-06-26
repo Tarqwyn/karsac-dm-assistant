@@ -404,6 +404,51 @@ promote_target: corpus/planning/items
 # Mathr Token
 `, 'utf8')
 
+  mkdirSync(join(root, 'proposals', 'clues'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'clues', 'hidden-ledger.proposed.md'), `---
+id: proposals/clues/hidden-ledger
+proposal_type: clue
+title: Hidden Ledger
+status: promoted
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/clues
+---
+
+# Hidden Ledger
+`, 'utf8')
+
+  mkdirSync(join(root, 'proposals', 'handouts'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'handouts', 'mathr-note.proposed.md'), `---
+id: proposals/handouts/mathr-note
+proposal_type: handout
+title: Mathr Note
+status: promoted
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/handouts
+---
+
+# Mathr Note
+`, 'utf8')
+
+  mkdirSync(join(root, 'proposals', 'factions'), { recursive: true })
+  writeFileSync(join(root, 'proposals', 'factions', 'mathr-cell.proposed.md'), `---
+id: proposals/factions/mathr-cell
+proposal_type: faction
+title: Mathr Cell
+status: proposed
+canonical: provisional
+visibility: dm-only
+review_status: approved
+promote_target: corpus/planning/factions
+---
+
+# Mathr Cell
+`, 'utf8')
+
   return root
 }
 
@@ -640,6 +685,9 @@ describe('state service', () => {
           places: ['proposals/places/torweg-harbour'],
           adversaries: ['proposals/ledger-keeper'],
           items: ['proposals/mathr-token'],
+          clueRefs: ['proposals/clues/hidden-ledger'],
+          handoutRefs: ['proposals/handouts/mathr-note'],
+          factionRefs: ['proposals/factions/mathr-cell'],
           beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
           facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
           handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
@@ -660,6 +708,9 @@ describe('state service', () => {
       expect.objectContaining({ proposalId: 'proposals/places/torweg-harbour', status: 'reviewed' }),
       expect.objectContaining({ proposalId: 'proposals/ledger-keeper', status: 'promoted' }),
       expect.objectContaining({ proposalId: 'proposals/mathr-token', status: 'reviewed' }),
+      expect.objectContaining({ proposalId: 'proposals/clues/hidden-ledger', status: 'promoted' }),
+      expect.objectContaining({ proposalId: 'proposals/handouts/mathr-note', status: 'promoted' }),
+      expect.objectContaining({ proposalId: 'proposals/factions/mathr-cell', status: 'reviewed' }),
     ]))
   })
 
@@ -682,6 +733,9 @@ describe('state service', () => {
           places: [],
           adversaries: ['proposals/ledger-keeper'],
           items: [],
+          clueRefs: ['proposals/clues/hidden-ledger'],
+          handoutRefs: ['proposals/handouts/mathr-note'],
+          factionRefs: [],
           beats: [{ id: 'beat-departure', label: 'Departure', desc: 'The ship leaves.' }],
           facts: [{ id: 'fact-mathr', label: 'Mathr named', desc: 'The name Mathr appears.' }],
           handouts: [{ id: 'handout-note', label: 'Mathr Note', desc: 'A folded note.' }],
@@ -700,6 +754,8 @@ describe('state service', () => {
     expect(result.bundle.progress?.currentCheckpoint?.id).toBe('cp-opening')
     expect(result.writtenFiles).toContain('corpus/state/chapters/chapter-3/facts.json')
     expect(result.bundle.scenes?.scenes[0]?.notesMd).toContain('Adversaries: `proposals/ledger-keeper`')
+    expect(result.bundle.scenes?.scenes[0]?.notesMd).toContain('Clue refs: `proposals/clues/hidden-ledger`')
+    expect(result.bundle.scenes?.scenes[0]?.notesMd).toContain('Handout refs: `proposals/handouts/mathr-note`')
     expect(result.bundle.triggers?.triggers).toEqual([
       { on: 'fact', id: 'fact-mathr', threadId: 'mathr-arithmetic', setStatus: 'hot' },
     ])
@@ -805,6 +861,9 @@ describe('state service', () => {
           places: [],
           adversaries: [],
           items: ['proposals/mathr-token'],
+          clueRefs: ['proposals/clues/hidden-ledger'],
+          handoutRefs: ['proposals/handouts/mathr-note'],
+          factionRefs: ['proposals/factions/mathr-cell'],
           beats: [],
           facts: [],
           handouts: [],
@@ -822,6 +881,9 @@ describe('state service', () => {
       expect((error as StateServiceError).statusCode).toBe(409)
       expect((error as StateServiceError).issues).toContain(
         'scene-1 items reference proposals/mathr-token is reviewed, not promoted.',
+      )
+      expect((error as StateServiceError).issues).toContain(
+        'scene-1 factionRefs reference proposals/factions/mathr-cell is reviewed, not promoted.',
       )
     }
   })

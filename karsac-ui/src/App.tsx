@@ -1,6 +1,6 @@
 import { createElement, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { PROPOSAL_TYPES } from '@karsac/shared'
+import { CHAPTER_SCENE_RELATIONSHIPS, PROPOSAL_TYPES } from '@karsac/shared'
 import type {
   ChapterBeat,
   ChapterBundle,
@@ -13,7 +13,7 @@ import type {
   ReadMode,
   WorldThread,
 } from '@karsac/shared'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   closeSession,
   createProposal,
@@ -344,6 +344,7 @@ function errorWithIssues(value: unknown): string {
 export default function App(): JSX.Element {
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const activeSection = sectionFromPath(location.pathname)
   const [readMode, setReadMode] = useState<ReadMode>(() => currentMode())
@@ -385,9 +386,37 @@ export default function App(): JSX.Element {
     }
   }, [location.pathname, navigate])
 
+  const contextRelationship = searchParams.get('relationship') ?? ''
+  const contextualProposalType = useMemo((): ProposalType | undefined => {
+    if (!contextRelationship) return undefined
+    const rel = CHAPTER_SCENE_RELATIONSHIPS.find((r) => r.relatedKey === contextRelationship)
+    if (!rel) return undefined
+    return PROPOSAL_TYPES.includes(rel.proposalType as ProposalType) ? rel.proposalType as ProposalType : undefined
+  }, [contextRelationship])
+
+  const contextBanner = useMemo(() => {
+    const chapter = searchParams.get('chapter')
+    const segment = searchParams.get('segment')
+    if (!chapter || !contextRelationship) return undefined
+    return `Creating ${contextualProposalType ?? contextRelationship} for ${segment ? `segment ${segment} in ` : ''}chapter ${chapter}. After saving, you'll be returned to the chapter to attach this proposal.`
+  }, [searchParams, contextRelationship, contextualProposalType])
+
   useEffect(() => {
     window.localStorage.setItem(READ_MODE_STORAGE_KEY, readMode)
   }, [readMode])
+
+  useEffect(() => {
+    if (activeSection === 'proposals' && contextRelationship) {
+      setProposalFormMode('create')
+      setProposalFormError('')
+    }
+  }, [activeSection, contextRelationship])
+
+  useEffect(() => {
+    if (activeSection === 'chapters' && searchParams.get('createdProposal')) {
+      setChapterWorkspaceMode('planning')
+    }
+  }, [activeSection, searchParams])
 
   const subtitle = useMemo(() => {
     if (activeSection === 'corpus') {
@@ -472,14 +501,16 @@ export default function App(): JSX.Element {
 
   useEffect(() => {
     if (activeSection !== 'chapters' && activeSection !== 'tracker') return
+    const chapterParam = searchParams.get('chapter')
     const currentChapter = chapters.find((chapter) => chapter.current)?.id
     const fallback = currentChapter || chapters[0]?.id || ''
     setSelectedChapterId((current) => {
       if (!fallback) return ''
       const ids = chapters.map((chapter) => chapter.id)
+      if (chapterParam && ids.includes(chapterParam)) return chapterParam
       return ids.includes(current) ? current : fallback
     })
-  }, [activeSection, chapters])
+  }, [activeSection, chapters, searchParams])
 
   useEffect(() => {
     if (activeSection !== 'chapters') return
@@ -546,13 +577,35 @@ export default function App(): JSX.Element {
     },
   })
 
+  function proposalContextFromUrl() {
+    const chapter = searchParams.get('chapter') ?? undefined
+    const segment = searchParams.get('segment') ?? undefined
+    const relationship = searchParams.get('relationship') ?? undefined
+    const parent = searchParams.get('parent') ?? undefined
+    if (!chapter) return undefined
+    const returnTo = `/chapters?chapter=${encodeURIComponent(chapter)}&segment=${encodeURIComponent(segment ?? '')}&relationship=${encodeURIComponent(relationship ?? '')}&parent=${encodeURIComponent(parent ?? '')}`
+    return {
+      chapterId: chapter,
+      segmentId: segment,
+      relationship,
+      parentProposalId: parent,
+      returnTo,
+    }
+  }
+
   const generateMutation = useMutation({
-    mutationFn: ({ type, prompt }: { type: ProposalType; prompt: string }) => generateProposal({ type, prompt }, readMode),
+    mutationFn: ({ type, prompt }: { type: ProposalType; prompt: string }) => {
+      const context = proposalContextFromUrl()
+      return generateProposal({ type, prompt, context }, readMode)
+    },
     onSuccess: (data) => {
       setProposalFormMode('view')
       setProposalFormError('')
       setSelectedProposalId(data.proposal.id)
-      queryClient.invalidateQueries({ queryKey: ['proposals', readMode] })
+      void queryClient.invalidateQueries({ queryKey: ['proposals', readMode] })
+      if (data.returnTo) {
+        void navigate(`${data.returnTo}&createdProposal=${encodeURIComponent(data.proposal.id)}`)
+      }
     },
     onError: (error) => {
       setProposalFormError(errorMessage(error, 'Failed to generate proposal.'))
@@ -560,13 +613,18 @@ export default function App(): JSX.Element {
   })
 
   const createMutation = useMutation({
-    mutationFn: ({ type, title, summary }: { type: ProposalType; title: string; summary: string }) =>
-      createProposal({ type, title, summary }, readMode),
+    mutationFn: ({ type, title, summary }: { type: ProposalType; title: string; summary: string }) => {
+      const context = proposalContextFromUrl()
+      return createProposal({ type, title, summary, context }, readMode)
+    },
     onSuccess: (data) => {
       setProposalFormMode('view')
       setProposalFormError('')
       setSelectedProposalId(data.proposal.id)
-      queryClient.invalidateQueries({ queryKey: ['proposals', readMode] })
+      void queryClient.invalidateQueries({ queryKey: ['proposals', readMode] })
+      if (data.returnTo) {
+        void navigate(`${data.returnTo}&createdProposal=${encodeURIComponent(data.proposal.id)}`)
+      }
     },
     onError: (error) => {
       setProposalFormError(errorMessage(error, 'Failed to create proposal.'))
@@ -1049,6 +1107,8 @@ export default function App(): JSX.Element {
                       mode="create"
                       isPending={createMutation.isPending || generateMutation.isPending}
                       error={proposalFormError}
+                      initialType={contextualProposalType}
+                      contextBanner={contextBanner}
                       onCancel={() => setProposalFormMode('view')}
                       onCreate={(type, title, summary) => createMutation.mutate({ type, title, summary })}
                       onGenerate={(type, prompt) => generateMutation.mutate({ type, prompt })}

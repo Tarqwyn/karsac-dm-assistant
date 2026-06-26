@@ -1071,6 +1071,18 @@ h1 {
   margin-top: 6px;
 }
 
+.composition-attach-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
 .composition-validation-callout {
   padding: 10px 12px;
   border: 1px solid #f0b65d;
@@ -1087,6 +1099,14 @@ h1 {
 .composition-validation-callout p,
 .composition-validation-callout ul {
   margin: 8px 0 0;
+}
+
+.composition-unresolved-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .proposal-promoted {

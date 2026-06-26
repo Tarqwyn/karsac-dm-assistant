@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type {
   ChapterBundle,
   ChapterPlan,
@@ -8,10 +9,13 @@ import type {
   ChapterPlanHandout,
   ChapterPlanScene,
   ChapterPlanTrigger,
+  ProposalResolveItem,
   ProposalSummary,
   ThreadStatus,
   WorldThread,
 } from '@karsac/shared'
+import { CHAPTER_SCENE_RELATIONSHIPS } from '@karsac/shared'
+import { resolveProposals } from './api'
 
 type WorkspaceError = Error & { scaffold?: Record<string, unknown>; statusCode?: number }
 type TriggerEvent = ChapterPlanTrigger['on']
@@ -73,20 +77,12 @@ function proposalValidationClass(status: string): string {
 }
 
 function proposalSlug(value: string): string {
-  return value.split('/').filter(Boolean).at(-1) || value
+  const parts = value.split('/').filter(Boolean)
+  return parts[parts.length - 1] || value
 }
 
-function relatedProposalIds(
-  source: ProposalSummary | undefined,
-  relation: string,
-  proposalType: string,
-  proposals: ProposalSummary[],
-): string[] {
-  const relatedSlugs = new Set((source?.related?.[relation] ?? []).map(proposalSlug))
-  if (!relatedSlugs.size) return []
-  return proposals
-    .filter((proposal) => proposal.proposalType === proposalType && relatedSlugs.has(proposalSlug(proposal.id)))
-    .map((proposal) => proposal.id)
+function relationshipForSlot(slot: string): typeof CHAPTER_SCENE_RELATIONSHIPS[number] | undefined {
+  return CHAPTER_SCENE_RELATIONSHIPS.find((r) => r.relatedKey === slot || r.planField === slot)
 }
 
 function clonePlan<T>(value: T): T {
@@ -131,13 +127,24 @@ export function ChapterCompositionWorkspace({
   onSave,
   onMaterialize,
 }: Props): JSX.Element {
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlSegment = searchParams.get('segment') ?? ''
+  const urlRelationship = searchParams.get('relationship') ?? ''
+  const urlCreatedProposal = searchParams.get('createdProposal') ?? ''
+  const urlParent = searchParams.get('parent') ?? ''
+
   const [plan, setPlan] = useState<ChapterPlan>(() => createPlanScaffold(chapterId))
   const [selectedSceneId, setSelectedSceneId] = useState('')
+  const [resolvedRelations, setResolvedRelations] = useState<ProposalResolveItem[]>([])
 
   useEffect(() => {
     if (chapterPlanData?.plan) {
       setPlan(chapterPlanData.plan)
-      setSelectedSceneId((current) => current || chapterPlanData.plan.scenes[0]?.id || '')
+      setSelectedSceneId((current) => {
+        if (urlSegment && chapterPlanData.plan.scenes.some((s) => s.id === urlSegment)) return urlSegment
+        return current || chapterPlanData.plan.scenes[0]?.id || ''
+      })
       return
     }
     if ((chapterPlanError as WorkspaceError | null)?.statusCode === 404) {
@@ -148,7 +155,7 @@ export function ChapterCompositionWorkspace({
     }
     setPlan(createPlanScaffold(chapterId))
     setSelectedSceneId('')
-  }, [chapterId, chapterPlanData, chapterPlanError])
+  }, [chapterId, chapterPlanData, chapterPlanError, urlSegment])
 
   const proposalMap = useMemo(() => new Map(proposals.map((proposal) => [proposal.id, proposal])), [proposals])
   const sceneProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'scene'), [proposals])
@@ -157,6 +164,9 @@ export function ChapterCompositionWorkspace({
   const placeProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'place'), [proposals])
   const adversaryProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'adversary'), [proposals])
   const itemProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'item'), [proposals])
+  const clueProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'clue'), [proposals])
+  const handoutRefProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'handout'), [proposals])
+  const factionProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'faction'), [proposals])
   const assignedArtifactIds = useMemo(
     () => new Set(plan.scenes.flatMap((scene) => scene.artifactRef ? [scene.artifactRef] : [])),
     [plan.scenes],
@@ -171,21 +181,58 @@ export function ChapterCompositionWorkspace({
   )
   const selectedScene = plan.scenes.find((scene) => scene.id === selectedSceneId) || plan.scenes[0] || null
   const selectedArtifact = selectedScene?.artifactRef ? proposalMap.get(selectedScene.artifactRef) : undefined
-  const unresolvedArtifactRelations = useMemo(() => {
+
+  const artifactRelatedIds = useMemo(() => {
     if (!selectedArtifact) return []
-    const relationTypes = [
-      ['npcs', 'npc'],
-      ['places', 'place'],
-      ['adversaries', 'adversary'],
-      ['items', 'item'],
-    ] as const
-    return relationTypes.flatMap(([relation, proposalType]) => {
-      const resolved = new Set(relatedProposalIds(selectedArtifact, relation, proposalType, proposals).map(proposalSlug))
-      return (selectedArtifact.related?.[relation] ?? [])
-        .filter((value) => !resolved.has(proposalSlug(value)))
-        .map((value) => `${relation}: ${value}`)
+    return CHAPTER_SCENE_RELATIONSHIPS.flatMap((rel) => selectedArtifact.related?.[rel.relatedKey] ?? [])
+  }, [selectedArtifact])
+
+  useEffect(() => {
+    if (!artifactRelatedIds.length) {
+      setResolvedRelations([])
+      return
+    }
+    let cancelled = false
+    resolveProposals(artifactRelatedIds).then((result) => {
+      if (!cancelled) setResolvedRelations(result.items)
+    }).catch(() => { /* resolver failure is non-fatal */ })
+    return () => { cancelled = true }
+  }, [artifactRelatedIds])
+
+  const unresolvedArtifactRelations = useMemo(() => {
+    if (!selectedArtifact || !selectedScene) return []
+    return CHAPTER_SCENE_RELATIONSHIPS.flatMap((rel) => {
+      const related = selectedArtifact.related?.[rel.relatedKey] ?? []
+      if (!related.length) return []
+      const sceneField = selectedScene[rel.planField]
+      const attached = new Set(Array.isArray(sceneField) ? (sceneField as string[]) : [])
+      return related
+        .filter((rawId) => {
+          const resolved = resolvedRelations.find((item) => {
+            const slug = proposalSlug(rawId)
+            return item.id === rawId || item.id.endsWith(`/${slug}`)
+          })
+          if (!resolved || resolved.state === 'missing' || resolved.state === 'ambiguous') return true
+          return !attached.has(resolved.id)
+        })
+        .map((rawId) => {
+          const resolved = resolvedRelations.find((item) => {
+            const slug = proposalSlug(rawId)
+            return item.id === rawId || item.id.endsWith(`/${slug}`)
+          })
+          return {
+            slot: rel.relatedKey,
+            planField: rel.planField,
+            rawId,
+            resolvedId: resolved && (resolved.state === 'proposal' || resolved.state === 'promoted') ? resolved.id : rawId,
+            title: resolved?.title ?? rawId,
+            proposalType: rel.proposalType,
+            state: resolved?.state ?? 'missing',
+          }
+        })
     })
-  }, [proposals, selectedArtifact])
+  }, [resolvedRelations, selectedArtifact, selectedScene])
+
   const unresolvedRefs = useMemo(() => {
     const refs = plan.scenes.flatMap((scene) => [
       scene.artifactRef,
@@ -193,9 +240,23 @@ export function ChapterCompositionWorkspace({
       ...(scene.places ?? []),
       ...(scene.adversaries ?? []),
       ...(scene.items ?? []),
+      ...(scene.clueRefs ?? []),
+      ...(scene.handoutRefs ?? []),
+      ...(scene.factionRefs ?? []),
     ].filter((value): value is string => Boolean(value)))
     return refs.filter((proposalId) => proposalRefStatus(proposalMap.get(proposalId)) !== 'promoted')
   }, [plan.scenes, proposalMap])
+
+  const pendingAttach = useMemo(() => {
+    if (!urlCreatedProposal || !urlRelationship || !urlSegment) return null
+    const rel = relationshipForSlot(urlRelationship)
+    if (!rel) return null
+    const scene = plan.scenes.find((s) => s.id === urlSegment)
+    if (!scene) return null
+    const current = scene[rel.planField]
+    if (Array.isArray(current) && (current as string[]).includes(urlCreatedProposal)) return null
+    return { proposalId: urlCreatedProposal, planField: rel.planField, sceneId: urlSegment, label: rel.label }
+  }, [urlCreatedProposal, urlRelationship, urlSegment, plan.scenes])
 
   function updatePlan(mutator: (current: ChapterPlan) => ChapterPlan): void {
     setPlan((current) => mutator(clonePlan(current)))
@@ -209,24 +270,40 @@ export function ChapterCompositionWorkspace({
     })
   }
 
-  function addSegment(proposal?: ProposalSummary): void {
+  async function resolveRelatedIds(proposal: ProposalSummary | undefined, relation: typeof CHAPTER_SCENE_RELATIONSHIPS[number]): Promise<string[]> {
+    const rawIds = proposal?.related?.[relation.relatedKey] ?? []
+    if (!rawIds.length) return []
+    try {
+      const result = await resolveProposals(rawIds)
+      return result.items
+        .filter((item) => (item.state === 'proposal' || item.state === 'promoted') && item.proposalType === relation.proposalType)
+        .map((item) => item.id)
+    } catch {
+      return []
+    }
+  }
+
+  async function addSegment(proposal?: ProposalSummary): Promise<void> {
     const sceneId = nextSceneId(plan.scenes)
-    const relatedNpcs = relatedProposalIds(proposal, 'npcs', 'npc', proposals)
-    const relatedPlaces = relatedProposalIds(proposal, 'places', 'place', proposals)
-    const relatedAdversaries = relatedProposalIds(proposal, 'adversaries', 'adversary', proposals)
-    const relatedItems = relatedProposalIds(proposal, 'items', 'item', proposals)
+    const relatedEntries = await Promise.all(
+      CHAPTER_SCENE_RELATIONSHIPS.map(async (relation) => [relation.planField, await resolveRelatedIds(proposal, relation)] as const),
+    )
+    const related = Object.fromEntries(relatedEntries) as Record<string, string[]>
     updatePlan((current) => {
       current.scenes.push({
         id: sceneId,
         label: proposal?.title || `Segment ${current.scenes.length + 1}`,
         kind: current.scenes.length === 0 ? 'opening' : 'middle',
-        order: (current.scenes.at(-1)?.order ?? 0) + 10,
+        order: (current.scenes[current.scenes.length - 1]?.order ?? 0) + 10,
         summary: proposal?.summary || '',
         artifactRef: proposal?.id || null,
-        npcs: relatedNpcs,
-        places: relatedPlaces,
-        adversaries: relatedAdversaries,
-        items: relatedItems,
+        npcs: related.npcs ?? [],
+        places: related.places ?? [],
+        adversaries: related.adversaries ?? [],
+        items: related.items ?? [],
+        clueRefs: related.clueRefs ?? [],
+        handoutRefs: related.handoutRefs ?? [],
+        factionRefs: related.factionRefs ?? [],
         beats: [],
         facts: [],
         handouts: [],
@@ -235,6 +312,35 @@ export function ChapterCompositionWorkspace({
       return current
     })
     setSelectedSceneId(sceneId)
+  }
+
+  async function attachPendingProposal(): Promise<void> {
+    if (!pendingAttach) return
+    const updated = clonePlan(plan)
+    const scene = updated.scenes.find((s) => s.id === pendingAttach.sceneId)
+    if (!scene) return
+    const current = (scene[pendingAttach.planField] as string[] | undefined) ?? []
+    if (!current.includes(pendingAttach.proposalId)) {
+      ;(scene as Record<string, unknown>)[pendingAttach.planField as string] = [...current, pendingAttach.proposalId]
+    }
+    await onSave(updated)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('createdProposal')
+      next.delete('relationship')
+      next.delete('parent')
+      return next
+    }, { replace: true })
+  }
+
+  function attachRelationshipToSelected(planField: keyof ChapterPlanScene, proposalId: string): void {
+    if (!selectedScene) return
+    updateScene(selectedScene.id, (scene) => {
+      const current = (scene[planField] as string[] | undefined) ?? []
+      if (!current.includes(proposalId)) {
+        ;(scene as Record<string, unknown>)[planField as string] = [...current, proposalId]
+      }
+    })
   }
 
   function removeScene(sceneId: string): void {
@@ -418,6 +524,26 @@ export function ChapterCompositionWorkspace({
         </div>
       )}
 
+      {pendingAttach && (
+        <div className="composition-attach-banner">
+          <span>
+            Ready to attach <strong>{pendingAttach.proposalId}</strong> to {pendingAttach.label} in segment <strong>{pendingAttach.sceneId}</strong>.
+          </span>
+          <button className="chapter-mini-btn" disabled={busy} onClick={() => void attachPendingProposal()}>
+            Attach
+          </button>
+          <button className="chapter-mini-btn" onClick={() => setSearchParams((prev) => {
+            const next = new URLSearchParams(prev)
+            next.delete('createdProposal')
+            next.delete('relationship')
+            next.delete('parent')
+            return next
+          }, { replace: true })}>
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {chapterPlanLoading ? (
         <div className="placeholder-card">Loading chapter plan…</div>
       ) : (
@@ -457,7 +583,7 @@ export function ChapterCompositionWorkspace({
               <div className="content-block markdown-block">
                 <div className="chapter-drill-head">
                   <h4>Chapter Segments</h4>
-                  <button className="chapter-mini-btn" onClick={() => addSegment()}>Add blank segment</button>
+                  <button className="chapter-mini-btn" onClick={() => void addSegment()}>Add blank segment</button>
                 </div>
                   <div className="chapter-lane">
                     {plan.scenes.length ? plan.scenes.map((scene, index) => (
@@ -506,7 +632,7 @@ export function ChapterCompositionWorkspace({
                           <span className={proposalValidationClass(proposal.validation.status)}>
                             {proposal.validation.status}{proposal.validation.issues.length ? ` · ${proposal.validation.issues.length}` : ''}
                           </span>
-                          <button className="chapter-mini-btn" onClick={() => addSegment(proposal)}>Add as segment</button>
+                          <button className="chapter-mini-btn" onClick={() => void addSegment(proposal)}>Add as segment</button>
                         </div>
                       </div>
                     )) : <div className="chapter-scene-meta">All scene proposals are assigned.</div>}
@@ -524,7 +650,7 @@ export function ChapterCompositionWorkspace({
                           <span className={proposalValidationClass(proposal.validation.status)}>
                             {proposal.validation.status}{proposal.validation.issues.length ? ` · ${proposal.validation.issues.length}` : ''}
                           </span>
-                          <button className="chapter-mini-btn" onClick={() => addSegment(proposal)}>Add as segment</button>
+                          <button className="chapter-mini-btn" onClick={() => void addSegment(proposal)}>Add as segment</button>
                         </div>
                       </div>
                     )) : <div className="chapter-scene-meta">All encounter proposals are assigned.</div>}
@@ -666,10 +792,39 @@ export function ChapterCompositionWorkspace({
 
                   {unresolvedArtifactRelations.length ? (
                     <div className="composition-validation-callout">
-                      <strong>Related content without a matching proposal</strong>
-                      <p>These relationships were not attached automatically. Create or link proposals if they belong in this segment.</p>
+                      <strong>Related content without a proposal in this segment</strong>
+                      <p>These relationships exist on the artifact but are not yet attached to this segment. Create or select a proposal to fill each slot.</p>
                       <ul>
-                        {unresolvedArtifactRelations.map((relation) => <li key={relation}>{relation}</li>)}
+                        {unresolvedArtifactRelations.map((rel) => (
+                          <li key={`${rel.slot}:${rel.rawId}`} className="composition-unresolved-item">
+                            <span className="entity-id">{rel.slot}: {rel.title} · {rel.state}</span>
+                            {rel.state === 'ambiguous' ? (
+                              <span className="status-chip proposal-reviewed">ambiguous match</span>
+                            ) : rel.state === 'proposal' || rel.state === 'promoted' ? (
+                              <button
+                                className="chapter-mini-btn"
+                                onClick={() => attachRelationshipToSelected(rel.planField, rel.resolvedId)}
+                              >
+                                Attach
+                              </button>
+                            ) : (
+                              <button
+                                className="chapter-mini-btn"
+                                onClick={() => {
+                                  const params = new URLSearchParams({
+                                    chapter: chapterId,
+                                    segment: selectedScene?.id ?? '',
+                                    relationship: rel.slot,
+                                    parent: selectedArtifact?.id ?? '',
+                                  })
+                                  void navigate(`/proposals?${params.toString()}`)
+                                }}
+                              >
+                                Propose
+                              </button>
+                            )}
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   ) : null}
@@ -755,6 +910,72 @@ export function ChapterCompositionWorkspace({
                               </button>
                             )
                           })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="chapter-scene-meta">Clues</div>
+                        <div className="composition-toggle-list">
+                          {clueProposals.map((proposal) => {
+                            const active = (selectedScene.clueRefs ?? []).includes(proposal.id)
+                            return (
+                              <button
+                                key={proposal.id}
+                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
+                                onClick={() => updateScene(selectedScene.id, (scene) => {
+                                  scene.clueRefs = active
+                                    ? (scene.clueRefs ?? []).filter((id) => id !== proposal.id)
+                                    : [...(scene.clueRefs ?? []), proposal.id]
+                                })}
+                              >
+                                {proposal.title}
+                              </button>
+                            )
+                          })}
+                          {!clueProposals.length && <div className="chapter-scene-meta">No clue proposals available.</div>}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="chapter-scene-meta">Handout Refs</div>
+                        <div className="composition-toggle-list">
+                          {handoutRefProposals.map((proposal) => {
+                            const active = (selectedScene.handoutRefs ?? []).includes(proposal.id)
+                            return (
+                              <button
+                                key={proposal.id}
+                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
+                                onClick={() => updateScene(selectedScene.id, (scene) => {
+                                  scene.handoutRefs = active
+                                    ? (scene.handoutRefs ?? []).filter((id) => id !== proposal.id)
+                                    : [...(scene.handoutRefs ?? []), proposal.id]
+                                })}
+                              >
+                                {proposal.title}
+                              </button>
+                            )
+                          })}
+                          {!handoutRefProposals.length && <div className="chapter-scene-meta">No handout proposals available.</div>}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="chapter-scene-meta">Factions</div>
+                        <div className="composition-toggle-list">
+                          {factionProposals.map((proposal) => {
+                            const active = (selectedScene.factionRefs ?? []).includes(proposal.id)
+                            return (
+                              <button
+                                key={proposal.id}
+                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
+                                onClick={() => updateScene(selectedScene.id, (scene) => {
+                                  scene.factionRefs = active
+                                    ? (scene.factionRefs ?? []).filter((id) => id !== proposal.id)
+                                    : [...(scene.factionRefs ?? []), proposal.id]
+                                })}
+                              >
+                                {proposal.title}
+                              </button>
+                            )
+                          })}
+                          {!factionProposals.length && <div className="chapter-scene-meta">No faction proposals available.</div>}
                         </div>
                       </div>
                     </div>

@@ -127,6 +127,24 @@
           "items": {
             "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/chapterTrigger"
           }
+        },
+        "clueRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
+        "handoutRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
+        "factionRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
         }
       },
       "additionalProperties": false

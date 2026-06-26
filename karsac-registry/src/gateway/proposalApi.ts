@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import fg from 'fast-glob'
 import matter from 'gray-matter'
-import { PROJECT_ROOT, PROPOSALS_ROOT } from '../paths.js'
+import { PLANNING_ROOT, PROJECT_ROOT, PROPOSALS_ROOT } from '../paths.js'
 import { getProposalFolder, getPromoteTarget } from '../proposals/proposalContractsLoader.js'
 import { promoteProposal } from '../proposals/proposalPromoter.js'
 import { PROPOSAL_TYPE_VALUES } from '../proposals/proposalTypes.js'
@@ -13,6 +13,18 @@ import { generateProposalFromPrompt } from './karsacRunner.js'
 import { readJsonBody, sendError, sendJson } from './httpUtils.js'
 
 const VALID_PROPOSAL_TYPES = new Set<string>(PROPOSAL_TYPE_VALUES)
+const VALID_CONTEXT_RELATIONSHIPS = new Set([
+  'npcs',
+  'places',
+  'adversaries',
+  'items',
+  'clues',
+  'handouts',
+  'factions',
+  'clueRefs',
+  'handoutRefs',
+  'factionRefs',
+])
 
 type ProposalReviewState = {
   reviewed: boolean
@@ -46,6 +58,26 @@ type ProposalDetail = ProposalSummary & {
   frontmatter: Record<string, unknown>
 }
 
+type ProposalResolveState = 'proposal' | 'promoted' | 'missing' | 'ambiguous'
+
+type ProposalResolveCandidate = {
+  id: string
+  state: Exclude<ProposalResolveState, 'missing' | 'ambiguous'>
+  title?: string
+  status?: string
+  proposalType?: string
+  reviewStatus?: ProposalReviewState['review_status']
+}
+
+type ProposalResolveItem = ProposalResolveCandidate | {
+  id: string
+  state: 'missing'
+} | {
+  id: string
+  state: 'ambiguous'
+  matches: ProposalResolveCandidate[]
+}
+
 type ProposalReviewPayload = {
   reviewed?: boolean
   review_status?: 'approved' | 'pending' | 'changes_requested'
@@ -63,6 +95,10 @@ function parseReadMode(value: string | null): 'live' | 'planning' {
 
 function proposalFiles(): string[] {
   return fg.sync('**/*.proposed.md', { cwd: PROPOSALS_ROOT, absolute: true })
+}
+
+function planningFiles(): string[] {
+  return fg.sync('**/*.md', { cwd: PLANNING_ROOT, absolute: true })
 }
 
 function proposalPathForId(id: string): string | null {
@@ -100,6 +136,86 @@ function proposalReviewState(frontmatter: Record<string, unknown>): ProposalRevi
   }
 
   return state
+}
+
+function slugFromId(id: string): string {
+  return id.split('/').filter(Boolean).pop() ?? id
+}
+
+function titleToSlug(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+function relationshipKeysForCandidate(candidate: ProposalResolveCandidate): Set<string> {
+  const keys = new Set<string>()
+  const id = candidate.id.trim()
+  if (id) {
+    keys.add(id)
+    keys.add(id.replace(/^proposals\//, ''))
+    keys.add(slugFromId(id))
+  }
+  if (candidate.title) keys.add(titleToSlug(candidate.title))
+  if (candidate.proposalType) {
+    const folder = getProposalFolder(candidate.proposalType as ProposalType)
+    if (folder) keys.add(`${folder}/${slugFromId(id)}`)
+  }
+  return keys
+}
+
+function dedupeResolveCandidates(candidates: ProposalResolveCandidate[]): ProposalResolveCandidate[] {
+  const seen = new Set<string>()
+  return candidates.filter((candidate) => {
+    const key = `${candidate.state}:${candidate.id}:${candidate.proposalType ?? ''}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function resolveProposalOrPromotedEntity(id: string, candidates: ProposalResolveCandidate[]): ProposalResolveItem {
+  const matches = dedupeResolveCandidates(candidates.filter((candidate) => relationshipKeysForCandidate(candidate).has(id)))
+  if (!matches.length) return { id, state: 'missing' }
+  if (matches.length === 1) return { ...matches[0], id: matches[0].id }
+  return { id, state: 'ambiguous', matches }
+}
+
+function loadResolveCandidates(): ProposalResolveCandidate[] {
+  const proposalCandidates = proposalFiles().flatMap((file): ProposalResolveCandidate[] => {
+    try {
+      const fm = matter(readFileSync(file, 'utf-8')).data as Record<string, unknown>
+      const status = String(fm.status ?? '')
+      const reviewState = proposalReviewState(fm)
+      return [{
+        id: String(fm.id ?? '').trim(),
+        state: status === 'promoted' ? 'promoted' : 'proposal',
+        title: String(fm.title ?? ''),
+        status,
+        proposalType: String(fm.proposal_type ?? ''),
+        reviewStatus: reviewState.review_status,
+      }]
+    } catch {
+      return []
+    }
+  })
+
+  const planningCandidates = planningFiles().flatMap((file): ProposalResolveCandidate[] => {
+    try {
+      const fm = matter(readFileSync(file, 'utf-8')).data as Record<string, unknown>
+      const id = String(fm.id ?? '').trim()
+      if (!id) return []
+      return [{
+        id,
+        state: 'promoted',
+        title: String(fm.title ?? ''),
+        status: String(fm.status ?? 'promoted'),
+        proposalType: String(fm.proposal_type ?? ''),
+      }]
+    } catch {
+      return []
+    }
+  })
+
+  return [...proposalCandidates, ...planningCandidates]
 }
 
 function proposalSummaryFrom(filePath: string): ProposalSummary {
@@ -178,8 +294,17 @@ function toPromotePayload(value: unknown): ProposalPromotePayload | null {
   return candidate
 }
 
-type ProposalGeneratePayload = { type: ProposalType; prompt: string }
-type ProposalCreatePayload = { type: ProposalType; title: string; summary?: string }
+type ProposalContext = {
+  chapterId?: string
+  segmentId?: string
+  relationship?: string
+  parentProposalId?: string
+  suggestedSubjectId?: string
+  returnTo?: string
+}
+
+type ProposalGeneratePayload = { type: ProposalType; prompt: string; context?: ProposalContext }
+type ProposalCreatePayload = { type: ProposalType; title: string; summary?: string; context?: ProposalContext }
 type ProposalUpdatePayload = {
   title?: string
   summary?: string
@@ -187,12 +312,25 @@ type ProposalUpdatePayload = {
   related?: Record<string, string[]>
 }
 
+function toContext(value: unknown): ProposalContext | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const c = value as Record<string, unknown>
+  const ctx: ProposalContext = {}
+  if (typeof c.chapterId === 'string') ctx.chapterId = c.chapterId
+  if (typeof c.segmentId === 'string') ctx.segmentId = c.segmentId
+  if (typeof c.relationship === 'string') ctx.relationship = c.relationship
+  if (typeof c.parentProposalId === 'string') ctx.parentProposalId = c.parentProposalId
+  if (typeof c.suggestedSubjectId === 'string') ctx.suggestedSubjectId = c.suggestedSubjectId
+  if (typeof c.returnTo === 'string') ctx.returnTo = c.returnTo
+  return ctx
+}
+
 function toGeneratePayload(value: unknown): ProposalGeneratePayload | null {
   if (!value || typeof value !== 'object') return null
   const candidate = value as Record<string, unknown>
   if (typeof candidate.type !== 'string' || !VALID_PROPOSAL_TYPES.has(candidate.type)) return null
   if (typeof candidate.prompt !== 'string' || !candidate.prompt.trim()) return null
-  return { type: candidate.type as ProposalType, prompt: candidate.prompt.trim() }
+  return { type: candidate.type as ProposalType, prompt: candidate.prompt.trim(), context: toContext(candidate.context) }
 }
 
 function toCreatePayload(value: unknown): ProposalCreatePayload | null {
@@ -205,7 +343,33 @@ function toCreatePayload(value: unknown): ProposalCreatePayload | null {
     title: candidate.title.trim(),
   }
   if (typeof candidate.summary === 'string') payload.summary = candidate.summary
+  payload.context = toContext(candidate.context)
   return payload
+}
+
+function contextIssues(context: ProposalContext | undefined): string[] {
+  const issues: string[] = []
+  if (!context) return issues
+  if (context.relationship && !VALID_CONTEXT_RELATIONSHIPS.has(context.relationship)) {
+    issues.push(`Unknown relationship slot "${context.relationship}".`)
+  }
+  return issues
+}
+
+function contextualPrompt(prompt: string, context: ProposalContext | undefined): string {
+  if (!context) return prompt
+  const lines = [
+    'Context for this proposal:',
+    context.chapterId ? `- originating chapter: ${context.chapterId}` : '',
+    context.segmentId ? `- originating segment: ${context.segmentId}` : '',
+    context.relationship ? `- relationship slot: ${context.relationship}` : '',
+    context.parentProposalId ? `- parent artifact: ${context.parentProposalId}` : '',
+    context.suggestedSubjectId ? `- suggested subject: ${context.suggestedSubjectId}` : '',
+    '',
+    'Proposal request:',
+    prompt,
+  ].filter((line) => line !== '')
+  return lines.join('\n')
 }
 
 function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
@@ -238,11 +402,7 @@ function toUpdatePayload(value: unknown): ProposalUpdatePayload | null {
   return payload
 }
 
-function titleToSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-}
-
-function scaffoldProposal(payload: ProposalCreatePayload): { filePath: string } | { conflict: string } {
+function scaffoldProposal(payload: ProposalCreatePayload): { filePath: string; returnTo?: string } | { conflict: string } {
   const folder = getProposalFolder(payload.type)
   const slug = titleToSlug(payload.title)
   const id = `proposals/${folder}/${slug}`
@@ -255,6 +415,11 @@ function scaffoldProposal(payload: ProposalCreatePayload): { filePath: string } 
 
   mkdirSync(dir, { recursive: true })
 
+  const related: Record<string, string[]> = {}
+  if (payload.context?.parentProposalId) {
+    related.scenes = [payload.context.parentProposalId]
+  }
+
   const frontmatter: Record<string, unknown> = {
     id,
     proposal_type: payload.type,
@@ -265,11 +430,12 @@ function scaffoldProposal(payload: ProposalCreatePayload): { filePath: string } 
     created_at: new Date().toISOString(),
     promote_target: getPromoteTarget(payload.type) ?? '',
     summary: payload.summary ?? '',
+    ...(Object.keys(related).length ? { related } : {}),
   }
 
   const body = `# ${payload.title}\n\n<!-- Add proposal content here. -->\n`
   writeProposalFrontmatter(filePath, frontmatter, body)
-  return { filePath }
+  return { filePath, returnTo: payload.context?.returnTo }
 }
 
 export async function handleProposalApiRequest(
@@ -308,22 +474,42 @@ export async function handleProposalApiRequest(
       return true
     }
 
+    if (req.method === 'GET' && proposalId === 'resolve' && !action) {
+      const rawIds = url.searchParams.get('ids') ?? ''
+      const ids = rawIds.split(',').map((s) => s.trim()).filter(Boolean)
+      if (!ids.length) {
+        sendError(res, 400, 'ids query parameter is required.', 'invalid_request_error')
+        return true
+      }
+      const candidates = loadResolveCandidates()
+      const items = ids.map((id) => resolveProposalOrPromotedEntity(id, candidates))
+      sendJson(res, 200, { items })
+      return true
+    }
+
     if (req.method === 'POST' && proposalId === 'generate' && !action) {
       const payload = toGeneratePayload(await readJsonBody(req))
       if (!payload) {
         sendError(res, 400, 'Invalid generate payload. Expected { type, prompt }.', 'invalid_request_error')
         return true
       }
-      const generated = await generateProposalFromPrompt(payload.prompt, payload.type)
+      const issues = contextIssues(payload.context)
+      if (issues.length) {
+        sendJson(res, 422, { error: { message: 'Invalid proposal context.', type: 'validation_error', issues } })
+        return true
+      }
+      const generated = await generateProposalFromPrompt(contextualPrompt(payload.prompt, payload.context), payload.type)
       if (!generated.proposalPath) {
         sendError(res, 500, 'Proposal generation did not produce an output file.', 'server_error')
         return true
       }
-      sendJson(res, 200, {
+      const responseBody: Record<string, unknown> = {
         mode: readMode,
         validationStatus: generated.validationStatus,
         proposal: proposalDetailFrom(generated.proposalPath),
-      })
+      }
+      if (payload.context?.returnTo) responseBody.returnTo = payload.context.returnTo
+      sendJson(res, 200, responseBody)
       return true
     }
 
@@ -333,15 +519,22 @@ export async function handleProposalApiRequest(
         sendError(res, 400, 'Invalid create payload. Expected { type, title }.', 'invalid_request_error')
         return true
       }
+      const issues = contextIssues(payload.context)
+      if (issues.length) {
+        sendJson(res, 422, { error: { message: 'Invalid proposal context.', type: 'validation_error', issues } })
+        return true
+      }
       const scaffold = scaffoldProposal(payload)
       if ('conflict' in scaffold) {
         sendError(res, 409, scaffold.conflict, 'conflict_error')
         return true
       }
-      sendJson(res, 201, {
+      const responseBody: Record<string, unknown> = {
         mode: readMode,
         proposal: proposalDetailFrom(scaffold.filePath),
-      })
+      }
+      if (scaffold.returnTo) responseBody.returnTo = scaffold.returnTo
+      sendJson(res, 201, responseBody)
       return true
     }
 

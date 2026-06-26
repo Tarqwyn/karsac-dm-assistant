@@ -1,6 +1,6 @@
 export const PROPOSAL_TYPE_VALUES = [
   'adversary', 'encounter', 'chapter-outline', 'session-outline',
-  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'state-update',
+  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'faction', 'state-update',
 ] as const
 
 export type ProposalType = typeof PROPOSAL_TYPE_VALUES[number]

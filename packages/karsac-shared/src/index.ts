@@ -78,6 +78,7 @@ export interface ProposalListResponse {
 export interface ProposalDetailResponse {
   mode: ReadMode
   proposal: ProposalDetail
+  returnTo?: string
 }
 
 export interface ProposalPromotionResult {
@@ -96,7 +97,7 @@ export interface ProposalPromotionResponse {
 
 export const PROPOSAL_TYPES = [
   'adversary', 'encounter', 'chapter-outline', 'session-outline',
-  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'state-update',
+  'scene', 'npc', 'place', 'item', 'clue', 'handout', 'faction', 'state-update',
 ] as const
 
 export type ProposalType = typeof PROPOSAL_TYPES[number]
@@ -105,6 +106,7 @@ export interface ProposalCreateRequest {
   type: ProposalType
   title: string
   summary?: string
+  context?: ProposalContextRequest
 }
 
 export interface ProposalUpdateRequest {
@@ -117,12 +119,14 @@ export interface ProposalUpdateRequest {
 export interface ProposalGenerateRequest {
   type: ProposalType
   prompt: string
+  context?: ProposalContextRequest
 }
 
 export interface ProposalGenerateResponse {
   mode: ReadMode
   validationStatus?: string
   proposal: ProposalDetail
+  returnTo?: string
 }
 
 export interface CampaignClock {
@@ -255,6 +259,9 @@ export interface ChapterPlanScene {
   places?: string[]
   adversaries?: string[]
   items?: string[]
+  clueRefs?: string[]
+  handoutRefs?: string[]
+  factionRefs?: string[]
   beats: ChapterPlanBeat[]
   facts: ChapterPlanFact[]
   handouts: ChapterPlanHandout[]
@@ -308,6 +315,55 @@ export interface ChapterPlanMaterializeResponse {
   chapterId: string
   bundle: ChapterBundle
   writtenFiles: string[]
+}
+
+export interface ChapterSceneRelationship {
+  readonly relatedKey: string
+  readonly planField: keyof ChapterPlanScene
+  readonly proposalType: string
+  readonly label: string
+}
+
+export const CHAPTER_SCENE_RELATIONSHIPS: readonly ChapterSceneRelationship[] = [
+  { relatedKey: 'npcs',        planField: 'npcs',        proposalType: 'npc',       label: 'NPCs' },
+  { relatedKey: 'places',      planField: 'places',      proposalType: 'place',     label: 'Places' },
+  { relatedKey: 'adversaries', planField: 'adversaries', proposalType: 'adversary', label: 'Adversaries' },
+  { relatedKey: 'items',       planField: 'items',       proposalType: 'item',      label: 'Items' },
+  { relatedKey: 'clues',       planField: 'clueRefs',    proposalType: 'clue',      label: 'Clues' },
+  { relatedKey: 'handouts',    planField: 'handoutRefs', proposalType: 'handout',   label: 'Handout Refs' },
+  { relatedKey: 'factions',    planField: 'factionRefs', proposalType: 'faction',   label: 'Factions' },
+]
+
+export type ProposalResolveState = 'proposal' | 'promoted' | 'missing' | 'ambiguous'
+
+export interface ProposalResolveItem {
+  id: string
+  state: ProposalResolveState
+  title?: string
+  status?: string
+  proposalType?: string
+  reviewStatus?: string
+  matches?: Array<{
+    id: string
+    state: 'proposal' | 'promoted'
+    title?: string
+    status?: string
+    proposalType?: string
+    reviewStatus?: string
+  }>
+}
+
+export interface ProposalResolveResponse {
+  items: ProposalResolveItem[]
+}
+
+export interface ProposalContextRequest {
+  chapterId?: string
+  segmentId?: string
+  relationship?: string
+  parentProposalId?: string
+  suggestedSubjectId?: string
+  returnTo?: string
 }
 
 export interface ChapterCollection {

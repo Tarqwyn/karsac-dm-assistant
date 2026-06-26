@@ -251,6 +251,10 @@ proposal_types:
     folder: handouts
     promote_target: corpus/planning/handouts
 
+  faction:
+    folder: factions
+    promote_target: corpus/planning/factions
+
   state-update:
     folder: state-updates
     promote_target: null

@@ -1,6 +1,6 @@
 # Task 0006: Contextual Proposal Expansion and Relationship Workflow
 
-Status: Ready for pre-development review
+Status: Implemented — ready for review
 
 ## Goal
 
@@ -288,3 +288,30 @@ The current slug-based relationship matching in the composition workspace is tra
 - [ADR-0005 — Proposals as the Primary Authoring Unit](../adr/0005-proposals-as-primary-authoring-unit.md)
 - [ADR-0006 — Chapter Composition Model](../adr/0006-chapter-composition-model.md)
 - [RFC-0004 — Proposal-Backed Chapter Authoring](../rfc/0004-proposal-backed-chapter-authoring.md)
+
+---
+
+## Implementation note — 2026-06-26
+
+Implemented as a connected workflow across the shared contract, registry API, and UI:
+
+- `faction` is now a valid proposal type with a proposal contract entry and promote target.
+- `planScene` supports `clueRefs`, `handoutRefs`, and `factionRefs` alongside NPC/place/adversary/item joins.
+- `CHAPTER_SCENE_RELATIONSHIPS` in `@karsac/shared` is the static relationship registry used by the UI.
+- `GET /api/v1/proposals/resolve?ids=...` resolves exact ids, namespaced ids, promoted planning entities, missing subjects, and ambiguous aliases.
+- Manual and AI-assisted proposal creation accept context metadata and return a retry-safe `returnTo`.
+- Chapter composition can show missing relationship gaps, attach existing resolver matches, launch contextual proposal creation, and return with a pending attach banner.
+- Segment creation uses the backend resolver for relationship joins rather than client-side slug guessing.
+- Materialisation gates the new relationship ref fields the same way it gates existing proposal refs.
+
+Known limitations:
+
+- Existing proposal selection is functional through resolver matches and type-specific toggle lists, but there is not yet a polished per-slot search/filter component.
+- Contextual child proposals currently record the parent in `related.scenes`, which matches the scene/encounter parent workflow but is not a general parent-type relationship mapper.
+- `clueRefs`, `handoutRefs`, and `factionRefs` are normalized and materialisation-gated, but there are no additional write-time uniqueness rules beyond string-array validation.
+
+Verification:
+
+- `npm test` passed: 28 files, 814 tests.
+- `npm run karsac-ui:build` passed.
+- `npx tsc --noEmit --project karsac-registry/tsconfig.json` still reports pre-existing project-wide TypeScript errors, but the Task 0006-introduced `service.ts` implicit-any error was fixed.
