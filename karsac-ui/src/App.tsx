@@ -47,7 +47,7 @@ import {
   updateProposal,
 } from './api'
 import { ChapterCompositionWorkspace } from './ChapterCompositionWorkspace'
-import { ProposalForm } from './ProposalForm'
+import { ProposalFormPage } from './ProposalFormPage'
 
 const sections = [
   { id: 'corpus', label: 'Corpus', path: '/corpus' },
@@ -1103,7 +1103,7 @@ export default function App(): JSX.Element {
                 </div>
                 <div className="entity-detail">
                   {proposalFormMode === 'create' ? (
-                    <ProposalForm
+                    <ProposalFormPage
                       mode="create"
                       isPending={createMutation.isPending || generateMutation.isPending}
                       error={proposalFormError}
@@ -1114,7 +1114,7 @@ export default function App(): JSX.Element {
                       onGenerate={(type, prompt) => generateMutation.mutate({ type, prompt })}
                     />
                   ) : proposalFormMode === 'edit' && proposalDetail ? (
-                    <ProposalForm
+                    <ProposalFormPage
                       mode="edit"
                       proposal={proposalDetail}
                       isPending={updateMutation.isPending}
@@ -1389,6 +1389,8 @@ export default function App(): JSX.Element {
                       ) : (
                         <ChapterCompositionWorkspace
                           chapterId={selectedChapterId}
+                          chapters={chapters}
+                          onSelectChapter={setSelectedChapterId}
                           chapterDetail={chapterDetail}
                           chapterPlanData={chapterPlanQuery.data ?? null}
                           chapterPlanError={chapterPlanQuery.error}

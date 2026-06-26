@@ -714,6 +714,94 @@ describe('state service', () => {
     ]))
   })
 
+  it('seeds workingSet from plan references on read without writing the file', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    writeJson(root, 'chapters/chapter-3/plan.json', {
+      id: 'chapter-3-plan',
+      type: 'chapter-plan',
+      campaign: 'karsac',
+      chapterId: 'chapter-3',
+      source: 'authored',
+      importStatus: 'live',
+      title: 'Seeded Plan',
+      scenes: [
+        {
+          id: 'scene-1',
+          label: 'Seeded scene',
+          kind: 'opening',
+          order: 10,
+          summary: '',
+          artifactRef: 'proposals/scenes/greybacks-departure',
+          npcs: ['proposals/npcs/brynja'],
+          places: [],
+          adversaries: [],
+          items: [],
+          clueRefs: [],
+          handoutRefs: [],
+          factionRefs: [],
+          beats: [],
+          facts: [],
+          handouts: [],
+          triggers: [],
+        },
+      ],
+      threads: [],
+      checkpoints: [],
+    })
+
+    const result = service.readChapterPlan('chapter-3')
+    const persisted = readJson(root, 'chapters/chapter-3/plan.json')
+
+    expect(result.plan.workingSet).toEqual([
+      'proposals/scenes/greybacks-departure',
+      'proposals/npcs/brynja',
+    ])
+    expect(persisted.workingSet).toBeUndefined()
+  })
+
+  it('persists workingSet and ignores it during materialisation', () => {
+    const root = makeStateFixture()
+    cleanupRoots.push(root)
+    const service = createStateService(root)
+
+    service.writeChapterPlan('chapter-3', {
+      title: 'Working Set Plan',
+      workingSet: ['proposals/scenes/greybacks-departure', 'proposals/npcs/brynja'],
+      scenes: [
+        {
+          id: 'scene-1',
+          label: 'The Greyback Departure',
+          kind: 'opening',
+          order: 10,
+          summary: 'Set the departure tone.',
+          artifactRef: 'proposals/scenes/greybacks-departure',
+          npcs: [],
+          places: [],
+          adversaries: [],
+          items: [],
+          clueRefs: [],
+          handoutRefs: [],
+          factionRefs: [],
+          beats: [],
+          facts: [],
+          handouts: [],
+          triggers: [],
+        },
+      ],
+      threads: [],
+      checkpoints: [],
+    })
+
+    const result = service.readChapterPlan('chapter-3')
+    const materialized = service.materializeChapterPlan('chapter-3')
+
+    expect(result.plan.workingSet).toEqual(['proposals/scenes/greybacks-departure', 'proposals/npcs/brynja'])
+    expect(materialized.bundle.scenes?.scenes[0]?.notesMd).toContain('Artifact: `proposals/scenes/greybacks-departure`')
+  })
+
   it('materialises a chapter plan into tracker-facing state files when all refs are promoted', () => {
     const root = makeStateFixture()
     cleanupRoots.push(root)

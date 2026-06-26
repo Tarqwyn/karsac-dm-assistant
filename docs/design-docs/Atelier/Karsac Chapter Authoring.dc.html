@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── Shared header ───────────────────────────────────── */
+    .hdr {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      height: 50px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 18px; gap: 12px;
+    }
+    .hdr-brand { display: flex; align-items: center; gap: 8px; }
+    .hdr-jewel {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: var(--accent); display: flex; align-items: center;
+      justify-content: center; font-size: 11px; color: #fff; font-weight: 700;
+    }
+    .hdr-name { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; }
+    .hdr-sub { font-size: 11px; opacity: 0.45; margin-left: 4px; }
+    .hdr-tabs { display: flex; gap: 3px; }
+    .dir-tab {
+      padding: 5px 13px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      letter-spacing: 0.01em; transition: all 0.14s;
+    }
+    .dir-tab:hover { background: #f0eaff; color: #5b3fb5; border-color: #5b3fb5; }
+    .dir-tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+
+    /* ── Theme: Direction A (dark pipeline) ─────────────── */
+    .dir-a {
+      --bg: #0c1118; --surf: #131a24; --card: #192030;
+      --border: #273040; --text: #dde5f0; --muted: #6b7d94;
+      --accent: #c99030; --accent-soft: rgba(201,144,48,.12);
+      --promoted: #34d068; --reviewed: #f0a040; --proposed: #4e6080;
+      --pass: #34d068; --warn: #f0a040; --fail: #f07070;
+      background: var(--bg); color: var(--text);
+      height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+      padding-top: 50px; animation: fadeUp 0.18s ease both;
+    }
+    /* A – subbar */
+    .a-bar {
+      flex-shrink: 0; height: 38px; background: var(--surf);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; padding: 0 16px;
+    }
+    .a-ch { font-size: 12px; font-weight: 700; color: var(--text); flex: 1; }
+    .a-stat {
+      font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 3px;
+      font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.03em;
+    }
+    .a-st-p { background: rgba(78,96,128,.25); color: var(--proposed); }
+    .a-st-r { background: rgba(240,160,64,.15); color: var(--reviewed); }
+    .a-st-g { background: rgba(52,208,104,.15); color: var(--promoted); }
+    .a-st-c { background: var(--accent-soft); color: var(--accent); }
+    /* A – board */
+    .a-board {
+      flex: 1; min-height: 0; display: grid;
+      grid-template-columns: repeat(4, 1fr); overflow: hidden;
+    }
+    .a-col {
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .a-col:last-child { border-right: none; }
+    .a-col-hd {
+      flex-shrink: 0; padding: 8px 12px; border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .a-col-lbl {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--muted); font-family: 'IBM Plex Mono', monospace;
+    }
+    .a-col-cnt {
+      font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace;
+    }
+    .a-col-body {
+      flex: 1; overflow-y: auto; padding: 8px; display: flex;
+      flex-direction: column; gap: 6px;
+    }
+    .a-col-body::-webkit-scrollbar { width: 3px; }
+    .a-col-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .a-card {
+      padding: 9px 10px; border-radius: 5px; border: 1px solid var(--border);
+      background: var(--card); cursor: pointer; transition: border-color .12s, background .12s;
+      animation: popIn .16s ease both;
+    }
+    .a-card:hover { border-color: var(--accent); background: rgba(255,255,255,.04); }
+    .a-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .a-ct { display: flex; align-items: flex-start; gap: 7px; }
+    .a-cg { font-size: 13px; flex-shrink: 0; margin-top: 1px; opacity: .5; }
+    .a-ctitle { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; }
+    .a-cmeta { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; align-items: center; }
+    .a-ctype {
+      font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted); background: rgba(255,255,255,.06); border-radius: 3px; padding: 1px 5px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .a-val-pass { font-size: 9px; font-weight: 700; color: var(--pass); font-family: 'IBM Plex Mono', monospace; }
+    .a-val-warn { font-size: 9px; font-weight: 700; color: var(--warn); font-family: 'IBM Plex Mono', monospace; }
+    .a-val-fail { font-size: 9px; font-weight: 700; color: var(--fail); font-family: 'IBM Plex Mono', monospace; }
+    .a-ibadge {
+      font-size: 8px; font-weight: 700; background: rgba(240,112,112,.18);
+      color: var(--fail); border-radius: 3px; padding: 1px 5px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .a-cbtns { display: flex; gap: 4px; margin-top: 7px; }
+    .a-btn {
+      padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);
+      background: rgba(255,255,255,.05); color: var(--muted);
+      font-size: 9px; font-weight: 700; cursor: pointer; transition: all .13s;
+      font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .a-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .a-btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .a-btn.pri:hover { opacity: .88; }
+    .a-ic-card {
+      padding: 9px 10px; border-radius: 5px; border: 1px solid rgba(52,208,104,.3);
+      background: rgba(52,208,104,.07); animation: popIn .16s ease both;
+    }
+    .a-ic-title { font-size: 11px; font-weight: 600; color: var(--promoted); }
+    .a-ic-sub { font-size: 9px; color: var(--muted); margin-top: 3px; font-family: 'IBM Plex Mono', monospace; }
+    .a-empty { font-size: 10px; color: var(--muted); text-align: center; padding: 18px 8px; opacity: .55; font-family: 'IBM Plex Mono', monospace; }
+    /* A – detail panel */
+    .a-panel {
+      flex-shrink: 0; border-top: 1px solid var(--border); background: var(--surf);
+      padding: 12px 16px; display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 16px; min-height: 76px;
+      animation: fadeUp .14s ease both;
+    }
+    .a-pl { flex: 1; min-width: 0; }
+    .a-pk { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-bottom: 3px; }
+    .a-pt { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .a-ps { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .a-pi { font-size: 10px; color: var(--fail); margin-top: 6px; }
+    .a-pi::before { content: '! '; font-family: 'IBM Plex Mono', monospace; }
+    .a-pr { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+    .a-pbtns { display: flex; gap: 5px; }
+
+    /* ── Theme: Direction B (warm atelier) ───────────────── */
+    .dir-b {
+      --bg: #f3ede3; --surf: #fff; --card: #faf7f2;
+      --border: #e3d9cb; --text: #1e1a15; --muted: #7a6f62;
+      --accent: #2d7a58; --accent-soft: #e8f3ed;
+      --promoted: #2d7a58; --reviewed: #b86b2a; --proposed: #9a8b7e;
+      --pass: #2d7a58; --warn: #b86b2a; --fail: #b83232;
+      background: var(--bg); color: var(--text);
+      height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+      padding-top: 50px; animation: fadeUp 0.18s ease both;
+      font-family: 'DM Sans', sans-serif;
+    }
+    /* B – subbar */
+    .b-bar {
+      flex-shrink: 0; height: 46px; background: var(--surf);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px; gap: 12px;
+    }
+    .b-ch-info {}
+    .b-ch-kicker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 1px; }
+    .b-ch-title { font-size: 14px; font-weight: 600; color: var(--text); font-family: 'Lora', Georgia, serif; font-style: italic; }
+    .b-ch-meta { font-size: 11px; color: var(--muted); }
+    /* B – body */
+    .b-body {
+      flex: 1; min-height: 0; display: grid;
+      grid-template-columns: 300px 1fr; overflow: hidden;
+    }
+    .b-catalog {
+      border-right: 1px solid var(--border); background: var(--surf);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .b-ttabs {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+    }
+    .b-ttab {
+      padding: 3px 9px; border-radius: 5px; border: 1px solid var(--border);
+      background: var(--card); color: var(--muted); font-size: 10px; font-weight: 600;
+      cursor: pointer; transition: all .12s; font-family: 'DM Sans', sans-serif;
+    }
+    .b-ttab:hover { border-color: var(--accent); color: var(--accent); }
+    .b-ttab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .b-clist {
+      flex: 1; overflow-y: auto; padding: 8px 10px;
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .b-clist::-webkit-scrollbar { width: 3px; }
+    .b-clist::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .b-pcard {
+      padding: 9px 11px; background: var(--card); border: 1px solid var(--border);
+      border-radius: 6px; transition: border-color .12s;
+    }
+    .b-pcard:hover { border-color: var(--accent); }
+    .b-ptop { display: flex; align-items: flex-start; justify-content: space-between; gap: 7px; }
+    .b-ptitle { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.35; font-family: 'Lora', Georgia, serif; }
+    .b-pglyph { font-size: 14px; opacity: .4; flex-shrink: 0; }
+    .b-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+    .b-chip { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: .03em; }
+    .b-chip-promoted { background: rgba(45,122,88,.12); color: var(--promoted); }
+    .b-chip-reviewed { background: rgba(184,107,42,.12); color: var(--reviewed); }
+    .b-chip-proposed { background: rgba(154,139,126,.15); color: var(--proposed); }
+    .b-chip-pass { background: rgba(45,122,88,.1); color: var(--pass); }
+    .b-chip-warn { background: rgba(184,107,42,.1); color: var(--warn); }
+    .b-chip-fail { background: rgba(184,50,50,.1); color: var(--fail); }
+    .b-psum { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+    .b-padd {
+      margin-top: 7px; padding: 4px 10px; border-radius: 5px;
+      border: 1px solid var(--border); background: var(--accent-soft); color: var(--accent);
+      font-size: 10px; font-weight: 600; cursor: pointer; transition: all .12s;
+      font-family: 'DM Sans', sans-serif; width: 100%;
+    }
+    .b-padd:hover:not(:disabled) { background: var(--accent); color: #fff; }
+    .b-padd:disabled { opacity: .35; cursor: not-allowed; background: var(--card); color: var(--muted); }
+    .b-empty { text-align: center; padding: 24px; color: var(--muted); font-size: 11px; }
+    /* B – canvas */
+    .b-canvas {
+      overflow-y: auto; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .b-canvas::-webkit-scrollbar { width: 4px; }
+    .b-canvas::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .b-cvhd {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .b-cvtitle { font-size: 16px; font-weight: 700; font-family: 'Lora', Georgia, serif; color: var(--text); }
+    .b-cvmeta { font-size: 11px; color: var(--muted); }
+    .b-scard {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .b-shd {
+      display: flex; align-items: center; gap: 9px; padding: 11px 13px;
+      cursor: pointer; transition: background .12s;
+    }
+    .b-shd:hover { background: var(--card); }
+    .b-skind {
+      font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+      color: var(--muted); background: var(--card); border: 1px solid var(--border);
+      border-radius: 3px; padding: 2px 5px; flex-shrink: 0;
+    }
+    .b-stitle { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; font-family: 'Lora', Georgia, serif; }
+    .b-sready {
+      font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; flex-shrink: 0;
+    }
+    .b-readiness-ready { background: rgba(45,122,88,.12); color: var(--promoted); }
+    .b-readiness-partial { background: rgba(184,107,42,.12); color: var(--reviewed); }
+    .b-readiness-blocked { background: rgba(184,50,50,.12); color: var(--fail); }
+    .b-readiness-unlinked { background: rgba(154,139,126,.12); color: var(--proposed); }
+    .b-stog { font-size: 10px; color: var(--muted); }
+    .b-sbody {
+      padding: 10px 13px; border-top: 1px solid var(--border);
+      background: var(--card); display: flex; flex-direction: column; gap: 9px;
+    }
+    .b-ssec-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); display: block; margin-bottom: 4px; }
+    .b-sartifact { font-size: 11px; color: var(--text); display: flex; align-items: center; gap: 5px; }
+    .b-npc-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .b-npc-chip {
+      font-size: 10px; padding: 2px 8px; border-radius: 4px;
+      background: rgba(45,122,88,.09); color: var(--accent); border: 1px solid rgba(45,122,88,.2);
+    }
+    .b-beats { display: flex; flex-direction: column; gap: 4px; }
+    .b-beat {
+      font-size: 11px; color: var(--muted); padding: 4px 0;
+      border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 5px;
+    }
+    .b-beat::before { content: '▸'; font-size: 9px; color: var(--accent); flex-shrink: 0; }
+    /* B – toast */
+    .b-toast {
+      position: fixed; bottom: 18px; right: 18px; z-index: 500;
+      background: var(--accent); color: #fff; padding: 9px 14px;
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      animation: popIn .18s ease; box-shadow: 0 4px 18px rgba(0,0,0,.15);
+    }
+
+    /* ── Theme: Direction C (wizard) ─────────────────────── */
+    .dir-c {
+      --bg: #eef2f8; --surf: #fff; --card: #fff;
+      --border: #d8e2ed; --text: #0f1928; --muted: #5e7490;
+      --accent: #2d68e8; --accent-soft: #e8effe;
+      --promoted: #1a9e60; --reviewed: #c97b1a; --proposed: #8097b0;
+      --pass: #1a9e60; --warn: #c97b1a; --fail: #d03030;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding-top: 66px; padding-bottom: 40px;
+      display: flex; align-items: flex-start; justify-content: center;
+      animation: fadeUp 0.18s ease both;
+    }
+    .c-wrap { width: 100%; max-width: 660px; padding: 0 16px; }
+    .c-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 6px 30px rgba(15,25,40,.08);
+    }
+    /* C – stepper */
+    .c-stepper {
+      display: flex; align-items: flex-start; padding: 20px 20px 14px;
+      border-bottom: 1px solid var(--border); gap: 0;
+    }
+    .c-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .c-step-inner { display: flex; align-items: center; width: 100%; }
+    .c-node {
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border);
+      background: var(--bg); display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: var(--muted); flex-shrink: 0;
+      transition: all .2s; cursor: default;
+    }
+    .c-node-done { background: var(--promoted); border-color: var(--promoted); color: #fff; cursor: pointer; }
+    .c-node-active {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+    .c-line { flex: 1; height: 2px; background: var(--border); margin: 0 3px; transition: background .2s; }
+    .c-line-done { background: var(--promoted); }
+    .c-slabel { font-size: 9px; font-weight: 600; color: var(--muted); margin-top: 5px; text-align: center; }
+    .c-slabel-active { color: var(--accent); font-weight: 700; }
+    .c-slabel-done { color: var(--promoted); }
+    /* C – content */
+    .c-content { padding: 22px 22px 14px; display: flex; flex-direction: column; gap: 14px; }
+    .c-stitle { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
+    .c-sdesc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .c-form-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .c-tybtn {
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--card); color: var(--muted); font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all .12s; font-family: 'DM Sans', sans-serif;
+    }
+    .c-tybtn:hover { border-color: var(--accent); color: var(--accent); }
+    .c-tybtn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .c-field { display: flex; flex-direction: column; gap: 4px; }
+    .c-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .c-input, .c-textarea {
+      border: 1px solid var(--border); border-radius: 7px; background: var(--bg);
+      color: var(--text); padding: 9px 11px; font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 13px; outline: none; transition: border-color .13s; width: 100%;
+    }
+    .c-input:focus, .c-textarea:focus { border-color: var(--accent); }
+    .c-textarea { resize: vertical; min-height: 76px; }
+    .c-genbtn {
+      padding: 10px 20px; border-radius: 8px; background: var(--accent); border: none;
+      color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; align-self: flex-start; transition: opacity .13s;
+    }
+    .c-genbtn:hover { opacity: .88; }
+    .c-genbtn:disabled { opacity: .36; cursor: not-allowed; }
+    .c-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .c-stat {
+      text-align: center; padding: 12px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px;
+    }
+    .c-stat-n { font-size: 24px; font-weight: 800; color: var(--accent); display: block; }
+    .c-stat-l { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .c-ritem {
+      padding: 12px 13px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--card); cursor: pointer; transition: border-color .12s;
+    }
+    .c-ritem:hover { border-color: var(--accent); }
+    .c-ritem.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .c-rtop { display: flex; align-items: center; gap: 7px; }
+    .c-rtag {
+      font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; padding: 2px 5px;
+    }
+    .c-rtitle { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+    .c-rissue-cnt { font-size: 10px; font-weight: 700; color: var(--warn); }
+    .c-rissues { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+    .c-rissue { font-size: 11px; color: var(--warn); display: flex; gap: 5px; }
+    .c-rissue::before { content: '⚠'; flex-shrink: 0; }
+    .c-rissue-fail { font-size: 11px; color: var(--fail); display: flex; gap: 5px; }
+    .c-rissue-fail::before { content: '✗'; flex-shrink: 0; }
+    .c-rsum { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+    .c-rbtnrow { display: flex; gap: 7px; margin-top: 10px; }
+    .c-approve {
+      padding: 6px 14px; border-radius: 6px; background: var(--promoted); border: none;
+      color: #fff; font-size: 11px; font-weight: 700; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: opacity .13s;
+    }
+    .c-approve:hover { opacity: .88; }
+    .c-skip {
+      padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 11px; font-weight: 600;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .c-pitem {
+      display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+      border: 1px solid var(--border); border-radius: 7px; background: var(--card);
+    }
+    .c-pglyph { font-size: 14px; opacity: .4; }
+    .c-ptag {
+      font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; padding: 2px 5px; flex-shrink: 0;
+    }
+    .c-ptitle { font-size: 12px; font-weight: 600; color: var(--text); flex: 1; }
+    .c-pstatus {
+      font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+      background: rgba(201,123,26,.12); color: var(--reviewed);
+    }
+    .c-prom-btn {
+      padding: 4px 11px; border-radius: 5px; background: var(--accent); border: none;
+      color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: opacity .13s;
+    }
+    .c-prom-btn:hover { opacity: .88; }
+    .c-prom-all {
+      padding: 9px 18px; border-radius: 8px; background: var(--accent); border: none;
+      color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; align-self: flex-start; transition: opacity .13s;
+    }
+    .c-prom-all:hover { opacity: .88; }
+    .c-cscene {
+      padding: 13px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+    }
+    .c-cstitle { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .c-crefs { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+    .c-cref {
+      font-size: 10px; padding: 2px 8px; border-radius: 4px;
+      background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(45,104,232,.18);
+    }
+    .c-mat-box { text-align: center; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .c-mat-icon { font-size: 40px; }
+    .c-mat-title { font-size: 20px; font-weight: 700; color: var(--text); }
+    .c-mat-desc { font-size: 12px; color: var(--muted); line-height: 1.6; max-width: 380px; }
+    .c-mat-files { text-align: left; margin-top: 4px; display: flex; flex-direction: column; gap: 3px; }
+    .c-mat-file { font-size: 11px; color: var(--promoted); font-family: 'IBM Plex Mono', monospace; display: flex; align-items: center; gap: 5px; }
+    .c-mat-file::before { content: '✓'; }
+    .c-matbtn {
+      padding: 11px 26px; border-radius: 9px; background: var(--promoted); border: none;
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: opacity .13s;
+    }
+    .c-matbtn:hover { opacity: .9; }
+    .c-empty { text-align: center; padding: 28px; color: var(--muted); font-size: 12px; }
+    /* C – nav */
+    .c-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 22px; border-top: 1px solid var(--border); background: var(--bg);
+    }
+    .c-navinfo { font-size: 11px; color: var(--muted); }
+    .c-navbtns { display: flex; gap: 7px; }
+    .c-navback {
+      padding: 7px 16px; border-radius: 7px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .12s;
+    }
+    .c-navback:hover { border-color: var(--text); color: var(--text); }
+    .c-navnext {
+      padding: 7px 16px; border-radius: 7px; background: var(--accent); border: none;
+      color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: opacity .13s;
+    }
+    .c-navnext:hover { opacity: .88; }
+    .anim-in { animation: popIn .2s ease both; }
+  </style>
+</helmet>
+
+<!-- ═══ SHARED HEADER ═══════════════════════════════════════════════ -->
+<div class="hdr" style="background:var(--surf,#fff);border-bottom:1px solid var(--border,#e5e7eb);">
+  <div class="hdr-brand">
+    <div class="hdr-jewel">K</div>
+    <span class="hdr-name" style="color:var(--text,#111);">Karsac</span>
+    <span class="hdr-sub" style="color:var(--muted,#888);">Chapter Authoring · Direction Exploration</span>
+  </div>
+  <div class="hdr-tabs">
+    <button class="{{ aTabClass }}" onClick="{{ switchA }}">A · Pipeline</button>
+    <button class="{{ bTabClass }}" onClick="{{ switchB }}">B · Atelier</button>
+    <button class="{{ cTabClass }}" onClick="{{ switchC }}">C · Guided Flow</button>
+  </div>
+</div>
+
+<!-- ═══ DIRECTION A: PIPELINE ════════════════════════════════════════ -->
+<sc-if value="{{ isA }}" hint-placeholder-val="{{ true }}">
+  <div class="dir-a">
+    <!-- subbar -->
+    <div class="a-bar">
+      <span class="a-ch">Chapter 4 · The Thornward Crossing</span>
+      <span class="a-stat a-st-p">{{ aProposedCount }} proposed</span>
+      <span class="a-stat a-st-r">{{ aReviewedCount }} reviewed</span>
+      <span class="a-stat a-st-g">{{ aPromotedCount }} promoted</span>
+      <span class="a-stat a-st-c">{{ aInChapterCount }} in chapter</span>
+    </div>
+    <!-- board -->
+    <div class="a-board">
+      <!-- Proposed -->
+      <div class="a-col">
+        <div class="a-col-hd">
+          <span class="a-col-lbl">Proposed</span>
+          <span class="a-col-cnt">{{ aProposedCount }}</span>
+        </div>
+        <div class="a-col-body">
+          <sc-if value="{{ aProposedEmpty }}" hint-placeholder-val="{{ false }}">
+            <div class="a-empty">No pending proposals</div>
+          </sc-if>
+          <sc-for list="{{ aProposed }}" as="p" hint-placeholder-count="3">
+            <div class="a-card {{ p.selectedClass }}" onClick="{{ p.onSelect }}">
+              <div class="a-ct">
+                <span class="a-cg">{{ p.glyph }}</span>
+                <span class="a-ctitle">{{ p.title }}</span>
+              </div>
+              <div class="a-cmeta">
+                <span class="a-ctype">{{ p.type }}</span>
+                <span class="{{ p.valClass }}">{{ p.valText }}</span>
+                <sc-if value="{{ p.hasIssues }}" hint-placeholder-val="{{ false }}">
+                  <span class="a-ibadge">{{ p.issueCount }}i</span>
+                </sc-if>
+              </div>
+              <div class="a-cbtns">
+                <button class="a-btn pri" onClick="{{ p.onReview }}">Review →</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <!-- Reviewed -->
+      <div class="a-col">
+        <div class="a-col-hd">
+          <span class="a-col-lbl">Reviewed</span>
+          <span class="a-col-cnt">{{ aReviewedCount }}</span>
+        </div>
+        <div class="a-col-body">
+          <sc-if value="{{ aReviewedEmpty }}" hint-placeholder-val="{{ false }}">
+            <div class="a-empty">None reviewed yet</div>
+          </sc-if>
+          <sc-for list="{{ aReviewed }}" as="p" hint-placeholder-count="2">
+            <div class="a-card {{ p.selectedClass }}" onClick="{{ p.onSelect }}">
+              <div class="a-ct">
+                <span class="a-cg">{{ p.glyph }}</span>
+                <span class="a-ctitle">{{ p.title }}</span>
+              </div>
+              <div class="a-cmeta">
+                <span class="a-ctype">{{ p.type }}</span>
+                <span class="{{ p.valClass }}">{{ p.valText }}</span>
+                <sc-if value="{{ p.hasIssues }}" hint-placeholder-val="{{ false }}">
+                  <span class="a-ibadge">{{ p.issueCount }}i</span>
+                </sc-if>
+              </div>
+              <div class="a-cbtns">
+                <button class="a-btn pri" onClick="{{ p.onPromote }}">Promote →</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <!-- Promoted -->
+      <div class="a-col">
+        <div class="a-col-hd">
+          <span class="a-col-lbl">Promoted</span>
+          <span class="a-col-cnt">{{ aPromotedCount }}</span>
+        </div>
+        <div class="a-col-body">
+          <sc-if value="{{ aPromotedEmpty }}" hint-placeholder-val="{{ false }}">
+            <div class="a-empty">Nothing promoted yet</div>
+          </sc-if>
+          <sc-for list="{{ aPromoted }}" as="p" hint-placeholder-count="2">
+            <div class="a-card {{ p.selectedClass }}" onClick="{{ p.onSelect }}">
+              <div class="a-ct">
+                <span class="a-cg">{{ p.glyph }}</span>
+                <span class="a-ctitle">{{ p.title }}</span>
+              </div>
+              <div class="a-cmeta">
+                <span class="a-ctype">{{ p.type }}</span>
+                <span class="{{ p.valClass }}">{{ p.valText }}</span>
+              </div>
+              <div class="a-cbtns">
+                <button class="a-btn pri" onClick="{{ p.onAdd }}">Add to chapter →</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <!-- In Chapter -->
+      <div class="a-col">
+        <div class="a-col-hd">
+          <span class="a-col-lbl">In Chapter</span>
+          <span class="a-col-cnt">{{ aInChapterCount }}</span>
+        </div>
+        <div class="a-col-body">
+          <sc-if value="{{ aInChapterEmpty }}" hint-placeholder-val="{{ false }}">
+            <div class="a-empty">Promote then add proposals here</div>
+          </sc-if>
+          <sc-for list="{{ aInChapter }}" as="p" hint-placeholder-count="1">
+            <div class="a-ic-card" onClick="{{ p.onSelect }}">
+              <div class="a-ic-title">{{ p.title }}</div>
+              <div class="a-ic-sub">{{ p.type }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <!-- detail panel -->
+    <sc-if value="{{ aHasSelected }}" hint-placeholder-val="{{ true }}">
+      <div class="a-panel">
+        <div class="a-pl">
+          <div class="a-pk">{{ aSelected.type }} · {{ aSelected.status }}</div>
+          <div class="a-pt">{{ aSelected.title }}</div>
+          <div class="a-ps">{{ aSelected.summary }}</div>
+          <sc-if value="{{ aHasIssues }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ aSelectedIssues }}" as="iss" hint-placeholder-count="1">
+              <div class="a-pi">{{ iss }}</div>
+            </sc-for>
+          </sc-if>
+        </div>
+        <div class="a-pr">
+          <div style="display:flex;gap:5px;align-items:center;">
+            <span class="{{ aSelected.valClass }}">{{ aSelected.valText }}</span>
+          </div>
+          <div class="a-pbtns">
+            <sc-if value="{{ aSelCanReview }}" hint-placeholder-val="{{ false }}">
+              <button class="a-btn pri" onClick="{{ aOnReviewSel }}">Review</button>
+            </sc-if>
+            <sc-if value="{{ aSelCanPromote }}" hint-placeholder-val="{{ false }}">
+              <button class="a-btn pri" onClick="{{ aOnPromoteSel }}">Promote</button>
+            </sc-if>
+            <sc-if value="{{ aSelCanAdd }}" hint-placeholder-val="{{ false }}">
+              <button class="a-btn pri" onClick="{{ aOnAddSel }}">Add to chapter</button>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ═══ DIRECTION B: ATELIER ═════════════════════════════════════════ -->
+<sc-if value="{{ isB }}" hint-placeholder-val="{{ false }}">
+  <div class="dir-b">
+    <!-- subbar -->
+    <div class="b-bar">
+      <div class="b-ch-info">
+        <div class="b-ch-kicker">Authoring</div>
+        <div class="b-ch-title">The Thornward Crossing</div>
+      </div>
+      <div class="b-ch-meta">{{ bPromotedCount }} promoted refs · {{ bReadyCount }} scene{{ bReadyCount === 1 ? '' : 's' }} ready</div>
+    </div>
+    <!-- split body -->
+    <div class="b-body">
+      <!-- catalog -->
+      <div class="b-catalog">
+        <div class="b-ttabs">
+          <sc-for list="{{ bTypeOpts }}" as="tab" hint-placeholder-count="7">
+            <button class="b-ttab {{ tab.activeClass }}" onClick="{{ tab.onClick }}">{{ tab.label }}</button>
+          </sc-for>
+        </div>
+        <div class="b-clist">
+          <sc-if value="{{ bFilteredEmpty }}" hint-placeholder-val="{{ false }}">
+            <div class="b-empty">No proposals match this filter.</div>
+          </sc-if>
+          <sc-for list="{{ bFiltered }}" as="prop" hint-placeholder-count="4">
+            <div class="b-pcard">
+              <div class="b-ptop">
+                <span class="b-ptitle">{{ prop.title }}</span>
+                <span class="b-pglyph">{{ prop.glyph }}</span>
+              </div>
+              <div class="b-chips">
+                <span class="{{ prop.bStatusClass }}">{{ prop.bStatusLabel }}</span>
+                <span class="{{ prop.bValClass }}">{{ prop.bValText }}</span>
+                <sc-if value="{{ prop.hasIssues }}" hint-placeholder-val="{{ false }}">
+                  <span class="b-chip b-chip-fail">{{ prop.issueCount }} issues</span>
+                </sc-if>
+              </div>
+              <div class="b-psum">{{ prop.summary }}</div>
+              <button class="b-padd" disabled="{{ prop.addDisabled }}" onClick="{{ prop.onAdd }}">+ Add to scene</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <!-- canvas -->
+      <div class="b-canvas">
+        <div class="b-cvhd">
+          <span class="b-cvtitle">Chapter 4</span>
+          <span class="b-cvmeta">{{ bSceneCount }} scene · {{ bBeatCount }} beats</span>
+        </div>
+        <sc-for list="{{ bScenes }}" as="scene" hint-placeholder-count="1">
+          <div class="b-scard">
+            <div class="b-shd" onClick="{{ scene.onToggle }}">
+              <span class="b-skind">{{ scene.kind }}</span>
+              <span class="b-stitle">{{ scene.label }}</span>
+              <span class="b-sready {{ scene.readinessClass }}">{{ scene.readinessLabel }}</span>
+              <span class="b-stog">{{ scene.toggleIcon }}</span>
+            </div>
+            <sc-if value="{{ scene.isExpanded }}" hint-placeholder-val="{{ true }}">
+              <div class="b-sbody">
+                <div>
+                  <span class="b-ssec-lbl">Scene artifact</span>
+                  <div class="b-sartifact">▷ {{ scene.artifactTitle }}</div>
+                </div>
+                <sc-if value="{{ scene.hasNpcs }}" hint-placeholder-val="{{ true }}">
+                  <div>
+                    <span class="b-ssec-lbl">NPCs</span>
+                    <div class="b-npc-chips">
+                      <sc-for list="{{ scene.npcTitles }}" as="npc" hint-placeholder-count="1">
+                        <span class="b-npc-chip">◉ {{ npc }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ scene.hasPlaces }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <span class="b-ssec-lbl">Places</span>
+                    <div class="b-npc-chips">
+                      <sc-for list="{{ scene.placeTitles }}" as="place" hint-placeholder-count="1">
+                        <span class="b-npc-chip" style="background:rgba(45,122,88,.05);">◈ {{ place }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <div>
+                  <span class="b-ssec-lbl">Beats ({{ scene.beatCount }})</span>
+                  <div class="b-beats">
+                    <sc-for list="{{ scene.beats }}" as="beat" hint-placeholder-count="2">
+                      <div class="b-beat">{{ beat.label }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <!-- toast -->
+    <sc-if value="{{ bHasNotice }}" hint-placeholder-val="{{ false }}">
+      <div class="b-toast">{{ bNotice }}</div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ═══ DIRECTION C: GUIDED FLOW ═════════════════════════════════════ -->
+<sc-if value="{{ isC }}" hint-placeholder-val="{{ false }}">
+  <div class="dir-c">
+    <div class="c-wrap">
+      <div class="c-card">
+        <!-- stepper -->
+        <div class="c-stepper">
+          <sc-for list="{{ cSteps }}" as="step" hint-placeholder-count="5">
+            <div class="c-step">
+              <div class="c-step-inner">
+                <div class="{{ step.nodeClass }}" onClick="{{ step.onClick }}">{{ step.nodeText }}</div>
+                <sc-if value="{{ step.showLine }}" hint-placeholder-val="{{ true }}">
+                  <div class="{{ step.lineClass }}"></div>
+                </sc-if>
+              </div>
+              <span class="{{ step.labelClass }}">{{ step.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- Step content -->
+        <div class="c-content">
+
+          <!-- Step 1: Generate -->
+          <sc-if value="{{ cIsStep1 }}" hint-placeholder-val="{{ true }}">
+            <div class="anim-in">
+              <div class="c-stitle">Generate a proposal</div>
+              <div class="c-sdesc">Create a new entity proposal. The pipeline validates, constrains, and governs the output — the model proposes, code governs.</div>
+              <div>
+                <div class="c-label" style="margin-bottom:7px;">Proposal type</div>
+                <div class="c-form-row">
+                  <sc-for list="{{ cGenTypes }}" as="gt" hint-placeholder-count="6">
+                    <button class="c-tybtn {{ gt.activeClass }}" onClick="{{ gt.onClick }}">{{ gt.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div class="c-field">
+                <label class="c-label">Title</label>
+                <input class="c-input" placeholder="Entity name or working title" value="{{ cGenTitle }}" onChange="{{ cOnGenTitle }}">
+              </div>
+              <div class="c-field">
+                <label class="c-label">Brief (optional)</label>
+                <textarea class="c-textarea" placeholder="Describe what you want — the pipeline constrains and validates output against the corpus." onChange="{{ cOnGenPrompt }}"></textarea>
+              </div>
+              <div class="c-stats">
+                <div class="c-stat">
+                  <span class="c-stat-n">{{ cProposedCount }}</span>
+                  <span class="c-stat-l">Proposed</span>
+                </div>
+                <div class="c-stat">
+                  <span class="c-stat-n">{{ cReviewedCount }}</span>
+                  <span class="c-stat-l">Reviewed</span>
+                </div>
+                <div class="c-stat">
+                  <span class="c-stat-n">{{ cPromotedCount }}</span>
+                  <span class="c-stat-l">Promoted</span>
+                </div>
+              </div>
+              <button class="c-genbtn" disabled="{{ cGenTitleEmpty }}" onClick="{{ cOnGenerate }}">Generate proposal</button>
+            </div>
+          </sc-if>
+
+          <!-- Step 2: Review -->
+          <sc-if value="{{ cIsStep2 }}" hint-placeholder-val="{{ false }}">
+            <div class="anim-in">
+              <div class="c-stitle">Review proposals</div>
+              <div class="c-sdesc">Inspect each proposal for validation issues. Approve to mark as reviewed — reviewed proposals can be promoted to the corpus.</div>
+              <sc-if value="{{ cProposedEmpty }}" hint-placeholder-val="{{ false }}">
+                <div class="c-empty">All proposals have been reviewed. Proceed to Promote →</div>
+              </sc-if>
+              <sc-for list="{{ cProposedItems }}" as="prop" hint-placeholder-count="3">
+                <div class="c-ritem {{ prop.selectedClass }}" onClick="{{ prop.onSelect }}">
+                  <div class="c-rtop">
+                    <span class="c-rtag">{{ prop.type }}</span>
+                    <span class="c-rtitle">{{ prop.title }}</span>
+                    <sc-if value="{{ prop.hasIssues }}" hint-placeholder-val="{{ false }}">
+                      <span class="c-rissue-cnt">{{ prop.issueCount }} issue(s)</span>
+                    </sc-if>
+                  </div>
+                  <sc-if value="{{ prop.isSelected }}" hint-placeholder-val="{{ false }}">
+                    <div class="c-rsum">{{ prop.summary }}</div>
+                    <sc-if value="{{ prop.hasIssues }}" hint-placeholder-val="{{ false }}">
+                      <div class="c-rissues">
+                        <sc-for list="{{ prop.issues }}" as="iss" hint-placeholder-count="1">
+                          <div class="c-rissue">{{ iss }}</div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div class="c-rbtnrow">
+                      <button class="c-approve" onClick="{{ prop.onApprove }}">Approve</button>
+                      <button class="c-skip">Skip for now</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- Step 3: Promote -->
+          <sc-if value="{{ cIsStep3 }}" hint-placeholder-val="{{ false }}">
+            <div class="anim-in">
+              <div class="c-stitle">Promote to corpus</div>
+              <div class="c-sdesc">Promote reviewed proposals into the corpus. Once promoted, they become eligible inputs for chapter composition.</div>
+              <sc-if value="{{ cReviewedEmpty }}" hint-placeholder-val="{{ false }}">
+                <div class="c-empty">No reviewed proposals to promote. Go back to Review.</div>
+              </sc-if>
+              <sc-for list="{{ cReviewedItems }}" as="prop" hint-placeholder-count="2">
+                <div class="c-pitem">
+                  <span class="c-pglyph">{{ prop.glyph }}</span>
+                  <span class="c-ptag">{{ prop.type }}</span>
+                  <span class="c-ptitle">{{ prop.title }}</span>
+                  <span class="c-pstatus">reviewed</span>
+                  <button class="c-prom-btn" onClick="{{ prop.onPromote }}">Promote</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ cHasReviewed }}" hint-placeholder-val="{{ false }}">
+                <button class="c-prom-all" onClick="{{ cPromoteAll }}">Promote all reviewed</button>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <!-- Step 4: Compose -->
+          <sc-if value="{{ cIsStep4 }}" hint-placeholder-val="{{ false }}">
+            <div class="anim-in">
+              <div class="c-stitle">Compose chapter</div>
+              <div class="c-sdesc">Promoted proposals are assembled into chapter scenes with joins — NPCs, places, adversaries, and beats linked to each scene.</div>
+              <sc-for list="{{ cChapterScenes }}" as="scene" hint-placeholder-count="1">
+                <div class="c-cscene">
+                  <div class="c-cstitle">{{ scene.label }}</div>
+                  <div style="font-size:11px;color:var(--muted);">{{ scene.kind }} · {{ scene.readinessLabel }}</div>
+                  <div class="c-crefs">
+                    <sc-for list="{{ scene.npcTitles }}" as="npc" hint-placeholder-count="1">
+                      <span class="c-cref">◉ {{ npc }}</span>
+                    </sc-for>
+                    <sc-for list="{{ scene.placeTitles }}" as="place" hint-placeholder-count="1">
+                      <span class="c-cref">◈ {{ place }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="font-size:11px;color:var(--muted);padding:6px 0;">Full composition — beats, triggers, handouts — is done in the Atelier (Direction B). This step confirms the plan is ready to materialise.</div>
+            </div>
+          </sc-if>
+
+          <!-- Step 5: Materialise -->
+          <sc-if value="{{ cIsStep5 }}" hint-placeholder-val="{{ false }}">
+            <div class="anim-in">
+              <sc-if value="{{ cMaterialised }}" hint-placeholder-val="{{ false }}">
+                <div class="c-mat-box">
+                  <div class="c-mat-icon">◆</div>
+                  <div class="c-mat-title">Chapter materialised</div>
+                  <div class="c-mat-desc">Chapter 4 tracker state has been written. The tracker reads the updated files directly from materialised state.</div>
+                  <div class="c-mat-files">
+                    <div class="c-mat-file">corpus/state/chapters/chapter-4/progress.json</div>
+                    <div class="c-mat-file">corpus/state/chapters/chapter-4/facts.json</div>
+                    <div class="c-mat-file">corpus/state/chapters/chapter-4/handouts.json</div>
+                    <div class="c-mat-file">corpus/state/chapters/chapter-4/beats.json</div>
+                    <div class="c-mat-file">corpus/state/chapters/chapter-4/scenes.json</div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ cNotMaterialised }}" hint-placeholder-val="{{ true }}">
+                <div class="anim-in">
+                  <div class="c-stitle">Materialise chapter</div>
+                  <div class="c-sdesc">Write the chapter plan to tracker-facing state files. Explicit, one-way. The tracker reads these files — it never reads the plan directly.</div>
+                  <div class="c-stats">
+                    <div class="c-stat">
+                      <span class="c-stat-n">{{ cPromotedCount }}</span>
+                      <span class="c-stat-l">Promoted refs</span>
+                    </div>
+                    <div class="c-stat">
+                      <span class="c-stat-n">{{ cSceneCount }}</span>
+                      <span class="c-stat-l">Scenes</span>
+                    </div>
+                    <div class="c-stat">
+                      <span class="c-stat-n">5</span>
+                      <span class="c-stat-l">Output files</span>
+                    </div>
+                  </div>
+                  <button class="c-matbtn" onClick="{{ cMaterialise }}">Materialise chapter →</button>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+        </div>
+
+        <!-- navigation -->
+        <div class="c-nav">
+          <span class="c-navinfo">Step {{ cStep }} of 5 · {{ cStepLabel }}</span>
+          <div class="c-navbtns">
+            <sc-if value="{{ cCanGoPrev }}" hint-placeholder-val="{{ false }}">
+              <button class="c-navback" onClick="{{ cGoPrev }}">← Back</button>
+            </sc-if>
+            <sc-if value="{{ cCanGoNext }}" hint-placeholder-val="{{ true }}">
+              <button class="c-navnext" onClick="{{ cGoNext }}">{{ cNextLabel }}</button>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    direction: 'A',
+    proposals: [
+      { id: 'npc-brynja', type: 'npc', title: 'Brynja Thorgrimsdotter', status: 'promoted', val: 'pass', summary: 'Shield-maiden and Chapter 3 survivor. Canon reference only — no invention permitted.', issues: [] },
+      { id: 'npc-beorn', type: 'npc', title: 'Jarl Beorn Ironhelm', status: 'reviewed', val: 'warning', summary: 'Ruler of Thornward. Secretly compromised by the Shadow Walkers. Canon ambiguity flagged.', issues: ["Ambiguous canon: Beorn's rank unresolved"] },
+      { id: 'npc-broker', type: 'npc', title: 'The Shadow Broker', status: 'proposed', val: 'fail', summary: 'Unknown intermediary between Shadow Walkers and Thornward guard. No corpus anchor found.', issues: ['No corpus anchor found', 'Faction affiliation unverified'] },
+      { id: 'place-gate', type: 'place', title: 'The Thornward Gate', status: 'promoted', val: 'pass', summary: 'Fortified northern gate of Thornward. Controls trade routes into the city. Canonical.', issues: [] },
+      { id: 'place-docks', type: 'place', title: 'The Frozen Docks', status: 'proposed', val: 'warning', summary: 'Ice-locked harbor district. Black market activity suspected. Provisional — no direct canon anchor.', issues: ['Provisional — no direct canon anchor'] },
+      { id: 'scene-standoff', type: 'scene', title: 'Opening Standoff', status: 'promoted', val: 'pass', summary: "Party arrives at Thornward Gate. Beorn's guard demands identification and travel papers.", issues: [] },
+      { id: 'scene-gambit', type: 'scene', title: "The Broker's Gambit", status: 'proposed', val: 'fail', summary: 'Broker reveals knowledge of party movements and proposes a dangerous exchange.', issues: ['Broker entity not yet promoted', 'Scene references unverified place'] },
+      { id: 'adversary-walker', type: 'adversary', title: 'Shadow Walker', status: 'promoted', val: 'pass', summary: 'Infiltrator class. Use stat block from corpus. Canonical entity.', issues: [] },
+      { id: 'adversary-captain', type: 'adversary', title: 'Guard Captain Halvar', status: 'proposed', val: 'warning', summary: "Thornward gate commander. Beorn's loyal officer. No stat block derived yet.", issues: ['No stat block derived yet'] },
+      { id: 'item-signet', type: 'item', title: "Beorn's Signet Ring", status: 'reviewed', val: 'pass', summary: 'Grants access to Thornward castle interior. Currently held by Beorn.', issues: [] },
+      { id: 'encounter-gate', type: 'encounter', title: 'Gate Confrontation', status: 'proposed', val: 'warning', summary: 'Non-combat standoff at the gate. May escalate depending on party approach.', issues: ['Encounter scaling not validated'] },
+    ],
+    chapter: {
+      id: 'chapter-4',
+      title: 'The Thornward Crossing',
+      scenes: [
+        {
+          id: 'sc-1',
+          label: 'Arrival at Thornward',
+          kind: 'opening',
+          artifactRef: 'scene-standoff',
+          npcs: ['npc-brynja'],
+          places: ['place-gate'],
+          beats: [
+            { id: 'b-1', label: 'Party presents credentials' },
+            { id: 'b-2', label: 'Brynja recognized by guard' },
+          ],
+          facts: [{ id: 'f-1', label: 'Beorn is compromised (DM only)' }],
+          handouts: [],
+        }
+      ]
+    },
+    dirA: { selectedId: 'npc-brynja', inChapter: ['scene-standoff'] },
+    dirB: { typeFilter: 'all', expandedSceneId: 'sc-1', notice: '' },
+    dirC: { step: 1, reviewingId: 'npc-broker', genType: 'npc', genTitle: '', genPrompt: '', materialised: false },
+  }
+
+  review(id) {
+    this.setState(s => ({ proposals: s.proposals.map(p => p.id === id ? { ...p, status: 'reviewed' } : p) }))
+  }
+
+  promote(id) {
+    this.setState(s => ({ proposals: s.proposals.map(p => p.id === id ? { ...p, status: 'promoted' } : p) }))
+  }
+
+  renderVals() {
+    const { direction, proposals, chapter, dirA, dirB, dirC } = this.state
+    const isA = direction === 'A', isB = direction === 'B', isC = direction === 'C'
+    const glyphs = { npc: '◉', place: '◈', scene: '▷', adversary: '◆', item: '◎', encounter: '◐' }
+    const G = t => glyphs[t] || '○'
+
+    // ── Direction A ──────────────────────────────────────────────────
+    const aEnrich = p => ({
+      ...p, glyph: G(p.type), issueCount: p.issues.length, hasIssues: p.issues.length > 0,
+      valClass: 'a-val-' + (p.val === 'pass' ? 'pass' : p.val === 'fail' ? 'fail' : 'warn'),
+      valText: p.val === 'pass' ? '✓ pass' : p.val === 'fail' ? '✗ fail' : '! warn',
+      isInChapter: dirA.inChapter.includes(p.id),
+      selectedClass: p.id === dirA.selectedId ? 'selected' : '',
+      onSelect: () => this.setState(st => ({ dirA: { ...st.dirA, selectedId: p.id } })),
+      onReview: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.review(p.id) },
+      onPromote: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.promote(p.id) },
+      onAdd: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState(st => ({ dirA: { ...st.dirA, inChapter: [...new Set([...st.dirA.inChapter, p.id])] } })) },
+    })
+    const aAll = proposals.map(aEnrich)
+    const aProposed = aAll.filter(p => p.status === 'proposed')
+    const aReviewed = aAll.filter(p => p.status === 'reviewed')
+    const aPromoted = aAll.filter(p => p.status === 'promoted' && !p.isInChapter)
+    const aInChapter = aAll.filter(p => p.isInChapter)
+    const aSelected = aAll.find(p => p.id === dirA.selectedId) || null
+
+    // ── Direction B ──────────────────────────────────────────────────
+    const bTypeOpts = ['all', 'npc', 'place', 'scene', 'adversary', 'encounter', 'item'].map(t => ({
+      id: t,
+      label: t === 'all' ? 'All' : t[0].toUpperCase() + t.slice(1),
+      count: t === 'all' ? proposals.length : proposals.filter(p => p.type === t).length,
+      activeClass: dirB.typeFilter === t ? 'active' : '',
+      onClick: () => this.setState(st => ({ dirB: { ...st.dirB, typeFilter: t } })),
+    }))
+    const bFiltered = proposals
+      .filter(p => dirB.typeFilter === 'all' || p.type === dirB.typeFilter)
+      .map(p => ({
+        ...p, glyph: G(p.type),
+        bStatusClass: 'b-chip b-chip-' + p.status,
+        bStatusLabel: p.status,
+        bValClass: 'b-chip b-chip-' + (p.val === 'pass' ? 'pass' : p.val === 'fail' ? 'fail' : 'warn'),
+        bValText: p.val === 'pass' ? '✓ valid' : p.val === 'fail' ? '✗ invalid' : '! issues',
+        hasIssues: p.issues.length > 0, issueCount: p.issues.length,
+        addDisabled: p.status === 'proposed',
+        onAdd: () => {
+          this.setState(st => {
+            const scenes = st.chapter.scenes.map(sc => ({ ...sc, npcs: [...sc.npcs], places: [...sc.places] }))
+            if (scenes[0]) {
+              if (p.type === 'npc' && !scenes[0].npcs.includes(p.id)) scenes[0].npcs = [...scenes[0].npcs, p.id]
+              else if (p.type === 'place' && !scenes[0].places.includes(p.id)) scenes[0].places = [...scenes[0].places, p.id]
+            }
+            return { chapter: { ...st.chapter, scenes }, dirB: { ...st.dirB, notice: p.title + ' added to scene' } }
+          })
+          setTimeout(() => this.setState(st => ({ dirB: { ...st.dirB, notice: '' } })), 2500)
+        },
+      }))
+    const bScenes = chapter.scenes.map(sc => {
+      const artifact = proposals.find(p => p.id === sc.artifactRef)
+      const npcTitles = sc.npcs.map(id => proposals.find(p => p.id === id)?.title).filter(Boolean)
+      const placeTitles = sc.places.map(id => proposals.find(p => p.id === id)?.title).filter(Boolean)
+      const readiness = !artifact ? 'unlinked' : artifact.status === 'promoted' ? 'ready' : artifact.status === 'reviewed' ? 'partial' : 'blocked'
+      const isExpanded = dirB.expandedSceneId === sc.id
+      return {
+        ...sc, isExpanded, artifactTitle: artifact?.title || '—', npcTitles, placeTitles,
+        hasNpcs: npcTitles.length > 0, hasPlaces: placeTitles.length > 0,
+        readinessClass: 'b-sready b-readiness-' + readiness,
+        readinessLabel: { ready: '✓ Ready', partial: 'Needs promotion', blocked: 'Blocked', unlinked: 'No artifact' }[readiness] || readiness,
+        beatCount: sc.beats.length,
+        toggleIcon: isExpanded ? '▲' : '▼',
+        onToggle: () => this.setState(st => ({ dirB: { ...st.dirB, expandedSceneId: st.dirB.expandedSceneId === sc.id ? '' : sc.id } })),
+      }
+    })
+
+    // ── Direction C ──────────────────────────────────────────────────
+    const cLabels = ['Generate', 'Review', 'Promote', 'Compose', 'Materialise']
+    const cSteps = [1, 2, 3, 4, 5].map(n => ({
+      n, label: cLabels[n - 1],
+      nodeClass: 'c-node ' + (dirC.step === n ? 'c-node-active' : dirC.step > n ? 'c-node-done' : 'c-node-pending'),
+      nodeText: dirC.step > n ? '✓' : String(n),
+      lineClass: 'c-line ' + (dirC.step > n ? 'c-line-done' : ''),
+      showLine: n < 5,
+      labelClass: 'c-slabel ' + (dirC.step === n ? 'c-slabel-active' : dirC.step > n ? 'c-slabel-done' : ''),
+      onClick: dirC.step > n ? () => this.setState(st => ({ dirC: { ...st.dirC, step: n } })) : null,
+    }))
+    const pendingProposals = proposals.filter(p => p.status === 'proposed')
+    const pendingIds = pendingProposals.map(p => p.id)
+    const cProposedItems = pendingProposals.map((p, i) => ({
+      ...p, glyph: G(p.type), hasIssues: p.issues.length > 0, issueCount: p.issues.length,
+      isSelected: p.id === dirC.reviewingId,
+      selectedClass: p.id === dirC.reviewingId ? 'selected' : '',
+      onSelect: () => this.setState(st => ({ dirC: { ...st.dirC, reviewingId: p.id } })),
+      onApprove: (e) => {
+        if (e && e.stopPropagation) e.stopPropagation()
+        this.review(p.id)
+        const nextId = pendingIds[i + 1] || null
+        if (nextId) this.setState(st => ({ dirC: { ...st.dirC, reviewingId: nextId } }))
+      },
+    }))
+    const cReviewedItems = proposals.filter(p => p.status === 'reviewed').map(p => ({
+      ...p, glyph: G(p.type), onPromote: () => this.promote(p.id),
+    }))
+    const cGenTypes = ['npc', 'place', 'scene', 'adversary', 'encounter', 'item'].map(t => ({
+      value: t, label: t[0].toUpperCase() + t.slice(1),
+      activeClass: dirC.genType === t ? 'active' : '',
+      onClick: () => this.setState(st => ({ dirC: { ...st.dirC, genType: t } })),
+    }))
+    const cNextLabels = ['Next: Review →', 'Next: Promote →', 'Next: Compose →', 'Next: Materialise →']
+
+    return {
+      isA, isB, isC,
+      switchA: () => this.setState({ direction: 'A' }),
+      switchB: () => this.setState({ direction: 'B' }),
+      switchC: () => this.setState({ direction: 'C' }),
+      aTabClass: 'dir-tab ' + (direction === 'A' ? 'active' : ''),
+      bTabClass: 'dir-tab ' + (direction === 'B' ? 'active' : ''),
+      cTabClass: 'dir-tab ' + (direction === 'C' ? 'active' : ''),
+
+      // A
+      aProposed, aReviewed, aPromoted, aInChapter, aSelected,
+      aHasSelected: !!aSelected,
+      aProposedCount: aProposed.length, aReviewedCount: aReviewed.length,
+      aPromotedCount: aPromoted.length, aInChapterCount: aInChapter.length,
+      aProposedEmpty: aProposed.length === 0, aReviewedEmpty: aReviewed.length === 0,
+      aPromotedEmpty: aPromoted.length === 0, aInChapterEmpty: aInChapter.length === 0,
+      aHasIssues: !!(aSelected && aSelected.issues.length > 0),
+      aSelectedIssues: aSelected ? aSelected.issues : [],
+      aSelCanReview: !!(aSelected && aSelected.status === 'proposed'),
+      aSelCanPromote: !!(aSelected && aSelected.status === 'reviewed'),
+      aSelCanAdd: !!(aSelected && aSelected.status === 'promoted' && !aSelected.isInChapter),
+      aOnReviewSel: () => aSelected && this.review(aSelected.id),
+      aOnPromoteSel: () => aSelected && this.promote(aSelected.id),
+      aOnAddSel: () => aSelected && this.setState(st => ({ dirA: { ...st.dirA, inChapter: [...new Set([...st.dirA.inChapter, aSelected.id])] } })),
+
+      // B
+      bTypeOpts, bFiltered, bScenes,
+      bNotice: dirB.notice, bHasNotice: !!dirB.notice,
+      bFilteredEmpty: bFiltered.length === 0,
+      bPromotedCount: proposals.filter(p => p.status === 'promoted').length,
+      bReadyCount: chapter.scenes.filter(sc => proposals.find(p => p.id === sc.artifactRef)?.status === 'promoted').length,
+      bSceneCount: chapter.scenes.length,
+      bBeatCount: chapter.scenes.reduce((s, sc) => s + sc.beats.length, 0),
+
+      // C
+      cSteps, cProposedItems, cReviewedItems, cGenTypes,
+      cIsStep1: dirC.step === 1, cIsStep2: dirC.step === 2, cIsStep3: dirC.step === 3,
+      cIsStep4: dirC.step === 4, cIsStep5: dirC.step === 5,
+      cCanGoPrev: dirC.step > 1, cCanGoNext: dirC.step < 5,
+      cGoPrev: () => this.setState(st => ({ dirC: { ...st.dirC, step: Math.max(1, st.dirC.step - 1) } })),
+      cGoNext: () => this.setState(st => ({ dirC: { ...st.dirC, step: Math.min(5, st.dirC.step + 1) } })),
+      cStep: dirC.step, cStepLabel: cLabels[dirC.step - 1],
+      cNextLabel: cNextLabels[dirC.step - 1] || 'Next →',
+      cProposedEmpty: pendingProposals.length === 0,
+      cReviewedEmpty: proposals.filter(p => p.status === 'reviewed').length === 0,
+      cHasReviewed: proposals.filter(p => p.status === 'reviewed').length > 0,
+      cGenTitle: dirC.genTitle, cGenTitleEmpty: !dirC.genTitle.trim(),
+      cOnGenTitle: (e) => this.setState(st => ({ dirC: { ...st.dirC, genTitle: e.target.value } })),
+      cOnGenPrompt: (e) => this.setState(st => ({ dirC: { ...st.dirC, genPrompt: e.target.value } })),
+      cOnGenerate: () => {
+        const { genTitle, genType, genPrompt } = dirC
+        if (!genTitle.trim()) return
+        this.setState(st => ({
+          proposals: [...st.proposals, {
+            id: genType + '-new-' + Date.now(), type: genType, title: genTitle.trim(),
+            status: 'proposed', val: 'warning',
+            summary: genPrompt || 'New ' + genType + ' — awaiting pipeline validation.',
+            issues: ['Awaiting pipeline validation'],
+          }],
+          dirC: { ...st.dirC, genTitle: '', genPrompt: '' },
+        }))
+      },
+      cPromoteAll: () => this.setState(st => ({
+        proposals: st.proposals.map(p => p.status === 'reviewed' ? { ...p, status: 'promoted' } : p),
+      })),
+      cMaterialise: () => this.setState(st => ({ dirC: { ...st.dirC, materialised: true } })),
+      cMaterialised: dirC.materialised, cNotMaterialised: !dirC.materialised,
+      cProposedCount: pendingProposals.length,
+      cReviewedCount: proposals.filter(p => p.status === 'reviewed').length,
+      cPromotedCount: proposals.filter(p => p.status === 'promoted').length,
+      cSceneCount: chapter.scenes.length,
+      cChapterScenes: bScenes,
+    }
+  }
+}
+</script>
+</body>
+</html>

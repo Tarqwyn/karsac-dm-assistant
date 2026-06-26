@@ -1,7 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
+import type React from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  closestCenter,
+  type CollisionDetection,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  pointerWithin,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type {
   ChapterBundle,
+  ChapterSummary,
   ChapterPlan,
   ChapterPlanBeat,
   ChapterPlanCheckpoint,
@@ -13,9 +38,11 @@ import type {
   ProposalSummary,
   ThreadStatus,
   WorldThread,
+  ProposalType,
 } from '@karsac/shared'
 import { CHAPTER_SCENE_RELATIONSHIPS } from '@karsac/shared'
-import { resolveProposals } from './api'
+import { createProposal, fetchProposal, generateProposal, resolveProposals } from './api'
+import { ProposalFormShell } from './ProposalFormShell'
 
 type WorkspaceError = Error & { scaffold?: Record<string, unknown>; statusCode?: number }
 type TriggerEvent = ChapterPlanTrigger['on']
@@ -24,6 +51,8 @@ const THREAD_STATUSES: ThreadStatus[] = ['dormant', 'simmering', 'hot', 'closed'
 
 type Props = {
   chapterId: string
+  chapters: ChapterSummary[]
+  onSelectChapter: (chapterId: string) => void
   chapterDetail: ChapterBundle | null
   chapterPlanData: { plan: ChapterPlan } | null
   chapterPlanError: unknown
@@ -35,6 +64,20 @@ type Props = {
   busy: boolean
   onSave: (plan: ChapterPlan) => Promise<void>
   onMaterialize: () => Promise<void>
+}
+
+type CatalogFilter = 'all' | 'chapter-outline' | 'scene' | 'encounter' | 'npc' | 'place' | 'adversary' | 'item' | 'clue' | 'handout' | 'faction'
+type DragData = { kind: 'scene'; sceneId: string } | { kind: 'proposal'; proposalId: string; proposalType: string }
+type Readiness = 'ready' | 'needs-review' | 'needs-promotion' | 'no-artifact'
+
+const CATALOG_FILTERS: CatalogFilter[] = ['all', 'chapter-outline', 'scene', 'encounter', 'npc', 'place', 'adversary', 'item', 'clue', 'handout', 'faction']
+const RELATIONSHIP_TYPES = new Set(CHAPTER_SCENE_RELATIONSHIPS.map((rel) => rel.proposalType))
+const ARTIFACT_TYPES = new Set(['scene', 'encounter'])
+const CHAPTER_SOURCE_TYPES = new Set(['chapter-outline'])
+
+const atelierCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args)
+  return pointerCollisions.length > 0 ? pointerCollisions : closestCenter(args)
 }
 
 function createPlanScaffold(chapterId: string): ChapterPlan {
@@ -49,6 +92,7 @@ function createPlanScaffold(chapterId: string): ChapterPlan {
     title: chapterNumber ? `Chapter ${chapterNumber}` : chapterId,
     updatedAt: new Date().toISOString(),
     notes: '',
+    workingSet: [],
     scenes: [],
     threads: [],
     checkpoints: [],
@@ -138,6 +182,138 @@ function appendRelationshipRef(scene: ChapterPlanScene, planField: keyof Chapter
   }
 }
 
+function removeRelationshipRef(scene: ChapterPlanScene, planField: keyof ChapterPlanScene, proposalId: string): void {
+  switch (planField) {
+    case 'npcs':
+      scene.npcs = (scene.npcs ?? []).filter((id) => id !== proposalId)
+      return
+    case 'places':
+      scene.places = (scene.places ?? []).filter((id) => id !== proposalId)
+      return
+    case 'adversaries':
+      scene.adversaries = (scene.adversaries ?? []).filter((id) => id !== proposalId)
+      return
+    case 'items':
+      scene.items = (scene.items ?? []).filter((id) => id !== proposalId)
+      return
+    case 'clueRefs':
+      scene.clueRefs = (scene.clueRefs ?? []).filter((id) => id !== proposalId)
+      return
+    case 'handoutRefs':
+      scene.handoutRefs = (scene.handoutRefs ?? []).filter((id) => id !== proposalId)
+      return
+    case 'factionRefs':
+      scene.factionRefs = (scene.factionRefs ?? []).filter((id) => id !== proposalId)
+      return
+    default:
+      return
+  }
+}
+
+function glyphForType(type: string): string {
+  if (type === 'scene') return 'Sc'
+  if (type === 'chapter-outline') return 'Ch'
+  if (type === 'encounter') return 'En'
+  if (type === 'npc') return 'NPC'
+  if (type === 'place') return 'Pl'
+  if (type === 'adversary') return 'Adv'
+  if (type === 'item') return 'It'
+  if (type === 'clue') return 'Cl'
+  if (type === 'handout') return 'Ho'
+  if (type === 'faction') return 'Fa'
+  return type.slice(0, 2).toUpperCase()
+}
+
+function readinessClass(readiness: Readiness): string {
+  if (readiness === 'ready') return 'readiness readiness-ready'
+  if (readiness === 'needs-review') return 'readiness readiness-review'
+  if (readiness === 'needs-promotion') return 'readiness readiness-promotion'
+  return 'readiness readiness-empty'
+}
+
+function readinessLabel(readiness: Readiness): string {
+  if (readiness === 'ready') return 'Ready'
+  if (readiness === 'needs-review') return 'Needs review'
+  if (readiness === 'needs-promotion') return 'Needs promotion'
+  return 'No artifact'
+}
+
+function DroppableZone({
+  id,
+  accepts,
+  activeProposalType,
+  children,
+}: {
+  id: string
+  accepts: Set<string>
+  activeProposalType: string
+  children: React.ReactNode
+}): JSX.Element {
+  const { isOver, setNodeRef } = useDroppable({ id })
+  const active = Boolean(activeProposalType && accepts.has(activeProposalType))
+  return (
+    <div ref={setNodeRef} className={`atelier-drop-zone ${active ? 'can-drop' : ''} ${isOver && active ? 'over' : ''}`}>
+      {children}
+    </div>
+  )
+}
+
+function ProposalCard({ proposal }: { proposal: ProposalSummary }): JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `proposal:${proposal.id}`,
+    data: { kind: 'proposal', proposalId: proposal.id, proposalType: proposal.proposalType } satisfies DragData,
+  })
+  const status = proposalRefStatus(proposal)
+  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined
+  return (
+    <div
+      ref={setNodeRef}
+      className={`atelier-prop-card prop-${status} ${isDragging ? 'dragging' : ''}`}
+      style={style}
+      {...attributes}
+      {...listeners}
+    >
+      <div className="atelier-prop-glyph">{glyphForType(proposal.proposalType)}</div>
+      <div className="atelier-prop-main">
+        <strong>{proposal.title}</strong>
+        <span className="entity-id">{proposal.id}</span>
+        <span>{proposal.summary || 'No summary.'}</span>
+      </div>
+      <div className="atelier-prop-status">
+        <span className={proposalStatusClass(status)}>{status}</span>
+        <span className={proposalValidationClass(proposal.validation.status)}>
+          {proposal.validation.status}{proposal.validation.issues.length ? ` ${proposal.validation.issues.length}` : ''}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function SortableSceneCard({
+  scene,
+  children,
+}: {
+  scene: ChapterPlanScene
+  children: React.ReactNode
+}): JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `scene:${scene.id}`,
+    data: { kind: 'scene', sceneId: scene.id } satisfies DragData,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+  return (
+    <article ref={setNodeRef} className={`atelier-scene-card ${isDragging ? 'dragging' : ''}`} style={style}>
+      <button className="atelier-drag-handle" type="button" {...attributes} {...listeners} aria-label={`Reorder ${scene.label}`}>
+        ::
+      </button>
+      {children}
+    </article>
+  )
+}
+
 function errorScaffold(error: unknown, chapterId: string): ChapterPlan {
   const candidate = (error as WorkspaceError | null)?.scaffold
   if (candidate && typeof candidate === 'object') {
@@ -146,8 +322,40 @@ function errorScaffold(error: unknown, chapterId: string): ChapterPlan {
   return createPlanScaffold(chapterId)
 }
 
+function errorMessage(value: unknown, fallback: string): string {
+  return value instanceof Error ? value.message : fallback
+}
+
+function parseSceneSpine(body: string): Array<{ label: string; summary: string }> {
+  const spineStart = body.search(/^##\s+Scene Spine\s*$/im)
+  if (spineStart < 0) return []
+  const spineBody = body.slice(spineStart)
+  const nextSection = spineBody.slice(1).search(/^##\s+/m)
+  const section = nextSection >= 0 ? spineBody.slice(0, nextSection + 1) : spineBody
+  const scenes: Array<{ heading: string; lines: string[] }> = []
+  for (const line of section.split('\n')) {
+    const heading = line.match(/^###\s+(.+?)\s*$/)
+    if (heading) {
+      scenes.push({ heading: heading[1].trim(), lines: [] })
+      continue
+    }
+    scenes[scenes.length - 1]?.lines.push(line)
+  }
+  return scenes.map((scene) => {
+    const label = scene.heading.replace(/^Scene\s+\d+\s+[—-]\s+/i, '').trim() || scene.heading
+    const summary = scene.lines
+      .map((line) => line.replace(/^[-*]\s*/, '').trim())
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(' ')
+    return { label, summary }
+  }).filter((scene) => scene.label)
+}
+
 export function ChapterCompositionWorkspace({
   chapterId,
+  chapters,
+  onSelectChapter,
   chapterDetail,
   chapterPlanData,
   chapterPlanError,
@@ -169,11 +377,28 @@ export function ChapterCompositionWorkspace({
 
   const [plan, setPlan] = useState<ChapterPlan>(() => createPlanScaffold(chapterId))
   const [selectedSceneId, setSelectedSceneId] = useState('')
+  const [expandedSceneIds, setExpandedSceneIds] = useState<Set<string>>(new Set())
+  const [catalogFilter, setCatalogFilter] = useState<CatalogFilter>('all')
+  const [enrolOpen, setEnrolOpen] = useState(false)
+  const [enrolQuery, setEnrolQuery] = useState('')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerType, setDrawerType] = useState<ProposalType>('npc')
+  const [drawerError, setDrawerError] = useState('')
+  const [drawerPending, setDrawerPending] = useState(false)
+  const [localProposals, setLocalProposals] = useState<ProposalSummary[]>([])
+  const [dirty, setDirty] = useState(false)
+  const [saveState, setSaveState] = useState<'idle' | 'saved' | 'issues'>('idle')
+  const [validationIssues, setValidationIssues] = useState<string[]>([])
+  const [activeProposalType, setActiveProposalType] = useState('')
+  const [activeProposalId, setActiveProposalId] = useState('')
   const [resolvedRelations, setResolvedRelations] = useState<ProposalResolveItem[]>([])
 
   useEffect(() => {
     if (chapterPlanData?.plan) {
       setPlan(chapterPlanData.plan)
+      setDirty(false)
+      setSaveState('idle')
+      setValidationIssues([])
       setSelectedSceneId((current) => {
         if (urlSegment && chapterPlanData.plan.scenes.some((s) => s.id === urlSegment)) return urlSegment
         return current || chapterPlanData.plan.scenes[0]?.id || ''
@@ -183,23 +408,30 @@ export function ChapterCompositionWorkspace({
     if ((chapterPlanError as WorkspaceError | null)?.statusCode === 404) {
       const scaffold = errorScaffold(chapterPlanError, chapterId)
       setPlan(scaffold)
+      setDirty(false)
       setSelectedSceneId(scaffold.scenes[0]?.id || '')
       return
     }
     setPlan(createPlanScaffold(chapterId))
+    setDirty(false)
     setSelectedSceneId('')
   }, [chapterId, chapterPlanData, chapterPlanError, urlSegment])
 
-  const proposalMap = useMemo(() => new Map(proposals.map((proposal) => [proposal.id, proposal])), [proposals])
-  const sceneProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'scene'), [proposals])
-  const encounterProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'encounter'), [proposals])
-  const npcProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'npc'), [proposals])
-  const placeProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'place'), [proposals])
-  const adversaryProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'adversary'), [proposals])
-  const itemProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'item'), [proposals])
-  const clueProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'clue'), [proposals])
-  const handoutRefProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'handout'), [proposals])
-  const factionProposals = useMemo(() => proposals.filter((proposal) => proposal.proposalType === 'faction'), [proposals])
+  const allProposals = useMemo(() => {
+    const merged = new Map(proposals.map((proposal) => [proposal.id, proposal]))
+    for (const proposal of localProposals) merged.set(proposal.id, proposal)
+    return Array.from(merged.values())
+  }, [localProposals, proposals])
+  const proposalMap = useMemo(() => new Map(allProposals.map((proposal) => [proposal.id, proposal])), [allProposals])
+  const sceneProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'scene'), [allProposals])
+  const encounterProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'encounter'), [allProposals])
+  const npcProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'npc'), [allProposals])
+  const placeProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'place'), [allProposals])
+  const adversaryProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'adversary'), [allProposals])
+  const itemProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'item'), [allProposals])
+  const clueProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'clue'), [allProposals])
+  const handoutRefProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'handout'), [allProposals])
+  const factionProposals = useMemo(() => allProposals.filter((proposal) => proposal.proposalType === 'faction'), [allProposals])
   const assignedArtifactIds = useMemo(
     () => new Set(plan.scenes.flatMap((scene) => scene.artifactRef ? [scene.artifactRef] : [])),
     [plan.scenes],
@@ -285,8 +517,40 @@ export function ChapterCompositionWorkspace({
     return { proposalId: urlCreatedProposal, planField: rel.planField, sceneId: urlSegment, label: rel.label }
   }, [urlCreatedProposal, urlRelationship, urlSegment, plan.scenes])
 
+  const workingSet = plan.workingSet ?? []
+  const workingSetProposals = useMemo(
+    () => workingSet.map((id) => proposalMap.get(id)).filter((proposal): proposal is ProposalSummary => Boolean(proposal)),
+    [proposalMap, workingSet],
+  )
+  const catalogProposals = useMemo(
+    () => workingSetProposals.filter((proposal) => catalogFilter === 'all' || proposal.proposalType === catalogFilter),
+    [catalogFilter, workingSetProposals],
+  )
+  const enrolCandidates = useMemo(() => {
+    const query = enrolQuery.trim().toLowerCase()
+    return allProposals.filter((proposal) => {
+      if (workingSet.includes(proposal.id)) return false
+      if (!query) return true
+      return `${proposal.title} ${proposal.id} ${proposal.proposalType}`.toLowerCase().includes(query)
+    })
+  }, [allProposals, enrolQuery, workingSet])
+  const selectedChapter = chapters.find((chapter) => chapter.id === chapterId)
+  const readOnly = selectedChapter?.locked === true
+  const readySceneCount = useMemo(
+    () => plan.scenes.filter((scene) => sceneReadiness(scene).state === 'ready').length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [plan.scenes, proposalMap],
+  )
+  const beatCount = useMemo(() => plan.scenes.reduce((total, scene) => total + scene.beats.length, 0), [plan.scenes])
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
   function updatePlan(mutator: (current: ChapterPlan) => ChapterPlan): void {
     setPlan((current) => mutator(clonePlan(current)))
+    setDirty(true)
+    setSaveState('idle')
   }
 
   function updateScene(sceneId: string, mutator: (scene: ChapterPlanScene) => void): void {
@@ -294,6 +558,45 @@ export function ChapterCompositionWorkspace({
       const scene = current.scenes.find((entry) => entry.id === sceneId)
       if (scene) mutator(scene)
       return current
+    })
+  }
+
+  function ensureWorkingSet(proposalId: string): void {
+    updatePlan((current) => {
+      current.workingSet = appendUniqueRef(current.workingSet, proposalId)
+      return current
+    })
+  }
+
+  function sceneRefs(scene: ChapterPlanScene): Array<{ label: string; proposalId: string; status: ReturnType<typeof proposalRefStatus> }> {
+    const refs: Array<{ label: string; proposalId: string; status: ReturnType<typeof proposalRefStatus> }> = []
+    if (scene.artifactRef) {
+      refs.push({ label: 'Artifact', proposalId: scene.artifactRef, status: proposalRefStatus(proposalMap.get(scene.artifactRef)) })
+    }
+    for (const rel of CHAPTER_SCENE_RELATIONSHIPS) {
+      const values = scene[rel.planField]
+      if (!Array.isArray(values)) continue
+      for (const proposalId of values as string[]) {
+        refs.push({ label: rel.label, proposalId, status: proposalRefStatus(proposalMap.get(proposalId)) })
+      }
+    }
+    return refs
+  }
+
+  function sceneReadiness(scene: ChapterPlanScene): { state: Readiness; refs: ReturnType<typeof sceneRefs> } {
+    const refs = sceneRefs(scene)
+    if (!scene.artifactRef) return { state: 'no-artifact', refs }
+    if (refs.some((ref) => ref.status === 'proposed' || ref.status === 'missing')) return { state: 'needs-review', refs }
+    if (refs.some((ref) => ref.status === 'reviewed')) return { state: 'needs-promotion', refs }
+    return { state: 'ready', refs }
+  }
+
+  function toggleExpanded(sceneId: string): void {
+    setExpandedSceneIds((current) => {
+      const next = new Set(current)
+      if (next.has(sceneId)) next.delete(sceneId)
+      else next.add(sceneId)
+      return next
     })
   }
 
@@ -339,6 +642,81 @@ export function ChapterCompositionWorkspace({
       return current
     })
     setSelectedSceneId(sceneId)
+  }
+
+  function addBlankSegment(): void {
+    const sceneId = nextSceneId(plan.scenes)
+    updatePlan((current) => {
+      current.scenes.push({
+        id: sceneId,
+        label: `Segment ${current.scenes.length + 1}`,
+        kind: current.scenes.length === 0 ? 'opening' : 'middle',
+        order: (current.scenes[current.scenes.length - 1]?.order ?? 0) + 10,
+        summary: '',
+        artifactRef: null,
+        npcs: [],
+        places: [],
+        adversaries: [],
+        items: [],
+        clueRefs: [],
+        handoutRefs: [],
+        factionRefs: [],
+        beats: [],
+        facts: [],
+        handouts: [],
+        triggers: [],
+      })
+      return current
+    })
+    setSelectedSceneId(sceneId)
+    setExpandedSceneIds((current) => new Set(current).add(sceneId))
+  }
+
+  async function importChapterOutline(proposal: ProposalSummary): Promise<void> {
+    try {
+      const detail = await fetchProposal(proposal.id, 'planning')
+      const outlineScenes = parseSceneSpine(detail.proposal.body)
+      const scenesToAdd = outlineScenes.length > 0
+        ? outlineScenes
+        : [{ label: proposal.title, summary: proposal.summary || 'Chapter outline dropped from the working set.' }]
+      let firstCreatedSceneId = ''
+
+      updatePlan((current) => {
+        const startIndex = current.scenes.length
+        for (const [index, outlineScene] of scenesToAdd.entries()) {
+          const sceneId = nextSceneId(current.scenes)
+          if (!firstCreatedSceneId) firstCreatedSceneId = sceneId
+          current.scenes.push({
+            id: sceneId,
+            label: outlineScene.label,
+            kind: startIndex + index === 0 ? 'opening' : index === scenesToAdd.length - 1 ? 'closing' : 'middle',
+            order: (current.scenes[current.scenes.length - 1]?.order ?? 0) + 10,
+            summary: outlineScene.summary,
+            artifactRef: null,
+            npcs: [],
+            places: [],
+            adversaries: [],
+            items: [],
+            clueRefs: [],
+            handoutRefs: [],
+            factionRefs: [],
+            beats: [],
+            facts: [],
+            handouts: [],
+            triggers: [],
+          })
+        }
+        current.workingSet = appendUniqueRef(current.workingSet, proposal.id)
+        return current
+      })
+      if (firstCreatedSceneId) {
+        setSelectedSceneId(firstCreatedSceneId)
+        setExpandedSceneIds((current) => new Set(current).add(firstCreatedSceneId))
+      }
+    } catch (err) {
+      setValidationIssues((current) => [...current, errorMessage(err, `Failed to import ${proposal.title}.`)])
+      setSaveState('issues')
+    }
   }
 
   async function attachPendingProposal(): Promise<void> {
@@ -516,802 +894,403 @@ export function ChapterCompositionWorkspace({
   }
 
   async function handleSave(): Promise<void> {
-    await onSave(plan)
+    setValidationIssues([])
+    try {
+      await onSave(plan)
+      setDirty(false)
+      setSaveState('saved')
+    } catch (err) {
+      const issues = (err as Error & { issues?: string[] })?.issues ?? []
+      setValidationIssues(issues)
+      setSaveState('issues')
+      throw err
+    }
+  }
+
+  function handleDragStart(event: DragStartEvent): void {
+    const data = event.active.data.current as DragData | undefined
+    setActiveProposalType(data?.kind === 'proposal' ? data.proposalType : '')
+    setActiveProposalId(data?.kind === 'proposal' ? data.proposalId : '')
+  }
+
+  function handleDragEnd(event: DragEndEvent): void {
+    setActiveProposalType('')
+    setActiveProposalId('')
+    const activeData = event.active.data.current as DragData | undefined
+    if (!activeData || !event.over) return
+    if (activeData.kind === 'scene') {
+      const oldIndex = plan.scenes.findIndex((scene) => `scene:${scene.id}` === event.active.id)
+      const newIndex = plan.scenes.findIndex((scene) => `scene:${scene.id}` === event.over?.id)
+      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return
+      updatePlan((current) => {
+        current.scenes = arrayMove(current.scenes, oldIndex, newIndex).map((scene, index) => ({ ...scene, order: (index + 1) * 10 }))
+        return current
+      })
+      return
+    }
+
+    const overId = String(event.over.id)
+    const [zone, sceneId] = overId.split(':')
+    const proposal = proposalMap.get(activeData.proposalId)
+    if (!proposal || !sceneId) return
+    if (zone === 'chapter-outline' && CHAPTER_SOURCE_TYPES.has(proposal.proposalType)) {
+      void importChapterOutline(proposal)
+      return
+    }
+    if (zone === 'artifact' && ARTIFACT_TYPES.has(proposal.proposalType)) {
+      updateScene(sceneId, (scene) => {
+        scene.artifactRef = proposal.id
+        scene.label = scene.label || proposal.title
+        scene.summary = scene.summary || proposal.summary || ''
+      })
+      ensureWorkingSet(proposal.id)
+      return
+    }
+    if (zone === 'joins' && RELATIONSHIP_TYPES.has(proposal.proposalType)) {
+      const rel = CHAPTER_SCENE_RELATIONSHIPS.find((entry) => entry.proposalType === proposal.proposalType)
+      if (!rel) return
+      updateScene(sceneId, (scene) => appendRelationshipRef(scene, rel.planField, proposal.id))
+      ensureWorkingSet(proposal.id)
+    }
+  }
+
+  async function createDrawerProposal(type: ProposalType, title: string, summary: string): Promise<void> {
+    setDrawerPending(true)
+    setDrawerError('')
+    try {
+      const result = await createProposal({ type, title, summary }, 'planning')
+      setLocalProposals((current) => [...current, result.proposal])
+      ensureWorkingSet(result.proposal.id)
+      setDrawerOpen(false)
+    } catch (err) {
+      setDrawerError(errorMessage(err, 'Failed to create proposal.'))
+    } finally {
+      setDrawerPending(false)
+    }
+  }
+
+  async function generateDrawerProposal(type: ProposalType, prompt: string): Promise<void> {
+    setDrawerPending(true)
+    setDrawerError('')
+    try {
+      const result = await generateProposal({ type, prompt }, 'planning')
+      setLocalProposals((current) => [...current, result.proposal])
+      ensureWorkingSet(result.proposal.id)
+      setDrawerOpen(false)
+    } catch (err) {
+      setDrawerError(errorMessage(err, 'Failed to generate proposal.'))
+    } finally {
+      setDrawerPending(false)
+    }
   }
 
   return (
-    <div className="composition-shell">
-      <div className="composition-head">
-        <div>
-          <div className="workspace-kicker">Chapter Composition</div>
-          <h3>{plan.title}</h3>
-          <p className="chapter-draft-meta">
-            Compose proposal-backed scenes with chapter-local joins, then materialise explicit tracker state.
-          </p>
-        </div>
-        <div className="composition-actions">
-          <button className="chapter-mini-btn" disabled={busy} onClick={() => void handleSave()}>
-            Save plan
-          </button>
-          <button className="chapter-mini-btn" disabled={busy} onClick={() => void onMaterialize()}>
-            Materialise
-          </button>
-        </div>
-      </div>
-
-      {(notice || error) && (
-        <div className={error ? 'error-card' : 'placeholder-card'}>
-          {error || notice}
-        </div>
-      )}
-
-      {pendingAttach && (
-        <div className="composition-attach-banner">
-          <span>
-            Ready to attach <strong>{pendingAttach.proposalId}</strong> to {pendingAttach.label} in segment <strong>{pendingAttach.sceneId}</strong>.
-          </span>
-          <button className="chapter-mini-btn" disabled={busy} onClick={() => void attachPendingProposal()}>
-            Attach
-          </button>
-          <button className="chapter-mini-btn" onClick={() => setSearchParams((prev) => {
-            const next = new URLSearchParams(prev)
-            next.delete('createdProposal')
-            next.delete('relationship')
-            next.delete('parent')
-            return next
-          }, { replace: true })}>
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {chapterPlanLoading ? (
-        <div className="placeholder-card">Loading chapter plan…</div>
-      ) : (
-        <>
-          <div className="chapter-draft-grid">
-            <label className="chapter-draft-field">
-              <span>Plan title</span>
-              <input value={plan.title} onChange={(event) => setPlan({ ...plan, title: event.target.value })} />
-            </label>
-            <label className="chapter-draft-field chapter-draft-field-wide">
-              <span>Plan notes</span>
-              <textarea rows={3} value={plan.notes || ''} onChange={(event) => setPlan({ ...plan, notes: event.target.value })} />
-            </label>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={atelierCollisionDetection}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => {
+        setActiveProposalType('')
+        setActiveProposalId('')
+      }}
+    >
+      <div className="atelier composition-shell">
+        <div className="atelier-header">
+          <div>
+            <div className="workspace-kicker">Atelier</div>
+            <h3>{plan.title}</h3>
+            <p className="chapter-draft-meta">Compose a chapter working set into scene-like segments, then save and materialise when refs are promoted.</p>
           </div>
-
-          <div className="composition-summary-grid">
-            <div className="chapter-progress-item">
-              <span>Segments</span>
-              <strong>{plan.scenes.length}</strong>
-            </div>
-            <div className="chapter-progress-item">
-              <span>Threads</span>
-              <strong>{plan.threads.length}</strong>
-            </div>
-            <div className="chapter-progress-item">
-              <span>Checkpoints</span>
-              <strong>{plan.checkpoints.length}</strong>
-            </div>
-            <div className="chapter-progress-item">
-              <span>Unready refs</span>
-              <strong>{unresolvedRefs.length}</strong>
-            </div>
+          <div className="atelier-header-actions">
+            <select value={chapterId} onChange={(event) => onSelectChapter(event.target.value)}>
+              {chapters.map((chapter) => (
+                <option key={chapter.id} value={chapter.id}>
+                  {chapter.id}{chapter.locked ? ' (locked)' : ''}{chapter.current ? ' (current)' : ''}
+                </option>
+              ))}
+            </select>
+            <button className="chapter-mini-btn" disabled={busy || readOnly} onClick={() => void handleSave()}>
+              {saveState === 'saved' ? 'Saved' : saveState === 'issues' ? `${validationIssues.length} issue(s)` : dirty ? 'Save plan' : 'Saved'}
+            </button>
+            <button className="chapter-mini-btn" disabled={busy || readOnly || dirty || validationIssues.length > 0} onClick={() => void onMaterialize()}>
+              Materialise
+            </button>
           </div>
+        </div>
 
-          <div className="composition-layout">
-            <div className="composition-column">
-              <div className="content-block markdown-block">
-                <div className="chapter-drill-head">
-                  <h4>Chapter Segments</h4>
-                  <button className="chapter-mini-btn" onClick={() => void addSegment()}>Add blank segment</button>
+        {(notice || error) && <div className={error ? 'error-card' : 'placeholder-card'}>{error || notice}</div>}
+        {readOnly && <div className="placeholder-card">This chapter is locked. You can inspect the plan but cannot save or materialise changes.</div>}
+        {validationIssues.length > 0 && (
+          <div className="composition-validation-callout">
+            <strong>Plan validation issues</strong>
+            <ul>{validationIssues.map((issue) => <li key={issue}>{issue}</li>)}</ul>
+          </div>
+        )}
+
+        {pendingAttach && (
+          <div className="composition-attach-banner">
+            <span>Ready to attach <strong>{pendingAttach.proposalId}</strong> to {pendingAttach.label} in segment <strong>{pendingAttach.sceneId}</strong>.</span>
+            <button className="chapter-mini-btn" disabled={busy || readOnly} onClick={() => void attachPendingProposal()}>Attach</button>
+            <button className="chapter-mini-btn" onClick={() => setSearchParams((prev) => {
+              const next = new URLSearchParams(prev)
+              next.delete('createdProposal')
+              next.delete('relationship')
+              next.delete('parent')
+              return next
+            }, { replace: true })}>Dismiss</button>
+          </div>
+        )}
+
+        {chapterPlanLoading ? (
+          <div className="placeholder-card">Loading chapter plan...</div>
+        ) : (
+          <div className="atelier-grid">
+            <aside className="atelier-catalog">
+              <div className="atelier-catalog-head">
+                <div>
+                  <span className="workspace-kicker">Working set</span>
+                  <strong>{workingSet.length} enrolled</strong>
                 </div>
-                  <div className="chapter-lane">
-                    {plan.scenes.length ? plan.scenes.map((scene, index) => (
-                    <div
-                      key={scene.id}
-                      className={selectedScene?.id === scene.id ? 'chapter-drill-card active' : 'chapter-drill-card'}
-                      onClick={() => setSelectedSceneId(scene.id)}
-                    >
-                      <div className="chapter-drill-head">
-                        <strong>{scene.label}</strong>
-                        <span className="status-chip subtle">{scene.kind}</span>
-                      </div>
-                      <div className="chapter-drill-meta">{scene.summary || 'No segment summary yet.'}</div>
-                      <div className="chapter-scene-actions">
-                        <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); moveScene(scene.id, -1) }} disabled={index === 0}>
-                          Up
-                        </button>
-                        <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); moveScene(scene.id, 1) }} disabled={index === plan.scenes.length - 1}>
-                          Down
-                        </button>
-                        <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); removeScene(scene.id) }}>
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  )) : <div className="placeholder-card">No segments yet. Add a proposal below or create a blank segment.</div>}
-                </div>
+                <button
+                  className="chapter-mini-btn"
+                  disabled={readOnly}
+                  onClick={() => {
+                    setDrawerType(catalogFilter !== 'all' ? catalogFilter as ProposalType : 'npc')
+                    setDrawerOpen(true)
+                  }}
+                >
+                  + New
+                </button>
               </div>
-
-              <div className="content-block markdown-block">
-                <div className="chapter-drill-head">
-                  <h4>Proposal Inputs</h4>
-                  <span className="status-chip subtle">{proposals.length} proposals</span>
-                </div>
-                <div className="composition-catalog">
-                  <div>
-                    <h5>Scenes</h5>
-                    {availableSceneProposals.length ? availableSceneProposals.map((proposal) => (
-                      <div key={proposal.id} className="composition-ref-card">
-                        <div>
-                          <strong>{proposal.title}</strong>
-                          <div className="entity-id">{proposal.id}</div>
-                        </div>
-                        <div className="composition-ref-actions">
-                          <span className={proposalStatusClass(proposalRefStatus(proposal))}>{proposalRefStatus(proposal)}</span>
-                          <span className={proposalValidationClass(proposal.validation.status)}>
-                            {proposal.validation.status}{proposal.validation.issues.length ? ` · ${proposal.validation.issues.length}` : ''}
-                          </span>
-                          <button className="chapter-mini-btn" onClick={() => void addSegment(proposal)}>Add as segment</button>
-                        </div>
-                      </div>
-                    )) : <div className="chapter-scene-meta">All scene proposals are assigned.</div>}
-                  </div>
-                  <div>
-                    <h5>Encounters</h5>
-                    {availableEncounterProposals.length ? availableEncounterProposals.map((proposal) => (
-                      <div key={proposal.id} className="composition-ref-card">
-                        <div>
-                          <strong>{proposal.title}</strong>
-                          <div className="entity-id">{proposal.id}</div>
-                        </div>
-                        <div className="composition-ref-actions">
-                          <span className={proposalStatusClass(proposalRefStatus(proposal))}>{proposalRefStatus(proposal)}</span>
-                          <span className={proposalValidationClass(proposal.validation.status)}>
-                            {proposal.validation.status}{proposal.validation.issues.length ? ` · ${proposal.validation.issues.length}` : ''}
-                          </span>
-                          <button className="chapter-mini-btn" onClick={() => void addSegment(proposal)}>Add as segment</button>
-                        </div>
-                      </div>
-                    )) : <div className="chapter-scene-meta">All encounter proposals are assigned.</div>}
-                  </div>
-                  <div>
-                    <h5>NPCs</h5>
-                    {npcProposals.map((proposal) => (
-                      <div key={proposal.id} className="composition-ref-card">
-                        <div>
-                          <strong>{proposal.title}</strong>
-                          <div className="entity-id">{proposal.id}</div>
-                        </div>
-                        <div className="composition-ref-actions">
-                          <span className={proposalStatusClass(proposalRefStatus(proposal))}>{proposalRefStatus(proposal)}</span>
-                          <span className={proposalValidationClass(proposal.validation.status)}>{proposal.validation.status}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <h5>Places</h5>
-                    {placeProposals.map((proposal) => (
-                      <div key={proposal.id} className="composition-ref-card">
-                        <div>
-                          <strong>{proposal.title}</strong>
-                          <div className="entity-id">{proposal.id}</div>
-                        </div>
-                        <div className="composition-ref-actions">
-                          <span className={proposalStatusClass(proposalRefStatus(proposal))}>{proposalRefStatus(proposal)}</span>
-                          <span className={proposalValidationClass(proposal.validation.status)}>{proposal.validation.status}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <h5>Adversaries</h5>
-                    {adversaryProposals.length ? adversaryProposals.map((proposal) => (
-                      <div key={proposal.id} className="composition-ref-card">
-                        <div>
-                          <strong>{proposal.title}</strong>
-                          <div className="entity-id">{proposal.id}</div>
-                        </div>
-                        <div className="composition-ref-actions">
-                          <span className={proposalStatusClass(proposalRefStatus(proposal))}>{proposalRefStatus(proposal)}</span>
-                          <span className={proposalValidationClass(proposal.validation.status)}>{proposal.validation.status}</span>
-                        </div>
-                      </div>
-                    )) : <div className="chapter-scene-meta">No adversary proposals available.</div>}
-                  </div>
-                  <div>
-                    <h5>Items</h5>
-                    {itemProposals.length ? itemProposals.map((proposal) => (
-                      <div key={proposal.id} className="composition-ref-card">
-                        <div>
-                          <strong>{proposal.title}</strong>
-                          <div className="entity-id">{proposal.id}</div>
-                        </div>
-                        <div className="composition-ref-actions">
-                          <span className={proposalStatusClass(proposalRefStatus(proposal))}>{proposalRefStatus(proposal)}</span>
-                          <span className={proposalValidationClass(proposal.validation.status)}>{proposal.validation.status}</span>
-                        </div>
-                      </div>
-                    )) : <div className="chapter-scene-meta">No item proposals available.</div>}
-                  </div>
-                </div>
+              <div className="atelier-tabs">
+                {CATALOG_FILTERS.map((filter) => (
+                  <button key={filter} className={catalogFilter === filter ? 'active' : ''} onClick={() => setCatalogFilter(filter)}>
+                    {filter}
+                  </button>
+                ))}
               </div>
-            </div>
-
-            <div className="composition-column">
-              {selectedScene ? (
-                <div className="chapter-inspector-card">
-                  <div className="chapter-drill-head">
-                    <strong>Edit segment</strong>
-                    <span className="status-chip subtle">{selectedScene.id}</span>
-                  </div>
-                  <div className="chapter-draft-grid">
-                    <label className="chapter-draft-field">
-                      <span>Label</span>
-                      <input value={selectedScene.label} onChange={(event) => updateScene(selectedScene.id, (scene) => { scene.label = event.target.value })} />
-                    </label>
-                    <label className="chapter-draft-field">
-                      <span>Kind</span>
-                      <select value={selectedScene.kind} onChange={(event) => updateScene(selectedScene.id, (scene) => { scene.kind = event.target.value })}>
-                        <option value="opening">opening</option>
-                        <option value="middle">middle</option>
-                        <option value="climax">climax</option>
-                        <option value="interlude">interlude</option>
-                        <option value="closing">closing</option>
-                        <option value="optional">optional</option>
-                      </select>
-                    </label>
-                    <label className="chapter-draft-field">
-                      <span>Order</span>
-                      <input type="number" value={selectedScene.order} onChange={(event) => updateScene(selectedScene.id, (scene) => { scene.order = Number(event.target.value) || 0 })} />
-                    </label>
-                    <label className="chapter-draft-field chapter-draft-field-wide">
-                      <span>Summary</span>
-                      <textarea rows={4} value={selectedScene.summary} onChange={(event) => updateScene(selectedScene.id, (scene) => { scene.summary = event.target.value })} />
-                    </label>
-                    <label className="chapter-draft-field chapter-draft-field-wide">
-                      <span>Scene or encounter artifact</span>
-                      <select
-                        value={selectedScene.artifactRef || ''}
-                        onChange={(event) => updateScene(selectedScene.id, (scene) => { scene.artifactRef = event.target.value || null })}
-                      >
-                        <option value="">No linked artifact</option>
-                        <optgroup label="Scenes">
-                          {sceneProposals.map((proposal) => (
-                            <option key={proposal.id} value={proposal.id}>{proposal.title} · {proposalRefStatus(proposal)}</option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Encounters">
-                          {encounterProposals.map((proposal) => (
-                            <option key={proposal.id} value={proposal.id}>{proposal.title} · {proposalRefStatus(proposal)}</option>
-                          ))}
-                        </optgroup>
-                      </select>
-                      {selectedScene.artifactRef && (
-                        <span className="composition-selected-ref">
-                          <span className="entity-id">{selectedScene.artifactRef}</span>
-                          <span className={proposalStatusClass(proposalRefStatus(selectedArtifact))}>
-                            {selectedArtifact?.proposalType || 'missing'} · {proposalRefStatus(selectedArtifact)}
-                          </span>
-                        </span>
-                      )}
-                    </label>
-                  </div>
-
-                  {selectedArtifact?.validation.issues.length ? (
-                    <details className="composition-validation-callout">
-                      <summary>
-                        {selectedArtifact.validation.issues.length} unresolved validation issue(s) on this {selectedArtifact.proposalType}
-                      </summary>
-                      <ul>
-                        {selectedArtifact.validation.issues.map((issue) => <li key={issue}>{issue}</li>)}
-                      </ul>
-                    </details>
-                  ) : null}
-
-                  {unresolvedArtifactRelations.length ? (
-                    <div className="composition-validation-callout">
-                      <strong>Related content without a proposal in this segment</strong>
-                      <p>These relationships exist on the artifact but are not yet attached to this segment. Create or select a proposal to fill each slot.</p>
-                      <ul>
-                        {unresolvedArtifactRelations.map((rel) => (
-                          <li key={`${rel.slot}:${rel.rawId}`} className="composition-unresolved-item">
-                            <span className="entity-id">{rel.slot}: {rel.title} · {rel.state}</span>
-                            {rel.state === 'ambiguous' ? (
-                              <span className="status-chip proposal-reviewed">ambiguous match</span>
-                            ) : rel.state === 'proposal' || rel.state === 'promoted' ? (
-                              <button
-                                className="chapter-mini-btn"
-                                onClick={() => attachRelationshipToSelected(rel.planField, rel.resolvedId)}
-                              >
-                                Attach
-                              </button>
-                            ) : (
-                              <button
-                                className="chapter-mini-btn"
-                                onClick={() => {
-                                  const params = new URLSearchParams({
-                                    chapter: chapterId,
-                                    segment: selectedScene?.id ?? '',
-                                    relationship: rel.slot,
-                                    parent: selectedArtifact?.id ?? '',
-                                  })
-                                  void navigate(`/proposals?${params.toString()}`)
-                                }}
-                              >
-                                Propose
-                              </button>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-
-                  <div className="composition-join-section">
-                    <h4>Segment joins</h4>
-                    <div className="composition-join-grid">
-                      <div>
-                        <div className="chapter-scene-meta">NPCs</div>
-                        <div className="composition-toggle-list">
-                          {npcProposals.map((proposal) => {
-                            const active = (selectedScene.npcs ?? []).includes(proposal.id)
-                            return (
-                              <button
-                                key={proposal.id}
-                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                                onClick={() => updateScene(selectedScene.id, (scene) => {
-                                  scene.npcs = active ? (scene.npcs ?? []).filter((id) => id !== proposal.id) : [...(scene.npcs ?? []), proposal.id]
-                                })}
-                              >
-                                {proposal.title}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="chapter-scene-meta">Places</div>
-                        <div className="composition-toggle-list">
-                          {placeProposals.map((proposal) => {
-                            const active = (selectedScene.places ?? []).includes(proposal.id)
-                            return (
-                              <button
-                                key={proposal.id}
-                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                                onClick={() => updateScene(selectedScene.id, (scene) => {
-                                  scene.places = active ? (scene.places ?? []).filter((id) => id !== proposal.id) : [...(scene.places ?? []), proposal.id]
-                                })}
-                              >
-                                {proposal.title}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="chapter-scene-meta">Adversaries</div>
-                        <div className="composition-toggle-list">
-                          {adversaryProposals.map((proposal) => {
-                            const active = (selectedScene.adversaries ?? []).includes(proposal.id)
-                            return (
-                              <button
-                                key={proposal.id}
-                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                                onClick={() => updateScene(selectedScene.id, (scene) => {
-                                  scene.adversaries = active
-                                    ? (scene.adversaries ?? []).filter((id) => id !== proposal.id)
-                                    : [...(scene.adversaries ?? []), proposal.id]
-                                })}
-                              >
-                                {proposal.title}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="chapter-scene-meta">Items</div>
-                        <div className="composition-toggle-list">
-                          {itemProposals.map((proposal) => {
-                            const active = (selectedScene.items ?? []).includes(proposal.id)
-                            return (
-                              <button
-                                key={proposal.id}
-                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                                onClick={() => updateScene(selectedScene.id, (scene) => {
-                                  scene.items = active
-                                    ? (scene.items ?? []).filter((id) => id !== proposal.id)
-                                    : [...(scene.items ?? []), proposal.id]
-                                })}
-                              >
-                                {proposal.title}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="chapter-scene-meta">Clues</div>
-                        <div className="composition-toggle-list">
-                          {clueProposals.map((proposal) => {
-                            const active = (selectedScene.clueRefs ?? []).includes(proposal.id)
-                            return (
-                              <button
-                                key={proposal.id}
-                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                                onClick={() => updateScene(selectedScene.id, (scene) => {
-                                  scene.clueRefs = active
-                                    ? (scene.clueRefs ?? []).filter((id) => id !== proposal.id)
-                                    : [...(scene.clueRefs ?? []), proposal.id]
-                                })}
-                              >
-                                {proposal.title}
-                              </button>
-                            )
-                          })}
-                          {!clueProposals.length && <div className="chapter-scene-meta">No clue proposals available.</div>}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="chapter-scene-meta">Handout Refs</div>
-                        <div className="composition-toggle-list">
-                          {handoutRefProposals.map((proposal) => {
-                            const active = (selectedScene.handoutRefs ?? []).includes(proposal.id)
-                            return (
-                              <button
-                                key={proposal.id}
-                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                                onClick={() => updateScene(selectedScene.id, (scene) => {
-                                  scene.handoutRefs = active
-                                    ? (scene.handoutRefs ?? []).filter((id) => id !== proposal.id)
-                                    : [...(scene.handoutRefs ?? []), proposal.id]
-                                })}
-                              >
-                                {proposal.title}
-                              </button>
-                            )
-                          })}
-                          {!handoutRefProposals.length && <div className="chapter-scene-meta">No handout proposals available.</div>}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="chapter-scene-meta">Factions</div>
-                        <div className="composition-toggle-list">
-                          {factionProposals.map((proposal) => {
-                            const active = (selectedScene.factionRefs ?? []).includes(proposal.id)
-                            return (
-                              <button
-                                key={proposal.id}
-                                className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                                onClick={() => updateScene(selectedScene.id, (scene) => {
-                                  scene.factionRefs = active
-                                    ? (scene.factionRefs ?? []).filter((id) => id !== proposal.id)
-                                    : [...(scene.factionRefs ?? []), proposal.id]
-                                })}
-                              >
-                                {proposal.title}
-                              </button>
-                            )
-                          })}
-                          {!factionProposals.length && <div className="chapter-scene-meta">No faction proposals available.</div>}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="composition-join-section">
-                    <div className="chapter-drill-head">
-                      <h4>Beats</h4>
-                      <button className="chapter-mini-btn" onClick={addBeat}>Add beat</button>
-                    </div>
-                    <div className="chapter-lane">
-                      {selectedScene.beats.map((beat) => (
-                        <div key={beat.id} className="chapter-drill-card">
-                          <div className="chapter-draft-grid">
-                            <label className="chapter-draft-field">
-                              <span>Id</span>
-                              <input value={beat.id} onChange={(event) => updateNestedItem('beats', beat.id, { id: event.target.value })} />
-                            </label>
-                            <label className="chapter-draft-field">
-                              <span>Label</span>
-                              <input value={beat.label} onChange={(event) => updateNestedItem('beats', beat.id, { label: event.target.value })} />
-                            </label>
-                            <label className="chapter-draft-field chapter-draft-field-wide">
-                              <span>Description</span>
-                              <textarea rows={2} value={beat.desc} onChange={(event) => updateNestedItem('beats', beat.id, { desc: event.target.value })} />
-                            </label>
-                          </div>
-                          <button className="chapter-mini-btn" onClick={() => removeNestedItem('beats', beat.id)}>Remove</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="composition-join-section">
-                    <div className="chapter-drill-head">
-                      <h4>Facts</h4>
-                      <button className="chapter-mini-btn" onClick={addFact}>Add fact</button>
-                    </div>
-                    <div className="chapter-lane">
-                      {selectedScene.facts.map((fact) => (
-                        <div key={fact.id} className="chapter-drill-card">
-                          <div className="chapter-draft-grid">
-                            <label className="chapter-draft-field">
-                              <span>Id</span>
-                              <input value={fact.id} onChange={(event) => updateNestedItem('facts', fact.id, { id: event.target.value })} />
-                            </label>
-                            <label className="chapter-draft-field">
-                              <span>Label</span>
-                              <input value={fact.label} onChange={(event) => updateNestedItem('facts', fact.id, { label: event.target.value })} />
-                            </label>
-                            <label className="chapter-draft-field chapter-draft-field-wide">
-                              <span>Description</span>
-                              <textarea rows={2} value={fact.desc || ''} onChange={(event) => updateNestedItem('facts', fact.id, { desc: event.target.value })} />
-                            </label>
-                          </div>
-                          <button className="chapter-mini-btn" onClick={() => removeNestedItem('facts', fact.id)}>Remove</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="composition-join-section">
-                    <div className="chapter-drill-head">
-                      <h4>Handouts</h4>
-                      <button className="chapter-mini-btn" onClick={addHandout}>Add handout</button>
-                    </div>
-                    <div className="chapter-lane">
-                      {selectedScene.handouts.map((handout) => (
-                        <div key={handout.id} className="chapter-drill-card">
-                          <div className="chapter-draft-grid">
-                            <label className="chapter-draft-field">
-                              <span>Id</span>
-                              <input value={handout.id} onChange={(event) => updateNestedItem('handouts', handout.id, { id: event.target.value })} />
-                            </label>
-                            <label className="chapter-draft-field">
-                              <span>Label</span>
-                              <input value={handout.label} onChange={(event) => updateNestedItem('handouts', handout.id, { label: event.target.value })} />
-                            </label>
-                            <label className="chapter-draft-field chapter-draft-field-wide">
-                              <span>Description</span>
-                              <textarea rows={2} value={handout.desc || ''} onChange={(event) => updateNestedItem('handouts', handout.id, { desc: event.target.value })} />
-                            </label>
-                          </div>
-                          <button className="chapter-mini-btn" onClick={() => removeNestedItem('handouts', handout.id)}>Remove</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="composition-join-section">
-                    <div className="chapter-drill-head">
-                      <h4>Thread triggers</h4>
-                      <button
-                        className="chapter-mini-btn"
-                        onClick={addTrigger}
-                        disabled={!plan.threads.length || !(selectedScene.beats.length || selectedScene.facts.length || selectedScene.handouts.length)}
-                      >
-                        Add trigger
-                      </button>
-                    </div>
-                    {!plan.threads.length ? (
-                      <div className="chapter-scene-meta">Add a chapter thread before creating triggers.</div>
-                    ) : !(selectedScene.beats.length || selectedScene.facts.length || selectedScene.handouts.length) ? (
-                      <div className="chapter-scene-meta">Add a beat, fact, or handout to this segment before creating triggers.</div>
-                    ) : null}
-                    <div className="chapter-lane">
-                      {(selectedScene.triggers ?? []).map((trigger, index) => {
-                        const targets = triggerTargets(selectedScene, trigger.on)
-                        return (
-                          <div key={`${trigger.on}-${trigger.id}-${trigger.threadId}-${index}`} className="chapter-drill-card">
-                            <div className="chapter-draft-grid">
-                              <label className="chapter-draft-field">
-                                <span>When</span>
-                                <select
-                                  value={trigger.on}
-                                  onChange={(event) => updateTrigger(index, { on: event.target.value as TriggerEvent })}
-                                >
-                                  {selectedScene.facts.length ? <option value="fact">Fact revealed</option> : null}
-                                  {selectedScene.beats.length ? <option value="beat">Beat completed</option> : null}
-                                  {selectedScene.handouts.length ? <option value="handout">Handout posted</option> : null}
-                                </select>
-                              </label>
-                              <label className="chapter-draft-field">
-                                <span>Target</span>
-                                <select value={trigger.id} onChange={(event) => updateTrigger(index, { id: event.target.value })}>
-                                  {targets.map((target) => (
-                                    <option key={target.id} value={target.id}>{target.label} · {target.id}</option>
-                                  ))}
-                                </select>
-                              </label>
-                              <label className="chapter-draft-field">
-                                <span>Thread</span>
-                                <select value={trigger.threadId} onChange={(event) => updateTrigger(index, { threadId: event.target.value })}>
-                                  {plan.threads.map((thread) => {
-                                    const worldThread = worldThreads.find((candidate) => candidate.id === thread.threadId)
-                                    return <option key={thread.threadId} value={thread.threadId}>{worldThread?.name || thread.threadId}</option>
-                                  })}
-                                </select>
-                              </label>
-                              <label className="chapter-draft-field">
-                                <span>Set status</span>
-                                <select
-                                  value={trigger.setStatus}
-                                  onChange={(event) => updateTrigger(index, { setStatus: event.target.value as ThreadStatus })}
-                                >
-                                  {THREAD_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-                                </select>
-                              </label>
-                            </div>
-                            <button className="chapter-mini-btn" onClick={() => removeTrigger(index)}>Remove</button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="placeholder-card">Select or add a scene to edit joins and chapter-local assembly data.</div>
-              )}
-
-              <div className="chapter-inspector-card">
-                <div className="chapter-drill-head">
-                  <h4>Threads</h4>
-                  <button className="chapter-mini-btn" onClick={addThread}>Add thread</button>
-                </div>
-                <div className="chapter-lane">
-                  {plan.threads.map((thread, index) => (
-                    <div key={`${thread.threadId}-${index}`} className="chapter-drill-card">
-                      <div className="chapter-draft-grid">
-                        <label className="chapter-draft-field">
-                          <span>Thread</span>
-                          <select
-                            value={thread.threadId}
-                            onChange={(event) => updatePlan((current) => {
-                              const previousThreadId = current.threads[index].threadId
-                              current.threads[index].threadId = event.target.value
-                              current.scenes.forEach((scene) => {
-                                scene.triggers = (scene.triggers ?? []).map((trigger) => (
-                                  trigger.threadId === previousThreadId ? { ...trigger, threadId: event.target.value } : trigger
-                                ))
-                              })
-                              return current
-                            })}
-                          >
-                            {worldThreads.map((worldThread) => (
-                              <option key={worldThread.id} value={worldThread.id}>{worldThread.name || worldThread.id}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="chapter-draft-field chapter-draft-field-wide">
-                          <span>Hook</span>
-                          <textarea
-                            rows={2}
-                            value={thread.hook}
-                            onChange={(event) => updatePlan((current) => {
-                              current.threads[index].hook = event.target.value
-                              return current
-                            })}
-                          />
-                        </label>
-                      </div>
-                      <div className="composition-toggle-list">
-                        {plan.scenes.map((scene) => {
-                          const active = (thread.cueSceneIds ?? []).includes(scene.id)
-                          return (
-                            <button
-                              key={scene.id}
-                              className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                              onClick={() => updatePlan((current) => {
-                                const cueSceneIds = current.threads[index].cueSceneIds ?? []
-                                current.threads[index].cueSceneIds = active
-                                  ? cueSceneIds.filter((id) => id !== scene.id)
-                                  : [...cueSceneIds, scene.id]
-                                return current
-                              })}
-                            >
-                              {scene.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                      <button className="chapter-mini-btn" onClick={() => updatePlan((current) => {
-                        const removedThreadId = current.threads[index].threadId
-                        current.threads.splice(index, 1)
-                        current.scenes.forEach((scene) => {
-                          scene.triggers = (scene.triggers ?? []).filter((trigger) => trigger.threadId !== removedThreadId)
-                        })
-                        return current
-                      })}>
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="chapter-inspector-card">
-                <div className="chapter-drill-head">
-                  <h4>Checkpoints</h4>
-                  <button className="chapter-mini-btn" onClick={addCheckpoint}>Add checkpoint</button>
-                </div>
-                <div className="chapter-lane">
-                  {plan.checkpoints.map((checkpoint, index) => (
-                    <div key={checkpoint.id} className="chapter-drill-card">
-                      <div className="chapter-draft-grid">
-                        <label className="chapter-draft-field">
-                          <span>Label</span>
-                          <input value={checkpoint.label} onChange={(event) => updatePlan((current) => {
-                            current.checkpoints[index].label = event.target.value
-                            return current
-                          })} />
-                        </label>
-                        <label className="chapter-draft-field">
-                          <span>Index</span>
-                          <input type="number" value={checkpoint.index} onChange={(event) => updatePlan((current) => {
-                            current.checkpoints[index].index = Number(event.target.value) || 0
-                            return current
-                          })} />
-                        </label>
-                        <label className="chapter-draft-field chapter-draft-field-wide">
-                          <span>Pause label</span>
-                          <input value={checkpoint.pauseLabel || ''} onChange={(event) => updatePlan((current) => {
-                            current.checkpoints[index].pauseLabel = event.target.value || null
-                            return current
-                          })} />
-                        </label>
-                      </div>
-                      <div className="composition-toggle-list">
-                        {plan.scenes.map((scene) => {
-                          const active = checkpoint.sceneIds.includes(scene.id)
-                          return (
-                            <button
-                              key={scene.id}
-                              className={active ? 'chapter-mini-btn active-chip' : 'chapter-mini-btn'}
-                              onClick={() => updatePlan((current) => {
-                                const sceneIds = current.checkpoints[index].sceneIds
-                                current.checkpoints[index].sceneIds = active
-                                  ? sceneIds.filter((id) => id !== scene.id)
-                                  : [...sceneIds, scene.id]
-                                return current
-                              })}
-                            >
-                              {scene.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                      <button className="chapter-mini-btn" onClick={() => updatePlan((current) => {
-                        current.checkpoints.splice(index, 1)
-                        return current
-                      })}>
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="chapter-inspector-card">
-                <h4>Materialised Output</h4>
-                {chapterDetail ? (
-                  <div className="detail-grid">
-                    <div><span>Facts</span><strong>{chapterDetail.facts?.facts?.length || 0}</strong></div>
-                    <div><span>Handouts</span><strong>{chapterDetail.handouts?.handouts?.length || 0}</strong></div>
-                    <div><span>Beats</span><strong>{chapterDetail.beats?.beats?.length || 0}</strong></div>
-                    <div><span>Scenes</span><strong>{chapterDetail.scenes?.scenes?.length || 0}</strong></div>
-                  </div>
-                ) : (
-                  <div className="placeholder-card">Materialised state will appear here after you run the materialiser.</div>
+              <div className="atelier-prop-list">
+                {catalogProposals.length ? catalogProposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} />) : (
+                  <div className="placeholder-card">No enrolled proposals for this filter. Enrol from corpus or create one inline.</div>
                 )}
               </div>
+              <button className="atelier-enrol-btn" disabled={readOnly} onClick={() => setEnrolOpen(true)}>+ Enrol from corpus</button>
+            </aside>
+
+            <main className="atelier-canvas">
+              <div className="atelier-title-row">
+                <label className="chapter-draft-field">
+                  <span>Chapter title</span>
+                  <input disabled={readOnly} value={plan.title} onChange={(event) => updatePlan((current) => ({ ...current, title: event.target.value }))} />
+                </label>
+                <div className="atelier-stats">
+                  <span>{plan.scenes.length} scenes</span>
+                  <span>{beatCount} beats</span>
+                  <span>{readySceneCount} ready</span>
+                </div>
+              </div>
+              <label className="chapter-draft-field">
+                <span>Plan notes</span>
+                <textarea disabled={readOnly} rows={2} value={plan.notes || ''} onChange={(event) => updatePlan((current) => ({ ...current, notes: event.target.value }))} />
+              </label>
+              <div className="atelier-rail-head">
+                <h4>Scene rail</h4>
+                <button className="chapter-mini-btn" disabled={readOnly} onClick={addBlankSegment}>Add blank segment</button>
+              </div>
+              <DroppableZone id="chapter-outline:rail" accepts={CHAPTER_SOURCE_TYPES} activeProposalType={activeProposalType}>
+                <div className="atelier-zone-title">Chapter outline drop zone</div>
+                <span>Drop a chapter-outline proposal here to append its Scene Spine as blank segments.</span>
+              </DroppableZone>
+              <SortableContext items={plan.scenes.map((scene) => `scene:${scene.id}`)} strategy={verticalListSortingStrategy}>
+                <div className="atelier-scene-rail">
+                  {plan.scenes.length ? plan.scenes.map((scene) => {
+                    const readiness = sceneReadiness(scene)
+                    const expanded = expandedSceneIds.has(scene.id) || selectedSceneId === scene.id
+                    const artifact = scene.artifactRef ? proposalMap.get(scene.artifactRef) : undefined
+                    return (
+                      <SortableSceneCard key={scene.id} scene={scene}>
+                        <div className="atelier-scene-content" onClick={() => setSelectedSceneId(scene.id)}>
+                          <div className="atelier-scene-top">
+                            <div>
+                              <span className="status-chip subtle">{scene.kind}</span>
+                              <h4>{scene.label}</h4>
+                              <span className="entity-id">{scene.id}</span>
+                            </div>
+                            <div className="atelier-scene-actions">
+                              <span className={readinessClass(readiness.state)}>{readinessLabel(readiness.state)}</span>
+                              <button className="chapter-mini-btn" onClick={(event) => { event.stopPropagation(); toggleExpanded(scene.id) }}>
+                                {expanded ? 'Collapse' : 'Expand'}
+                              </button>
+                              <button className="chapter-mini-btn" disabled={readOnly} onClick={(event) => { event.stopPropagation(); removeScene(scene.id) }}>
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                          <p>{scene.summary || 'No segment summary yet.'}</p>
+
+                          {expanded && (
+                            <div className="atelier-scene-expanded">
+                              <div className="chapter-draft-grid">
+                                <label className="chapter-draft-field">
+                                  <span>Label</span>
+                                  <input disabled={readOnly} value={scene.label} onChange={(event) => updateScene(scene.id, (entry) => { entry.label = event.target.value })} />
+                                </label>
+                                <label className="chapter-draft-field">
+                                  <span>Kind</span>
+                                  <select disabled={readOnly} value={scene.kind} onChange={(event) => updateScene(scene.id, (entry) => { entry.kind = event.target.value })}>
+                                    <option value="opening">opening</option>
+                                    <option value="middle">middle</option>
+                                    <option value="climax">climax</option>
+                                    <option value="interlude">interlude</option>
+                                    <option value="closing">closing</option>
+                                    <option value="optional">optional</option>
+                                  </select>
+                                </label>
+                                <label className="chapter-draft-field chapter-draft-field-wide">
+                                  <span>Summary</span>
+                                  <textarea disabled={readOnly} rows={3} value={scene.summary} onChange={(event) => updateScene(scene.id, (entry) => { entry.summary = event.target.value })} />
+                                </label>
+                              </div>
+
+                              <DroppableZone id={`artifact:${scene.id}`} accepts={ARTIFACT_TYPES} activeProposalType={activeProposalType}>
+                                <div className="atelier-zone-title">Artifact drop zone</div>
+                                {artifact ? (
+                                  <div className="composition-selected-ref">
+                                    <span>{artifact.title}</span>
+                                    <span className={proposalStatusClass(proposalRefStatus(artifact))}>{proposalRefStatus(artifact)}</span>
+                                  </div>
+                                ) : <span>Drop a scene or encounter proposal here.</span>}
+                              </DroppableZone>
+
+                              <DroppableZone id={`joins:${scene.id}`} accepts={RELATIONSHIP_TYPES} activeProposalType={activeProposalType}>
+                                <div className="atelier-zone-title">Joins drop zone</div>
+                                <div className="atelier-join-list">
+                                  {CHAPTER_SCENE_RELATIONSHIPS.map((rel) => {
+                                    const values = Array.isArray(scene[rel.planField]) ? scene[rel.planField] as string[] : []
+                                    return (
+                                      <div key={rel.planField} className="atelier-join-group">
+                                        <strong>{rel.label}</strong>
+                                        {values.length ? values.map((proposalId) => {
+                                          const proposal = proposalMap.get(proposalId)
+                                          const status = proposalRefStatus(proposal)
+                                          return (
+                                            <span key={proposalId} className="atelier-join-pill">
+                                              {proposal?.title ?? proposalId}
+                                              <span className={proposalStatusClass(status)}>{status}</span>
+                                              <button disabled={readOnly} onClick={() => updateScene(scene.id, (entry) => removeRelationshipRef(entry, rel.planField, proposalId))}>x</button>
+                                            </span>
+                                          )
+                                        }) : <em>None</em>}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </DroppableZone>
+
+                              <div className="atelier-readiness-detail">
+                                <strong>Readiness detail</strong>
+                                {readiness.refs.length ? readiness.refs.map((ref) => (
+                                  <span key={`${ref.label}:${ref.proposalId}`}>
+                                    {ref.label}: <code>{ref.proposalId}</code> <span className={proposalStatusClass(ref.status)}>{ref.status}</span>
+                                  </span>
+                                )) : <span>No proposal references yet.</span>}
+                              </div>
+
+                              {validationIssues.filter((issue) => issue.includes(scene.id)).map((issue) => (
+                                <div key={issue} className="composition-validation-callout">{issue}</div>
+                              ))}
+
+                              <div className="atelier-local-items">
+                                <div className="chapter-drill-head"><h4>Beats</h4><button disabled={readOnly} className="chapter-mini-btn" onClick={addBeat}>Add beat</button></div>
+                                {scene.beats.map((beat) => (
+                                  <div key={beat.id} className="chapter-drill-card">
+                                    <input disabled={readOnly} value={beat.id} onChange={(event) => updateNestedItem('beats', beat.id, { id: event.target.value })} />
+                                    <input disabled={readOnly} value={beat.label} onChange={(event) => updateNestedItem('beats', beat.id, { label: event.target.value })} />
+                                    <button disabled={readOnly} className="chapter-mini-btn" onClick={() => removeNestedItem('beats', beat.id)}>Remove</button>
+                                  </div>
+                                ))}
+                                <div className="chapter-drill-head"><h4>Facts</h4><button disabled={readOnly} className="chapter-mini-btn" onClick={addFact}>Add fact</button></div>
+                                {scene.facts.map((fact) => (
+                                  <div key={fact.id} className="chapter-drill-card">
+                                    <input disabled={readOnly} value={fact.id} onChange={(event) => updateNestedItem('facts', fact.id, { id: event.target.value })} />
+                                    <input disabled={readOnly} value={fact.label} onChange={(event) => updateNestedItem('facts', fact.id, { label: event.target.value })} />
+                                    <button disabled={readOnly} className="chapter-mini-btn" onClick={() => removeNestedItem('facts', fact.id)}>Remove</button>
+                                  </div>
+                                ))}
+                                <div className="chapter-drill-head"><h4>Handouts</h4><button disabled={readOnly} className="chapter-mini-btn" onClick={addHandout}>Add handout</button></div>
+                                {scene.handouts.map((handout) => (
+                                  <div key={handout.id} className="chapter-drill-card">
+                                    <input disabled={readOnly} value={handout.id} onChange={(event) => updateNestedItem('handouts', handout.id, { id: event.target.value })} />
+                                    <input disabled={readOnly} value={handout.label} onChange={(event) => updateNestedItem('handouts', handout.id, { label: event.target.value })} />
+                                    <button disabled={readOnly} className="chapter-mini-btn" onClick={() => removeNestedItem('handouts', handout.id)}>Remove</button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </SortableSceneCard>
+                    )
+                  }) : <div className="placeholder-card">No segments yet. Add a blank segment or drop in scene proposals after enrolling them.</div>}
+                </div>
+              </SortableContext>
+            </main>
+          </div>
+        )}
+
+        {enrolOpen && (
+          <div className="atelier-modal-backdrop">
+            <div className="atelier-modal">
+              <div className="chapter-drill-head">
+                <h4>Enrol from corpus</h4>
+                <button className="chapter-mini-btn" onClick={() => setEnrolOpen(false)}>Close</button>
+              </div>
+              <input className="search-input" value={enrolQuery} onChange={(event) => setEnrolQuery(event.target.value)} placeholder="Search proposals by title, id, or type" />
+              <div className="atelier-enrol-list">
+                {enrolCandidates.map((proposal) => (
+                  <div key={proposal.id} className="composition-ref-card">
+                    <div><strong>{proposal.title}</strong><div className="entity-id">{proposal.id}</div></div>
+                    <div className="composition-ref-actions">
+                      <span className="status-chip subtle">{proposal.proposalType}</span>
+                      <span className={proposalStatusClass(proposalRefStatus(proposal))}>{proposalRefStatus(proposal)}</span>
+                      <button className="chapter-mini-btn" disabled={readOnly} onClick={() => ensureWorkingSet(proposal.id)}>Enrol</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </>
-      )}
-    </div>
+        )}
+
+        {drawerOpen && (
+          <div className="atelier-drawer">
+            <ProposalFormShell
+              mode="create"
+              initialType={drawerType}
+              isPending={drawerPending}
+              error={drawerError}
+              contextBanner={`Creating a ${drawerType} proposal for ${chapterId}. It will be enrolled in this chapter working set.`}
+              onCancel={() => setDrawerOpen(false)}
+              onCreate={(type, title, summary) => void createDrawerProposal(type, title, summary)}
+              onGenerate={(type, prompt) => void generateDrawerProposal(type, prompt)}
+            />
+          </div>
+        )}
+      </div>
+      <DragOverlay>
+        {activeProposalId ? (
+          <div className="atelier-prop-card atelier-drag-overlay">
+            <div className="atelier-prop-glyph">{glyphForType(proposalMap.get(activeProposalId)?.proposalType ?? '')}</div>
+            <div className="atelier-prop-main">
+              <strong>{proposalMap.get(activeProposalId)?.title ?? activeProposalId}</strong>
+              <span className="entity-id">{activeProposalId}</span>
+              <span>{proposalMap.get(activeProposalId)?.summary || 'Dragging proposal.'}</span>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   )
+
 }

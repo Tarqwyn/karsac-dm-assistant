@@ -130,6 +130,7 @@ type ChapterPlan = {
   title: string
   updatedAt?: string
   notes?: string
+  workingSet?: string[]
   scenes: ChapterPlanScene[]
   threads: ChapterPlanThread[]
   checkpoints: ChapterPlanCheckpoint[]
@@ -522,6 +523,7 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       title: chapterNumber ? `Chapter ${chapterNumber}` : chapterId,
       updatedAt: new Date().toISOString(),
       notes: '',
+      workingSet: [],
       scenes: [],
       threads: [],
       checkpoints: [],
@@ -691,6 +693,9 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
       title: raw.title !== undefined ? asString(raw.title, 'title') : source.title,
       updatedAt: new Date().toISOString(),
       notes: raw.notes !== undefined ? String(raw.notes) : (source.notes ?? ''),
+      workingSet: raw.workingSet !== undefined
+        ? asStringArray(raw.workingSet, 'workingSet')
+        : (source.workingSet ?? []),
       scenes: raw.scenes !== undefined
         ? (Array.isArray(raw.scenes) ? raw.scenes.map((entry, index) => normalizePlanScene(entry, index)) : (() => { throw new StateServiceError(400, 'scenes must be an array.', 'invalid_request_error') })())
         : source.scenes,
@@ -808,6 +813,14 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
     return Array.from(ids)
   }
 
+  function seedWorkingSet(plan: ChapterPlan): ChapterPlan {
+    if ((plan.workingSet ?? []).length > 0) return plan
+    return {
+      ...plan,
+      workingSet: collectPlanReferenceIds(plan),
+    }
+  }
+
   function annotatePlanReferences(plan: ChapterPlan): ChapterPlanReferenceStatus[] {
     const proposalIndex = readProposalIndex()
     return collectPlanReferenceIds(plan).map((proposalId) => {
@@ -839,7 +852,7 @@ export function createStateService(stateRoot = STATE_ROOT): StateService {
         'not_found_error',
       )
     }
-    const plan = normalizeChapterPlan(chapterId, readJsonFile(filePath))
+    const plan = seedWorkingSet(normalizeChapterPlan(chapterId, readJsonFile(filePath)))
     return {
       plan,
       referenceStatuses: annotatePlanReferences(plan),

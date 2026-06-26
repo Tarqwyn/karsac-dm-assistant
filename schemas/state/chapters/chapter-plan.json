@@ -25,6 +25,12 @@
         "notes": {
           "type": "string"
         },
+        "workingSet": {
+          "type": "array",
+          "items": {
+            "$ref": "https://karsac.local/schemas/state/_shared.json#/$defs/nonEmptyString"
+          }
+        },
         "scenes": {
           "type": "array",
           "items": {

@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      --bg: #f0ece4; --surf: #fff; --card: #faf7f3; --border: #e0d8cc;
+      --text: #1c1814; --muted: #7a6f62; --faint: #b5a898;
+      --accent: #2e7d56; --accent-soft: #e6f3ec;
+      --promoted: #2e7d56; --reviewed: #b06c22; --proposed: #8a7a6e;
+      --pass: #2e7d56; --warn: #b06c22; --fail: #b83030;
+      --shadow: 0 1px 4px rgba(28,24,20,.07);
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+    @keyframes slideLeft { from { transform:translateX(-100%); opacity:0; } to { transform:none; opacity:1; } }
+    @keyframes popIn { from { opacity:0; transform:scale(.97) translateY(6px); } to { opacity:1; transform:none; } }
+    @keyframes flashSave { 0%,100% { background:var(--surf); } 40% { background:var(--accent-soft); } }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    .hdr {
+      position: fixed; top:0; left:0; right:0; z-index:200; height:52px;
+      display:flex; align-items:center; justify-content:space-between; padding:0 18px; gap:12px;
+      background:var(--surf); border-bottom:1px solid var(--border);
+    }
+    .hdr-l { display:flex; align-items:center; gap:10px; }
+    .jewel {
+      width:24px; height:24px; border-radius:6px; background:#1c1814;
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:800; color:#fff; letter-spacing:-.01em; flex-shrink:0;
+    }
+    .brand { font-size:13px; font-weight:700; color:var(--text); }
+    .hdr-sep { color:var(--border); font-size:16px; }
+    .ch-sel {
+      border:1px solid var(--border); border-radius:6px; background:var(--bg);
+      color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
+      padding:5px 28px 5px 10px; cursor:pointer; appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%237a6f62' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 9px center;
+    }
+    .locked-chip {
+      font-size:10px; font-weight:700; color:var(--muted); background:var(--bg);
+      border:1px solid var(--border); border-radius:4px; padding:2px 8px; letter-spacing:.04em;
+    }
+    .hdr-r { display:flex; align-items:center; gap:8px; }
+    .save-lbl { font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; }
+    .save-ok { color:var(--promoted); background:var(--accent-soft); }
+    .save-err { color:var(--fail); background:rgba(184,48,48,.1); }
+    .btn-save {
+      padding:7px 16px; border-radius:7px; border:1px solid var(--border);
+      background:var(--surf); color:var(--text); font-size:12px; font-weight:600;
+      cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .13s;
+    }
+    .btn-save:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+    .btn-save:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-mat {
+      padding:7px 16px; border-radius:7px; background:var(--text); border:none;
+      color:#fff; font-size:12px; font-weight:600; cursor:pointer;
+      font-family:'DM Sans',sans-serif; transition:opacity .13s;
+    }
+    .btn-mat:hover:not(:disabled) { opacity:.85; }
+    .btn-mat:disabled { opacity:.35; cursor:not-allowed; }
+
+    /* ── SHELL ───────────────────────────────────────── */
+    .at-shell {
+      height:100vh; padding-top:52px; display:flex; overflow:hidden;
+      background:var(--bg);
+    }
+
+    /* ── CATALOG ─────────────────────────────────────── */
+    .cat-wrap {
+      position:relative; width:292px; flex-shrink:0;
+      border-right:1px solid var(--border); display:flex; flex-direction:column;
+      overflow:hidden; background:var(--surf);
+    }
+    .cat-head {
+      flex-shrink:0; padding:10px 12px 0;
+    }
+    .cat-head-row {
+      display:flex; align-items:center; gap:6px; margin-bottom:8px;
+    }
+    .cat-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); flex:1; }
+    .cat-cnt {
+      font-size:10px; font-weight:700; color:var(--muted); background:var(--bg);
+      border:1px solid var(--border); border-radius:3px; padding:1px 6px;
+      font-family:'IBM Plex Mono',monospace;
+    }
+    .btn-new-prop {
+      padding:4px 9px; border-radius:5px; background:var(--accent); border:none;
+      color:#fff; font-size:10px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif;
+      transition:opacity .12s;
+    }
+    .btn-new-prop:hover { opacity:.85; }
+    .cat-tabs {
+      flex-shrink:0; display:flex; flex-wrap:wrap; gap:3px;
+      padding:0 12px 8px; border-bottom:1px solid var(--border);
+    }
+    .cat-tab {
+      padding:3px 8px; border-radius:4px; border:1px solid var(--border);
+      background:var(--card); color:var(--muted); font-size:10px; font-weight:600;
+      cursor:pointer; transition:all .12s; font-family:'DM Sans',sans-serif;
+    }
+    .cat-tab:hover { border-color:var(--accent); color:var(--accent); }
+    .cat-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .cat-list {
+      flex:1; overflow-y:auto; padding:8px 10px;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .cat-list::-webkit-scrollbar { width:3px; }
+    .cat-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    .cat-empty { font-size:11px; color:var(--faint); text-align:center; padding:24px 12px; }
+    .cat-foot {
+      flex-shrink:0; padding:8px 12px; border-top:1px solid var(--border);
+    }
+    .btn-enrol {
+      width:100%; padding:7px; border-radius:6px; border:1px dashed var(--border);
+      background:transparent; color:var(--muted); font-size:11px; font-weight:600;
+      cursor:pointer; transition:all .12s; font-family:'DM Sans',sans-serif;
+    }
+    .btn-enrol:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+
+    /* ── PROPOSAL CARDS ──────────────────────────────── */
+    .prop-card {
+      display:flex; align-items:flex-start; gap:5px; padding:7px 9px;
+      background:var(--card); border:1px solid var(--border);
+      border-left:3px solid var(--border); border-radius:6px;
+      cursor:grab; transition:border-color .12s, opacity .12s; user-select:none;
+    }
+    .prop-card:hover { border-color:var(--border); box-shadow:var(--shadow); }
+    .prop-card.dragging { opacity:.35; border-style:dashed; cursor:grabbing; }
+    .prop-bl-promoted { border-left-color:var(--promoted); }
+    .prop-bl-reviewed { border-left-color:var(--reviewed); }
+    .prop-bl-proposed { border-left-color:var(--proposed); }
+    .prop-hdl { font-size:11px; color:var(--faint); flex-shrink:0; cursor:grab; padding-top:2px; }
+    .prop-body { flex:1; min-width:0; }
+    .prop-top { display:flex; align-items:flex-start; gap:5px; margin-bottom:4px; }
+    .prop-glyph { font-size:12px; flex-shrink:0; margin-top:1px; opacity:.5; }
+    .prop-ttl { font-size:11px; font-weight:600; color:var(--text); line-height:1.35; font-family:'Lora',Georgia,serif; }
+    .prop-chips { display:flex; gap:3px; flex-wrap:wrap; align-items:center; }
+    .pchip { font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; letter-spacing:.03em; }
+    .pchip-promoted { background:rgba(46,125,86,.12); color:var(--promoted); }
+    .pchip-reviewed { background:rgba(176,108,34,.12); color:var(--reviewed); }
+    .pchip-proposed { background:rgba(138,122,110,.12); color:var(--proposed); }
+    .pchip-pass { background:rgba(46,125,86,.1); color:var(--pass); }
+    .pchip-warn { background:rgba(176,108,34,.1); color:var(--warn); }
+    .pchip-fail { background:rgba(184,48,48,.1); color:var(--fail); }
+
+    /* ── NEW PROPOSAL PANEL ──────────────────────────── */
+    .new-prop-panel {
+      position:absolute; inset:0; background:var(--surf); z-index:50;
+      display:flex; flex-direction:column; animation:slideLeft .18s ease;
+    }
+    .npanel-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .npanel-title { font-size:12px; font-weight:700; color:var(--text); text-transform:uppercase; letter-spacing:.06em; }
+    .npanel-close {
+      width:26px; height:26px; border-radius:5px; border:1px solid var(--border);
+      background:var(--bg); color:var(--muted); cursor:pointer; font-size:13px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .npanel-close:hover { background:var(--text); color:#fff; border-color:var(--text); }
+    .npanel-body { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+    .npanel-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    .npanel-types { display:flex; flex-wrap:wrap; gap:4px; }
+    .npt {
+      padding:4px 10px; border-radius:5px; border:1px solid var(--border);
+      background:var(--card); color:var(--muted); font-size:10px; font-weight:600;
+      cursor:pointer; transition:all .12s; font-family:'DM Sans',sans-serif;
+    }
+    .npt:hover { border-color:var(--accent); color:var(--accent); }
+    .npt.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .np-input, .np-textarea {
+      border:1px solid var(--border); border-radius:6px; background:var(--bg);
+      color:var(--text); padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:12px;
+      outline:none; transition:border-color .13s; width:100%;
+    }
+    .np-input:focus, .np-textarea:focus { border-color:var(--accent); }
+    .np-textarea { resize:vertical; min-height:72px; }
+    .np-gen {
+      padding:9px 16px; border-radius:7px; background:var(--text); border:none;
+      color:#fff; font-size:12px; font-weight:700; cursor:pointer;
+      font-family:'DM Sans',sans-serif; transition:opacity .13s; width:100%;
+    }
+    .np-gen:hover { opacity:.85; }
+    .np-gen:disabled { opacity:.35; cursor:not-allowed; }
+    .np-note { font-size:10px; color:var(--faint); line-height:1.55; }
+
+    /* ── CANVAS ──────────────────────────────────────── */
+    .at-canvas { flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:10px; }
+    .at-canvas::-webkit-scrollbar { width:4px; }
+    .at-canvas::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    .canvas-head {
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      padding-bottom:4px;
+    }
+    .canvas-kicker { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:3px; }
+    .canvas-title { font-size:18px; font-weight:700; color:var(--text); font-family:'Lora',Georgia,serif; font-style:italic; }
+    .canvas-stats { display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding-top:6px; }
+    .cstat {
+      font-size:10px; font-weight:600; color:var(--muted); background:var(--surf);
+      border:1px solid var(--border); border-radius:4px; padding:2px 8px;
+      font-family:'IBM Plex Mono',monospace;
+    }
+    .cstat-ok { color:var(--promoted); background:rgba(46,125,86,.08); border-color:rgba(46,125,86,.2); }
+    .cstat-err { color:var(--fail); background:rgba(184,48,48,.08); border-color:rgba(184,48,48,.2); }
+    .btn-add-scene {
+      align-self:flex-start; padding:7px 14px; border-radius:7px; border:1px dashed var(--border);
+      background:transparent; color:var(--muted); font-size:12px; font-weight:600;
+      cursor:pointer; transition:all .13s; font-family:'DM Sans',sans-serif;
+    }
+    .btn-add-scene:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+
+    /* ── SCENE SLOTS & CARDS ─────────────────────────── */
+    .scene-slot { position:relative; transition:padding-top .15s; }
+    .scene-slot.insert-before { padding-top:14px; }
+    .scene-slot.insert-before::before {
+      content:''; position:absolute; top:5px; left:0; right:0;
+      height:3px; background:var(--accent); border-radius:2px;
+    }
+    .scene-card {
+      background:var(--surf); border:1px solid var(--border); border-radius:9px;
+      overflow:hidden; box-shadow:var(--shadow); transition:border-color .13s, box-shadow .13s;
+    }
+    .scene-card.prop-drop-target {
+      border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+    }
+    .scene-card.sc-dragging { opacity:.35; }
+    .scene-hd {
+      display:flex; align-items:center; gap:8px; padding:10px 12px;
+      background:var(--card); border-bottom:1px solid var(--border);
+    }
+    .scene-hdl {
+      font-size:11px; color:var(--faint); cursor:grab; user-select:none;
+      flex-shrink:0; padding:2px 3px; border-radius:3px; transition:background .1s;
+    }
+    .scene-hdl:hover { background:var(--border); }
+    .scene-hdl:active { cursor:grabbing; }
+    .kind-badge {
+      font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.09em;
+      color:var(--muted); background:var(--surf); border:1px solid var(--border);
+      border-radius:3px; padding:2px 5px; flex-shrink:0;
+    }
+    .scene-lbl { font-size:13px; font-weight:700; color:var(--text); flex:1; font-family:'Lora',Georgia,serif; }
+    .scene-hd-r { display:flex; align-items:center; gap:6px; margin-left:auto; }
+    .sready { font-size:9px; font-weight:700; padding:2px 7px; border-radius:4px; flex-shrink:0; }
+    .sready-ready { background:rgba(46,125,86,.1); color:var(--promoted); }
+    .sready-partial { background:rgba(176,108,34,.1); color:var(--reviewed); }
+    .sready-unlinked { background:rgba(138,122,110,.1); color:var(--proposed); }
+    .scene-tog {
+      width:22px; height:22px; border-radius:4px; border:1px solid var(--border);
+      background:var(--surf); color:var(--muted); font-size:10px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      transition:background .1s;
+    }
+    .scene-tog:hover { background:var(--bg); }
+    .scene-body { padding:10px 13px; display:flex; flex-direction:column; gap:8px; }
+    .scene-sec { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); display:block; margin-bottom:4px; }
+    .artifact-zone {
+      padding:7px 9px; border:1.5px dashed var(--border); border-radius:6px;
+      transition:all .14s; background:var(--card);
+    }
+    .artifact-zone.dz-active { border-color:var(--accent); background:var(--accent-soft); border-style:solid; }
+    .artifact-ref {
+      display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text);
+    }
+    .art-glyph { opacity:.5; }
+    .art-title { font-family:'Lora',Georgia,serif; font-weight:600; }
+    .ast {
+      font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+      padding:1px 5px; border-radius:3px;
+    }
+    .ast-promoted { color:var(--promoted); background:rgba(46,125,86,.1); }
+    .ast-reviewed { color:var(--reviewed); background:rgba(176,108,34,.1); }
+    .ast-proposed { color:var(--fail); background:rgba(184,48,48,.1); }
+    .artifact-empty { font-size:11px; color:var(--faint); font-style:italic; }
+    .joins-zone {
+      padding:7px 9px; border:1.5px dashed var(--border); border-radius:6px;
+      transition:all .14s;
+    }
+    .joins-zone.dz-active { border-color:rgba(46,125,86,.5); background:rgba(46,125,86,.04); border-style:solid; }
+    .joins-chips { display:flex; gap:5px; flex-wrap:wrap; }
+    .join-chip {
+      font-size:10px; padding:2px 8px; border-radius:4px;
+      background:rgba(46,125,86,.09); color:var(--accent); border:1px solid rgba(46,125,86,.18);
+    }
+    .join-place-chip {
+      font-size:10px; padding:2px 8px; border-radius:4px;
+      background:rgba(46,86,125,.08); color:#2e5d8e; border:1px solid rgba(46,86,125,.18);
+    }
+    .joins-empty { font-size:11px; color:var(--faint); font-style:italic; }
+    .beats-list { display:flex; flex-direction:column; gap:3px; }
+    .beat-row {
+      font-size:11px; color:var(--muted); padding:3px 0;
+      border-bottom:1px solid var(--border); display:flex; align-items:center; gap:5px;
+    }
+    .beat-row::before { content:'▸'; font-size:9px; color:var(--accent); flex-shrink:0; }
+    .val-callout {
+      background:rgba(184,48,48,.05); border:1px solid rgba(184,48,48,.18);
+      border-radius:5px; padding:6px 9px; display:flex; flex-direction:column; gap:3px;
+    }
+    .val-issue { font-size:10px; color:var(--fail); display:flex; gap:4px; align-items:flex-start; }
+    .val-issue::before { content:'!'; font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
+
+    /* ── CORPUS MODAL ────────────────────────────────── */
+    .modal-bg {
+      position:fixed; inset:0; background:rgba(28,24,20,.45); z-index:400;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .corpus-modal {
+      background:var(--surf); border:1px solid var(--border); border-radius:12px;
+      width:510px; max-height:500px; display:flex; flex-direction:column;
+      box-shadow:0 24px 60px rgba(28,24,20,.18); animation:popIn .18s ease;
+    }
+    .cm-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .cm-title { font-size:13px; font-weight:700; color:var(--text); }
+    .cm-close {
+      width:26px; height:26px; border-radius:5px; border:1px solid var(--border);
+      background:var(--bg); color:var(--muted); cursor:pointer; font-size:13px;
+      display:flex; align-items:center; justify-content:center; transition:all .12s;
+    }
+    .cm-close:hover { background:var(--text); color:#fff; border-color:var(--text); }
+    .cm-search-row { padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .cm-search {
+      width:100%; border:1px solid var(--border); border-radius:6px; background:var(--bg);
+      color:var(--text); padding:8px 11px; font-family:'DM Sans',sans-serif; font-size:12px;
+      outline:none; transition:border-color .13s;
+    }
+    .cm-search:focus { border-color:var(--accent); }
+    .cm-list { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:5px; }
+    .cm-list::-webkit-scrollbar { width:3px; }
+    .cm-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    .cm-item {
+      display:flex; align-items:center; gap:9px; padding:8px 10px;
+      border:1px solid var(--border); border-radius:6px; background:var(--card);
+    }
+    .cm-item.enrolled { opacity:.5; }
+    .cm-glyph { font-size:14px; opacity:.4; flex-shrink:0; }
+    .cm-info { flex:1; min-width:0; }
+    .cm-item-title { font-size:12px; font-weight:600; color:var(--text); font-family:'Lora',Georgia,serif; }
+    .cm-item-meta { font-size:10px; color:var(--muted); }
+    .btn-enrol-item {
+      padding:4px 10px; border-radius:5px; background:var(--accent); border:none;
+      color:#fff; font-size:10px; font-weight:700; cursor:pointer;
+      font-family:'DM Sans',sans-serif; flex-shrink:0; transition:opacity .12s;
+    }
+    .btn-enrol-item:hover:not(:disabled) { opacity:.85; }
+    .btn-enrol-item:disabled { opacity:.4; cursor:default; background:var(--muted); }
+  </style>
+</helmet>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════════ -->
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="jewel">K</div>
+    <span class="brand">Karsac</span>
+    <span class="hdr-sep">·</span>
+    <select class="ch-sel" value="{{ activeChapterId }}" onChange="{{ onChapterChange }}">
+      <sc-for list="{{ chapterOpts }}" as="ch" hint-placeholder-count="2">
+        <option value="{{ ch.id }}">{{ ch.title }}</option>
+      </sc-for>
+    </select>
+    <sc-if value="{{ chapterLocked }}" hint-placeholder-val="{{ false }}">
+      <span class="locked-chip">Locked</span>
+    </sc-if>
+  </div>
+  <div class="hdr-r">
+    <sc-if value="{{ hasSaveState }}" hint-placeholder-val="{{ false }}">
+      <span class="{{ saveClass }}">{{ saveLabel }}</span>
+    </sc-if>
+    <button class="btn-save" disabled="{{ chapterLocked }}" onClick="{{ onSave }}">Save plan</button>
+    <button class="btn-mat" disabled="{{ chapterLocked }}">Materialise →</button>
+  </div>
+</div>
+
+<!-- ═══ SHELL ════════════════════════════════════════════════════════ -->
+<div class="at-shell">
+
+  <!-- ─── CATALOG ─────────────────────────────────────────────────── -->
+  <div class="cat-wrap">
+
+    <!-- New proposal panel -->
+    <sc-if value="{{ newPropOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="new-prop-panel">
+        <div class="npanel-head">
+          <span class="npanel-title">New proposal</span>
+          <button class="npanel-close" onClick="{{ closeNewProp }}">✕</button>
+        </div>
+        <div class="npanel-body">
+          <div class="npanel-lbl">Type</div>
+          <div class="npanel-types">
+            <sc-for list="{{ newPropTypes }}" as="t" hint-placeholder-count="6">
+              <button class="npt {{ t.activeClass }}" onClick="{{ t.onClick }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <div class="npanel-lbl">Title</div>
+          <input class="np-input" placeholder="Entity name or working title" value="{{ newPropTitle }}" onChange="{{ onNewPropTitle }}">
+          <div class="npanel-lbl">Brief (optional)</div>
+          <textarea class="np-textarea" placeholder="Context and intent for the pipeline — constraints are applied automatically."></textarea>
+          <button class="np-gen" disabled="{{ newPropTitleEmpty }}" onClick="{{ onGenerate }}">Generate proposal</button>
+          <div class="np-note">Proposal is added to the working set as 'proposed'. Review and promote it before adding to a scene as an artifact.</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Catalog header -->
+    <div class="cat-head">
+      <div class="cat-head-row">
+        <span class="cat-title">Working Set</span>
+        <span class="cat-cnt">{{ wsCount }}</span>
+        <button class="btn-new-prop" onClick="{{ openNewProp }}">+ New</button>
+      </div>
+    </div>
+    <div class="cat-tabs">
+      <sc-for list="{{ typeOpts }}" as="tab" hint-placeholder-count="7">
+        <button class="cat-tab {{ tab.activeClass }}" onClick="{{ tab.onClick }}">{{ tab.label }}</button>
+      </sc-for>
+    </div>
+    <div class="cat-list">
+      <sc-if value="{{ wsEmpty }}" hint-placeholder-val="{{ false }}">
+        <div class="cat-empty">Nothing in the working set for this type.</div>
+      </sc-if>
+      <sc-for list="{{ filteredWs }}" as="prop" hint-placeholder-count="5">
+        <div class="prop-card {{ prop.cardClass }} prop-bl-{{ prop.status }}"
+             draggable="{{ true }}"
+             onDragStart="{{ prop.onDragStart }}"
+             onDragEnd="{{ onClearDrag }}">
+          <div class="prop-hdl">⋮⋮</div>
+          <div class="prop-body">
+            <div class="prop-top">
+              <span class="prop-glyph">{{ prop.glyph }}</span>
+              <span class="prop-ttl">{{ prop.title }}</span>
+            </div>
+            <div class="prop-chips">
+              <span class="pchip pchip-{{ prop.status }}">{{ prop.status }}</span>
+              <span class="pchip pchip-{{ prop.valKey }}">{{ prop.valText }}</span>
+              <sc-if value="{{ prop.hasIssues }}" hint-placeholder-val="{{ false }}">
+                <span class="pchip pchip-fail">{{ prop.issueCount }}i</span>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div class="cat-foot">
+      <button class="btn-enrol" onClick="{{ openCorpus }}">+ Enrol from corpus</button>
+    </div>
+  </div>
+
+  <!-- ─── CANVAS ──────────────────────────────────────────────────── -->
+  <div class="at-canvas">
+    <div class="canvas-head">
+      <div>
+        <div class="canvas-kicker">Chapter Composition</div>
+        <div class="canvas-title">{{ chapterTitle }}</div>
+      </div>
+      <div class="canvas-stats">
+        <span class="cstat">{{ sceneCount }} scenes</span>
+        <span class="cstat">{{ totalBeats }} beats</span>
+        <span class="cstat cstat-ok">{{ readyCount }} ready</span>
+        <sc-if value="{{ hasSaveIssues }}" hint-placeholder-val="{{ false }}">
+          <span class="cstat cstat-err">{{ issueCount }} issues</span>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-for list="{{ scenesDisplay }}" as="scene" hint-placeholder-count="2">
+      <div class="{{ scene.slotClass }}"
+           onDragOver="{{ scene.onSlotDragOver }}"
+           onDrop="{{ scene.onSlotDrop }}">
+        <div class="{{ scene.cardClass }}"
+             onDragOver="{{ scene.onCardDragOver }}"
+             onDrop="{{ scene.onCardDrop }}"
+             onDragLeave="{{ scene.onCardDragLeave }}">
+          <!-- Scene header -->
+          <div class="scene-hd">
+            <div class="scene-hdl"
+                 draggable="{{ true }}"
+                 onDragStart="{{ scene.onDragStart }}"
+                 onDragEnd="{{ onClearDrag }}">⋮⋮</div>
+            <span class="kind-badge">{{ scene.kind }}</span>
+            <span class="scene-lbl">{{ scene.label }}</span>
+            <div class="scene-hd-r">
+              <span class="{{ scene.readinessClass }}">{{ scene.readinessLabel }}</span>
+              <button class="scene-tog" onClick="{{ scene.onToggle }}">{{ scene.toggleIcon }}</button>
+            </div>
+          </div>
+          <!-- Scene body -->
+          <sc-if value="{{ scene.isExpanded }}" hint-placeholder-val="{{ true }}">
+            <div class="scene-body">
+              <!-- Artifact zone -->
+              <div class="{{ scene.artifactZoneClass }}"
+                   onDragOver="{{ scene.onArtifactDragOver }}"
+                   onDrop="{{ scene.onArtifactDrop }}"
+                   onDragLeave="{{ onClearDropZone }}">
+                <span class="scene-sec">Scene artifact</span>
+                <sc-if value="{{ scene.hasArtifact }}" hint-placeholder-val="{{ true }}">
+                  <div class="artifact-ref">
+                    <span class="art-glyph">▷</span>
+                    <span class="art-title">{{ scene.artifactTitle }}</span>
+                    <span class="{{ scene.astClass }}">{{ scene.artifactStatus }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ scene.noArtifact }}" hint-placeholder-val="{{ false }}">
+                  <div class="artifact-empty">Drop a scene or encounter proposal here</div>
+                </sc-if>
+              </div>
+              <!-- Joins zone -->
+              <div class="{{ scene.joinsZoneClass }}"
+                   onDragOver="{{ scene.onJoinsDragOver }}"
+                   onDrop="{{ scene.onJoinsDrop }}"
+                   onDragLeave="{{ onClearDropZone }}">
+                <span class="scene-sec">Joins</span>
+                <sc-if value="{{ scene.hasJoins }}" hint-placeholder-val="{{ true }}">
+                  <div class="joins-chips">
+                    <sc-for list="{{ scene.npcChips }}" as="npc" hint-placeholder-count="1">
+                      <span class="join-chip">◉ {{ npc }}</span>
+                    </sc-for>
+                    <sc-for list="{{ scene.placeChips }}" as="pl" hint-placeholder-count="1">
+                      <span class="join-place-chip">◈ {{ pl }}</span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ scene.noJoins }}" hint-placeholder-val="{{ false }}">
+                  <div class="joins-empty">Drop NPCs or places here</div>
+                </sc-if>
+              </div>
+              <!-- Beats -->
+              <sc-if value="{{ scene.hasBeats }}" hint-placeholder-val="{{ true }}">
+                <div>
+                  <span class="scene-sec">Beats ({{ scene.beatCount }})</span>
+                  <div class="beats-list">
+                    <sc-for list="{{ scene.beats }}" as="beat" hint-placeholder-count="2">
+                      <div class="beat-row">{{ beat.label }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <!-- Validation issues -->
+              <sc-if value="{{ scene.hasValIssues }}" hint-placeholder-val="{{ false }}">
+                <div class="val-callout">
+                  <sc-for list="{{ scene.valIssues }}" as="vi" hint-placeholder-count="1">
+                    <div class="val-issue">{{ vi }}</div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+
+    <button class="btn-add-scene" onClick="{{ addScene }}">+ Add scene</button>
+  </div>
+</div>
+
+<!-- ═══ CORPUS MODAL ═════════════════════════════════════════════════ -->
+<sc-if value="{{ corpusOpen }}" hint-placeholder-val="{{ false }}">
+  <div class="modal-bg" onClick="{{ closeCorpus }}">
+    <div class="corpus-modal" onClick="{{ stopProp }}">
+      <div class="cm-head">
+        <span class="cm-title">Enrol from corpus</span>
+        <button class="cm-close" onClick="{{ closeCorpus }}">✕</button>
+      </div>
+      <div class="cm-search-row">
+        <input class="cm-search" placeholder="Search by title or type..." value="{{ corpusSearch }}" onChange="{{ onCorpusSearch }}">
+      </div>
+      <div class="cm-list">
+        <sc-for list="{{ corpusItems }}" as="item" hint-placeholder-count="8">
+          <div class="cm-item {{ item.enrolledClass }}">
+            <span class="cm-glyph">{{ item.glyph }}</span>
+            <div class="cm-info">
+              <div class="cm-item-title">{{ item.title }}</div>
+              <div class="cm-item-meta">{{ item.type }} · {{ item.status }}</div>
+            </div>
+            <button class="btn-enrol-item" disabled="{{ item.enrolled }}" onClick="{{ item.onEnrol }}">{{ item.enrollLabel }}</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    activeChapterId: 'chapter-4',
+    chapterList: [
+      { id: 'chapter-3', title: 'The Fallen Bridge', locked: true },
+      { id: 'chapter-4', title: 'The Thornward Crossing', locked: false },
+      { id: 'chapter-5', title: 'Blood on the Ice', locked: false },
+    ],
+    proposals: [
+      { id: 'npc-brynja', type: 'npc', title: 'Brynja Thorgrimsdotter', status: 'promoted', val: 'pass', issues: [] },
+      { id: 'npc-beorn', type: 'npc', title: 'Jarl Beorn Ironhelm', status: 'reviewed', val: 'warning', issues: ["Beorn's rank unresolved in canon"] },
+      { id: 'npc-broker', type: 'npc', title: 'The Shadow Broker', status: 'proposed', val: 'fail', issues: ['No corpus anchor found', 'Faction affiliation unverified'] },
+      { id: 'npc-halvar', type: 'npc', title: 'Guard Captain Halvar', status: 'proposed', val: 'warning', issues: ['No stat block derived'] },
+      { id: 'place-gate', type: 'place', title: 'The Thornward Gate', status: 'promoted', val: 'pass', issues: [] },
+      { id: 'place-castle', type: 'place', title: 'Thornward Castle', status: 'promoted', val: 'pass', issues: [] },
+      { id: 'place-docks', type: 'place', title: 'The Frozen Docks', status: 'proposed', val: 'warning', issues: ['Provisional — no canon anchor'] },
+      { id: 'scene-standoff', type: 'scene', title: 'Opening Standoff', status: 'promoted', val: 'pass', issues: [] },
+      { id: 'scene-audience', type: 'scene', title: 'Audience with Beorn', status: 'reviewed', val: 'warning', issues: ["Beorn's motivation ambiguous"] },
+      { id: 'scene-gambit', type: 'scene', title: "The Broker's Gambit", status: 'proposed', val: 'fail', issues: ['Broker not promoted', 'Unverified place reference'] },
+      { id: 'adv-walker', type: 'adversary', title: 'Shadow Walker', status: 'promoted', val: 'pass', issues: [] },
+      { id: 'adv-captain', type: 'adversary', title: 'Guard Captain Halvar', status: 'proposed', val: 'warning', issues: ['No stat block'] },
+      { id: 'item-signet', type: 'item', title: "Beorn's Signet Ring", status: 'reviewed', val: 'pass', issues: [] },
+      { id: 'enc-gate', type: 'encounter', title: 'Gate Confrontation', status: 'proposed', val: 'warning', issues: ['Encounter scaling not validated'] },
+      { id: 'enc-ambush', type: 'encounter', title: 'Dockside Ambush', status: 'promoted', val: 'pass', issues: [] },
+    ],
+    workingSet: ['npc-brynja', 'npc-beorn', 'place-gate', 'place-castle', 'scene-standoff', 'scene-audience', 'adv-walker', 'item-signet', 'enc-ambush'],
+    scenes: [
+      {
+        id: 'sc-1', label: 'Arrival at Thornward', kind: 'opening', order: 10,
+        artifactRef: 'scene-standoff',
+        npcs: ['npc-brynja'], places: ['place-gate'],
+        beats: [{ id: 'b1', label: 'Party presents credentials' }, { id: 'b2', label: 'Brynja recognized by guard' }],
+      },
+      {
+        id: 'sc-2', label: 'The Great Hall', kind: 'middle', order: 20,
+        artifactRef: 'scene-audience',
+        npcs: ['npc-beorn'], places: ['place-castle'],
+        beats: [{ id: 'b3', label: 'Beorn offers terms' }, { id: 'b4', label: 'Party detects evasion' }],
+      },
+    ],
+    typeFilter: 'all',
+    expandedSceneIds: ['sc-1', 'sc-2'],
+    newPropOpen: false,
+    newPropType: 'npc',
+    newPropTitle: '',
+    newPropPrompt: '',
+    corpusOpen: false,
+    corpusSearch: '',
+    draggingPropId: null,
+    draggingSceneId: null,
+    dropTargetSceneId: null,
+    dropZoneType: null,
+    dropBeforeSceneId: null,
+    saveState: 'idle',
+    valIssues: [],
+  }
+
+  G(t) { return ({ npc:'◉', place:'◈', scene:'▷', adversary:'◆', item:'◎', encounter:'◐' })[t] || '○' }
+
+  addScene() {
+    const id = 'sc-' + Date.now()
+    this.setState(s => ({
+      scenes: [...s.scenes, { id, label: 'New scene', kind: 'middle', order: (s.scenes.at(-1)?.order || 0) + 10, artifactRef: null, npcs: [], places: [], beats: [] }],
+      expandedSceneIds: [...s.expandedSceneIds, id],
+    }))
+  }
+
+  toggleScene(id) {
+    this.setState(s => ({
+      expandedSceneIds: s.expandedSceneIds.includes(id)
+        ? s.expandedSceneIds.filter(x => x !== id)
+        : [...s.expandedSceneIds, id],
+    }))
+  }
+
+  moveScene(dragId, beforeId) {
+    this.setState(s => {
+      const arr = [...s.scenes]
+      const fi = arr.findIndex(x => x.id === dragId)
+      const ti = arr.findIndex(x => x.id === beforeId)
+      if (fi < 0 || ti < 0 || fi === ti) return { ...s, dropBeforeSceneId: null, draggingSceneId: null }
+      const [moved] = arr.splice(fi, 1)
+      arr.splice(fi < ti ? ti - 1 : ti, 0, moved)
+      return { scenes: arr.map((x, i) => ({ ...x, order: (i + 1) * 10 })), dropBeforeSceneId: null, draggingSceneId: null }
+    })
+  }
+
+  dropPropOnScene(sceneId, propId, zoneType) {
+    const prop = this.state.proposals.find(p => p.id === propId)
+    if (!prop) return
+    this.setState(s => {
+      const scenes = s.scenes.map(sc => {
+        if (sc.id !== sceneId) return sc
+        if (zoneType === 'artifact' && (prop.type === 'scene' || prop.type === 'encounter')) {
+          return { ...sc, artifactRef: propId }
+        }
+        if (zoneType === 'joins') {
+          if (prop.type === 'npc' && !sc.npcs.includes(propId)) return { ...sc, npcs: [...sc.npcs, propId] }
+          if (prop.type === 'place' && !sc.places.includes(propId)) return { ...sc, places: [...sc.places, propId] }
+        }
+        // fallback: smart assign by type
+        if ((prop.type === 'scene' || prop.type === 'encounter') && !sc.artifactRef) return { ...sc, artifactRef: propId }
+        if (prop.type === 'npc' && !sc.npcs.includes(propId)) return { ...sc, npcs: [...sc.npcs, propId] }
+        if (prop.type === 'place' && !sc.places.includes(propId)) return { ...sc, places: [...sc.places, propId] }
+        return sc
+      })
+      return { scenes, draggingPropId: null, dropTargetSceneId: null, dropZoneType: null }
+    })
+  }
+
+  enroll(propId) {
+    this.setState(s => ({
+      workingSet: s.workingSet.includes(propId) ? s.workingSet : [...s.workingSet, propId],
+    }))
+  }
+
+  generate() {
+    const { newPropType, newPropTitle, newPropPrompt } = this.state
+    if (!newPropTitle.trim()) return
+    const id = newPropType + '-' + Date.now()
+    this.setState(s => ({
+      proposals: [...s.proposals, { id, type: newPropType, title: newPropTitle.trim(), status: 'proposed', val: 'warning', issues: ['Awaiting pipeline validation'] }],
+      workingSet: [...s.workingSet, id],
+      newPropOpen: false, newPropTitle: '', newPropPrompt: '',
+    }))
+  }
+
+  saveAndValidate() {
+    const issues = []
+    this.state.scenes.forEach(sc => {
+      if (!sc.artifactRef) {
+        issues.push({ sceneId: sc.id, msg: 'No artifact linked to this scene' })
+      } else {
+        const p = this.state.proposals.find(x => x.id === sc.artifactRef)
+        if (p && p.status !== 'promoted') issues.push({ sceneId: sc.id, msg: `Artifact "${p.title}" is not promoted (${p.status})` })
+      }
+    })
+    this.setState({ saveState: issues.length === 0 ? 'saved' : 'issues', valIssues: issues })
+    if (issues.length === 0) setTimeout(() => this.setState({ saveState: 'idle' }), 2200)
+  }
+
+  renderVals() {
+    const s = this.state
+    const G = t => this.G(t)
+    const activeChapter = s.chapterList.find(ch => ch.id === s.activeChapterId) || s.chapterList[0]
+    const locked = activeChapter?.locked || false
+
+    // Type filter
+    const typeOpts = ['all','npc','place','scene','adversary','encounter','item'].map(t => ({
+      id: t, label: t === 'all' ? 'All' : t[0].toUpperCase() + t.slice(1),
+      activeClass: s.typeFilter === t ? 'active' : '',
+      onClick: () => this.setState({ typeFilter: t }),
+    }))
+
+    // Working set
+    const wsProposals = s.proposals.filter(p => s.workingSet.includes(p.id))
+    const filteredWs = wsProposals
+      .filter(p => s.typeFilter === 'all' || p.type === s.typeFilter)
+      .map(p => ({
+        ...p, glyph: G(p.type), hasIssues: p.issues.length > 0, issueCount: p.issues.length,
+        valKey: p.val === 'pass' ? 'pass' : p.val === 'fail' ? 'fail' : 'warn',
+        valText: p.val === 'pass' ? '✓ pass' : p.val === 'fail' ? '✗ fail' : '! warn',
+        cardClass: s.draggingPropId === p.id ? 'dragging' : '',
+        onDragStart: (e) => {
+          e.dataTransfer.setData('text/plain', p.id)
+          e.dataTransfer.effectAllowed = 'move'
+          this.setState({ draggingPropId: p.id, draggingSceneId: null })
+        },
+      }))
+
+    // Build issue map by scene
+    const issueMap = {}
+    s.valIssues.forEach(v => { issueMap[v.sceneId] = issueMap[v.sceneId] || []; issueMap[v.sceneId].push(v.msg) })
+
+    // Scenes
+    const scenesDisplay = s.scenes.map(sc => {
+      const artifact = s.proposals.find(p => p.id === sc.artifactRef)
+      const npcChips = sc.npcs.map(id => s.proposals.find(p => p.id === id)?.title).filter(Boolean)
+      const placeChips = sc.places.map(id => s.proposals.find(p => p.id === id)?.title).filter(Boolean)
+      const isExpanded = s.expandedSceneIds.includes(sc.id)
+      const isPropTarget = s.dropTargetSceneId === sc.id
+      const isSceneDragging = s.draggingSceneId === sc.id
+      const isInsertBefore = s.dropBeforeSceneId === sc.id && !!s.draggingSceneId
+      const scIssues = issueMap[sc.id] || []
+      const readiness = !artifact ? 'unlinked' : artifact.status === 'promoted' ? 'ready' : 'partial'
+      const isArtDrop = isPropTarget && s.dropZoneType === 'artifact'
+      const isJoinDrop = isPropTarget && s.dropZoneType === 'joins'
+
+      return {
+        ...sc, isExpanded, hasArtifact: !!artifact, noArtifact: !artifact,
+        artifactTitle: artifact?.title || '',
+        artifactStatus: artifact?.status || '',
+        astClass: artifact ? ('ast ast-' + artifact.status) : '',
+        npcChips, placeChips, hasJoins: npcChips.length + placeChips.length > 0,
+        noJoins: npcChips.length + placeChips.length === 0,
+        hasBeats: sc.beats.length > 0, beatCount: sc.beats.length,
+        hasValIssues: scIssues.length > 0, valIssues: scIssues,
+        readinessClass: 'sready sready-' + readiness,
+        readinessLabel: { ready: '✓ Ready', partial: 'Needs promotion', unlinked: 'No artifact' }[readiness],
+        toggleIcon: isExpanded ? '▲' : '▼',
+        artifactZoneClass: 'artifact-zone' + (isArtDrop ? ' dz-active' : ''),
+        joinsZoneClass: 'joins-zone' + (isJoinDrop ? ' dz-active' : ''),
+        cardClass: ['scene-card', isPropTarget && s.draggingPropId ? 'prop-drop-target' : '', isSceneDragging ? 'sc-dragging' : ''].filter(Boolean).join(' '),
+        slotClass: 'scene-slot' + (isInsertBefore ? ' insert-before' : ''),
+        onToggle: () => this.toggleScene(sc.id),
+        onDragStart: (e) => {
+          e.dataTransfer.setData('text/plain', sc.id)
+          e.dataTransfer.effectAllowed = 'move'
+          this.setState({ draggingSceneId: sc.id, draggingPropId: null })
+        },
+        onSlotDragOver: (e) => {
+          if (!s.draggingSceneId || s.draggingSceneId === sc.id) return
+          e.preventDefault()
+          if (s.dropBeforeSceneId !== sc.id) this.setState({ dropBeforeSceneId: sc.id })
+        },
+        onSlotDrop: (e) => {
+          e.preventDefault()
+          if (s.draggingSceneId && s.draggingSceneId !== sc.id) this.moveScene(s.draggingSceneId, sc.id)
+          else this.setState({ draggingSceneId: null, dropBeforeSceneId: null })
+        },
+        onCardDragOver: (e) => {
+          if (!s.draggingPropId) return
+          e.preventDefault(); e.stopPropagation()
+          if (s.dropTargetSceneId !== sc.id) this.setState({ dropTargetSceneId: sc.id })
+        },
+        onCardDrop: (e) => {
+          e.preventDefault()
+          if (s.draggingPropId) this.dropPropOnScene(sc.id, s.draggingPropId, null)
+        },
+        onCardDragLeave: (e) => {
+          if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+            this.setState(st => st.dropTargetSceneId === sc.id ? { dropTargetSceneId: null, dropZoneType: null } : st)
+          }
+        },
+        onArtifactDragOver: (e) => {
+          if (!s.draggingPropId) return
+          const p = s.proposals.find(x => x.id === s.draggingPropId)
+          if (!p || (p.type !== 'scene' && p.type !== 'encounter')) return
+          e.preventDefault(); e.stopPropagation()
+          if (s.dropTargetSceneId !== sc.id || s.dropZoneType !== 'artifact') this.setState({ dropTargetSceneId: sc.id, dropZoneType: 'artifact' })
+        },
+        onArtifactDrop: (e) => {
+          e.preventDefault(); e.stopPropagation()
+          if (s.draggingPropId) this.dropPropOnScene(sc.id, s.draggingPropId, 'artifact')
+        },
+        onJoinsDragOver: (e) => {
+          if (!s.draggingPropId) return
+          const p = s.proposals.find(x => x.id === s.draggingPropId)
+          if (!p || !['npc','place','adversary'].includes(p.type)) return
+          e.preventDefault(); e.stopPropagation()
+          if (s.dropTargetSceneId !== sc.id || s.dropZoneType !== 'joins') this.setState({ dropTargetSceneId: sc.id, dropZoneType: 'joins' })
+        },
+        onJoinsDrop: (e) => {
+          e.preventDefault(); e.stopPropagation()
+          if (s.draggingPropId) this.dropPropOnScene(sc.id, s.draggingPropId, 'joins')
+        },
+      }
+    })
+
+    // Corpus browser items
+    const q = s.corpusSearch.toLowerCase()
+    const corpusItems = s.proposals
+      .filter(p => !q || p.title.toLowerCase().includes(q) || p.type.includes(q))
+      .map(p => ({
+        ...p, glyph: G(p.type),
+        enrolled: s.workingSet.includes(p.id),
+        enrollLabel: s.workingSet.includes(p.id) ? 'Enrolled ✓' : 'Enrol',
+        enrolledClass: s.workingSet.includes(p.id) ? 'enrolled' : '',
+        onEnrol: () => this.enroll(p.id),
+      }))
+
+    const newPropTypes = ['npc','place','scene','adversary','encounter','item'].map(t => ({
+      value: t, label: t[0].toUpperCase() + t.slice(1),
+      activeClass: s.newPropType === t ? 'active' : '',
+      onClick: () => this.setState({ newPropType: t }),
+    }))
+
+    const totalBeats = s.scenes.reduce((n, sc) => n + sc.beats.length, 0)
+    const readyCount = s.scenes.filter(sc => s.proposals.find(p => p.id === sc.artifactRef)?.status === 'promoted').length
+    const saveLabels = { idle: '', saved: '✓ Saved', issues: s.valIssues.length + ' issues' }
+    const saveClasses = { idle: 'save-lbl', saved: 'save-lbl save-ok', issues: 'save-lbl save-err' }
+
+    return {
+      activeChapterId: s.activeChapterId,
+      chapterOpts: s.chapterList,
+      chapterTitle: activeChapter?.title || '',
+      chapterLocked: locked,
+      onChapterChange: (e) => this.setState({ activeChapterId: e.target.value }),
+
+      typeOpts, filteredWs, wsEmpty: filteredWs.length === 0, wsCount: s.workingSet.length,
+
+      scenesDisplay, sceneCount: s.scenes.length, totalBeats, readyCount,
+      hasSaveIssues: s.saveState === 'issues',
+      issueCount: s.valIssues.length,
+
+      onClearDrag: () => this.setState({ draggingPropId: null, draggingSceneId: null, dropTargetSceneId: null, dropBeforeSceneId: null, dropZoneType: null }),
+      onClearDropZone: () => this.setState({ dropZoneType: null }),
+
+      newPropOpen: s.newPropOpen,
+      openNewProp: () => this.setState({ newPropOpen: true }),
+      closeNewProp: () => this.setState({ newPropOpen: false }),
+      newPropTypes,
+      newPropTitle: s.newPropTitle,
+      newPropTitleEmpty: !s.newPropTitle.trim(),
+      onNewPropTitle: (e) => this.setState({ newPropTitle: e.target.value }),
+      onGenerate: () => this.generate(),
+
+      corpusOpen: s.corpusOpen,
+      openCorpus: () => this.setState({ corpusOpen: true }),
+      closeCorpus: () => this.setState({ corpusOpen: false }),
+      stopProp: (e) => e.stopPropagation(),
+      corpusItems, corpusSearch: s.corpusSearch,
+      onCorpusSearch: (e) => this.setState({ corpusSearch: e.target.value }),
+
+      addScene: () => this.addScene(),
+      onSave: () => this.saveAndValidate(),
+      hasSaveState: s.saveState !== 'idle',
+      saveLabel: saveLabels[s.saveState],
+      saveClass: saveClasses[s.saveState] || 'save-lbl',
+    }
+  }
+}
+</script>
+</body>
+</html>

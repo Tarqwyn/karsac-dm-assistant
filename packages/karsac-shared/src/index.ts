@@ -292,6 +292,7 @@ export interface ChapterPlan {
   title: string
   updatedAt?: string
   notes?: string
+  workingSet?: string[]
   scenes: ChapterPlanScene[]
   threads: ChapterPlanThread[]
   checkpoints: ChapterPlanCheckpoint[]
