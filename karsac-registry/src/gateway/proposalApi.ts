@@ -69,10 +69,12 @@ type ProposalResolveCandidate = {
   reviewStatus?: ProposalReviewState['review_status']
 }
 
-type ProposalResolveItem = ProposalResolveCandidate | {
+type ProposalResolveItem = (ProposalResolveCandidate & { queryId: string }) | {
+  queryId: string
   id: string
   state: 'missing'
 } | {
+  queryId: string
   id: string
   state: 'ambiguous'
   matches: ProposalResolveCandidate[]
@@ -174,9 +176,9 @@ function dedupeResolveCandidates(candidates: ProposalResolveCandidate[]): Propos
 
 function resolveProposalOrPromotedEntity(id: string, candidates: ProposalResolveCandidate[]): ProposalResolveItem {
   const matches = dedupeResolveCandidates(candidates.filter((candidate) => relationshipKeysForCandidate(candidate).has(id)))
-  if (!matches.length) return { id, state: 'missing' }
-  if (matches.length === 1) return { ...matches[0], id: matches[0].id }
-  return { id, state: 'ambiguous', matches }
+  if (!matches.length) return { queryId: id, id, state: 'missing' }
+  if (matches.length === 1) return { queryId: id, ...matches[0], id: matches[0].id }
+  return { queryId: id, id, state: 'ambiguous', matches }
 }
 
 function loadResolveCandidates(): ProposalResolveCandidate[] {

@@ -196,7 +196,7 @@ describe('gateway proposal authoring api', () => {
       expect(payload.items[0]).toMatchObject({ id: 'proposals/npcs/resolver-warden', state: 'proposal', proposalType: 'npc' })
       expect(payload.items[1]).toMatchObject({ id: 'proposals/npcs/resolver-warden', state: 'proposal', proposalType: 'npc' })
       expect(payload.items[2]).toMatchObject({ id: 'proposals/scenes/resolved-market', state: 'promoted', proposalType: 'scene' })
-      expect(payload.items[3]).toEqual({ id: 'missing-subject', state: 'missing' })
+      expect(payload.items[3]).toEqual({ queryId: 'missing-subject', id: 'missing-subject', state: 'missing' })
       expect(payload.items[4].state).toBe('ambiguous')
       expect(payload.items[4].matches?.map((match) => match.id).sort()).toEqual([
         'proposals/npcs/shared-name',

@@ -337,6 +337,7 @@ export const CHAPTER_SCENE_RELATIONSHIPS: readonly ChapterSceneRelationship[] = 
 export type ProposalResolveState = 'proposal' | 'promoted' | 'missing' | 'ambiguous'
 
 export interface ProposalResolveItem {
+  queryId?: string
   id: string
   state: ProposalResolveState
   title?: string

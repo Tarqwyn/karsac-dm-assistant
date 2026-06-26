@@ -105,6 +105,39 @@ function nextItemId(prefix: string, items: Array<{ id: string }>): string {
   return candidate
 }
 
+function appendUniqueRef(refs: string[] | undefined, proposalId: string): string[] {
+  const current = refs ?? []
+  return current.includes(proposalId) ? current : [...current, proposalId]
+}
+
+function appendRelationshipRef(scene: ChapterPlanScene, planField: keyof ChapterPlanScene, proposalId: string): void {
+  switch (planField) {
+    case 'npcs':
+      scene.npcs = appendUniqueRef(scene.npcs, proposalId)
+      return
+    case 'places':
+      scene.places = appendUniqueRef(scene.places, proposalId)
+      return
+    case 'adversaries':
+      scene.adversaries = appendUniqueRef(scene.adversaries, proposalId)
+      return
+    case 'items':
+      scene.items = appendUniqueRef(scene.items, proposalId)
+      return
+    case 'clueRefs':
+      scene.clueRefs = appendUniqueRef(scene.clueRefs, proposalId)
+      return
+    case 'handoutRefs':
+      scene.handoutRefs = appendUniqueRef(scene.handoutRefs, proposalId)
+      return
+    case 'factionRefs':
+      scene.factionRefs = appendUniqueRef(scene.factionRefs, proposalId)
+      return
+    default:
+      return
+  }
+}
+
 function errorScaffold(error: unknown, chapterId: string): ChapterPlan {
   const candidate = (error as WorkspaceError | null)?.scaffold
   if (candidate && typeof candidate === 'object') {
@@ -208,18 +241,12 @@ export function ChapterCompositionWorkspace({
       const attached = new Set(Array.isArray(sceneField) ? (sceneField as string[]) : [])
       return related
         .filter((rawId) => {
-          const resolved = resolvedRelations.find((item) => {
-            const slug = proposalSlug(rawId)
-            return item.id === rawId || item.id.endsWith(`/${slug}`)
-          })
+          const resolved = resolvedRelations.find((item) => item.queryId === rawId)
           if (!resolved || resolved.state === 'missing' || resolved.state === 'ambiguous') return true
           return !attached.has(resolved.id)
         })
         .map((rawId) => {
-          const resolved = resolvedRelations.find((item) => {
-            const slug = proposalSlug(rawId)
-            return item.id === rawId || item.id.endsWith(`/${slug}`)
-          })
+          const resolved = resolvedRelations.find((item) => item.queryId === rawId)
           return {
             slot: rel.relatedKey,
             planField: rel.planField,
@@ -319,10 +346,7 @@ export function ChapterCompositionWorkspace({
     const updated = clonePlan(plan)
     const scene = updated.scenes.find((s) => s.id === pendingAttach.sceneId)
     if (!scene) return
-    const current = (scene[pendingAttach.planField] as string[] | undefined) ?? []
-    if (!current.includes(pendingAttach.proposalId)) {
-      ;(scene as Record<string, unknown>)[pendingAttach.planField as string] = [...current, pendingAttach.proposalId]
-    }
+    appendRelationshipRef(scene, pendingAttach.planField, pendingAttach.proposalId)
     await onSave(updated)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -336,10 +360,7 @@ export function ChapterCompositionWorkspace({
   function attachRelationshipToSelected(planField: keyof ChapterPlanScene, proposalId: string): void {
     if (!selectedScene) return
     updateScene(selectedScene.id, (scene) => {
-      const current = (scene[planField] as string[] | undefined) ?? []
-      if (!current.includes(proposalId)) {
-        ;(scene as Record<string, unknown>)[planField as string] = [...current, proposalId]
-      }
+      appendRelationshipRef(scene, planField, proposalId)
     })
   }
 
